@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mazda CarPlay HUD Toolkit</title>
-<meta name="description" content="Apple CarPlay turn-by-turn navigation on the instrument-cluster HUD for Mazda CMU150 — with correct km/h speed limit for the European market.">
+<meta name="description" content="Apple CarPlay turn-by-turn navigation on the instrument-cluster HUD for Mazda CMU150 - with correct km/h speed limit for the European market.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
@@ -329,7 +329,8 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · FW 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">turn-by-turn</span> on the Mazda HUD.</h1>
-  <p class="lede">A polished, tested build of KidMixer's community shim with a one-line source patch that fixes the km/h indicator for European vehicles — and a small daemon that keeps the speed slot alive between OEM updates.</p>
+  <p class="lede">A polished, tested build of KidMixer's community shim with a one-line source patch that fixes the km/h indicator for European vehicles - and a small daemon that keeps the speed slot alive between OEM updates.</p>
+  <p class="sublede"><strong>Fits:</strong> Mazda CX-5 (KF, 2017-2021), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - EU market with CMU150 firmware 74.00.xxx.</p>
   <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Download toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
@@ -338,7 +339,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <h2><span class="num">01</span>What it does</h2>
   <p class="sublede">Adds the CarPlay maneuver + distance overlay to your instrument-cluster HUD, exactly like the built-in native navigation. Two additions on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> build:</p>
   <ul>
-    <li><strong>km/h fix.</strong> The shim was written with <code>displaySpeedUnit = 1</code> which the VBS enum reads as <em>mph</em>. On an EU HUD that renders a <code>50 km/h</code> sign as <code>≈80</code> after mile→km conversion. Our fix flips it to <code>2</code> (km/h).</li>
+    <li><strong>km/h fix.</strong> The shim was written with <code>displaySpeedUnit = 1</code> which the VBS enum reads as <em>mph</em>. On an EU HUD that renders a <code>50 km/h</code> sign as <code>≈80</code> after mile→km conversion. My fix flips it to <code>2</code> (km/h).</li>
     <li><strong>Speed-limit mirror daemon.</strong> A small shell script that passively watches the OEM <code>svcjcinavi.so</code> HUD stream and copies the current value into the shim's keep-alive frames. Without it the shim overwrites the speed slot with <code>0</code> every 500 ms and the value dies to <code>---</code> between OEM updates.</li>
   </ul>
   <p>Everything else is bit-for-bit the KidMixer original.</p>
@@ -350,7 +351,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <li>Mazda CMU150, firmware <code>74.00.324</code>, EU flavor (verify: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash drive (≥ 1 GB, FAT32-formatted)</li>
     <li>A computer with Wi-Fi (macOS, Linux, or Windows 10+)</li>
-    <li>CMU Wi-Fi hotspot (usually comes with a wireless-CarPlay dongle)</li>
   </ul>
 </div></section>
 
@@ -360,7 +360,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
       <h3>Create USB unlock stick</h3>
-      <p>Wipes and formats a USB stick as FAT32 with the label MZD, then copies the MP3-XSS payload that opens root+SSH on the CMU. Insert the stick in the head unit, tap any MP3, then tap SSH in the XSS overlay — <code>sshd</code> starts on port 36000.</p>
+      <p>Wipes and formats a USB stick as FAT32 with the label MZD, then copies the MP3-XSS payload that opens root+SSH on the CMU. Insert the stick in the head unit, tap any MP3, then tap SSH in the XSS overlay - <code>sshd</code> starts on port 36000.</p>
     </div></div>
     <div class="opt"><div class="num2">2</div><div>
       <h3>Backup CMU state</h3>
@@ -368,11 +368,11 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
       <h3>Install KidMixer patch</h3>
-      <p>Three-step deploy: (a) runs the vanilla <code>install.sh</code> which adds the <code>LD_PRELOAD</code> line to <code>sm.conf</code> and sets <code>NaviSupported=TRUE</code>, (b) overlays our km/h-fixed <code>.so</code>, (c) drops in the speed-mirror daemon and its auto-launcher. Ends with a reboot; wait ~2 min then re-establish SSH via the USB stick.</p>
+      <p>Three-step deploy: (a) runs the vanilla <code>install.sh</code> which adds the <code>LD_PRELOAD</code> line to <code>sm.conf</code> and sets <code>NaviSupported=TRUE</code>, (b) overlays my km/h-fixed <code>.so</code>, (c) drops in the speed-mirror daemon and its auto-launcher. Ends with a reboot; wait ~2 min then re-establish SSH via the USB stick.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
       <h3>Full rollback</h3>
-      <p>Kills our daemon, removes our extras, runs the vanilla <code>uninstall.sh</code> which restores <code>sm.conf</code> and <code>NaviSupported=FALSE</code> from the <code>.bak_precphud</code> backups made by <code>install.sh</code>. Ends with a reboot.</p>
+      <p>Kills my daemon, removes my extras, runs the vanilla <code>uninstall.sh</code> which restores <code>sm.conf</code> and <code>NaviSupported=FALSE</code> from the <code>.bak_precphud</code> backups made by <code>install.sh</code>. Ends with a reboot.</p>
     </div></div>
   </div>
 </div></section>
@@ -393,18 +393,19 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">05</span>Notes and limitations</h2>
   <div class="callout mint">
-    <p><strong>Cannot brick the head unit.</strong> The shim uses only <code>LD_PRELOAD</code> — the OEM <code>blmjcicarplay.so</code> is never modified on disk. The read-only rootfs guarantees a reboot always returns the unit to a working state.</p>
+    <p><strong>Cannot brick the head unit.</strong> The shim uses only <code>LD_PRELOAD</code> - the OEM <code>blmjcicarplay.so</code> is never modified on disk. The read-only rootfs guarantees a reboot always returns the unit to a working state.</p>
   </div>
   <ul>
     <li>The daemon does <strong>not</strong> trigger any NNG requests. It only listens to what the OEM navigation service already broadcasts on D-Bus, so the HUD stays as close to stock behaviour as possible.</li>
-    <li>Lane guidance arrows (<code>SetRecommLaneReq</code>) are <strong>not</strong> implemented — Apple does not transmit lane data over iAP2, only in the CarPlay video stream.</li>
+    <li>Lane guidance arrows (<code>SetRecommLaneReq</code>) are <strong>not</strong> implemented - Apple does not transmit lane data over iAP2, only in the CarPlay video stream.</li>
+    <li>Only <strong>Apple Maps</strong> and <strong>Google Maps</strong> stream turn arrows to the HUD. <strong>Waze does not work</strong> - it never publishes maneuver data on the iAP2 sidechannel that the shim reads; the HUD stays blank while Waze is the active app. Waze CarPlay limitation, not a CMU issue.</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">06</span>Support</h2>
   <p>If SSH refuses to connect on port 36000, the <code>sshd</code> on the head unit was killed by the read-only rootfs at boot. Re-run the USB → XSS → SSH step and it comes back up.</p>
-  <p>If the HUD stays blank after install, verify with option 9 first, then SSH in and check <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> — the <code>L_jciCARPLAY</code> process must be running with <code>LD_PRELOAD</code> in its <code>/proc/PID/environ</code>.</p>
+  <p>If the HUD stays blank after install, verify with option 9 first, then SSH in and check <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - the <code>L_jciCARPLAY</code> process must be running with <code>LD_PRELOAD</code> in its <code>/proc/PID/environ</code>.</p>
 </div></section>
 
 </div><!-- /en -->
@@ -414,7 +415,8 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Прошивка 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">поворот-за-поворотом</span> на Mazda HUD.</h1>
-  <p class="lede">Опрацьована збірка комунітарного шима KidMixer з однорядковим патчем, який виправляє індикатор км/год для авто ЄС — та маленьким демоном, який тримає значення ліміту швидкості між оновленнями штатної навігації.</p>
+  <p class="lede">Опрацьована збірка комунітарного шима KidMixer з однорядковим патчем, який виправляє індикатор км/год для авто ЄС - та маленьким демоном, який тримає значення ліміту швидкості між оновленнями штатної навігації.</p>
+  <p class="sublede"><strong>Підходить для:</strong> Mazda CX-5 (KF, 2017-2021), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - EU-ринок з CMU150 прошивкою 74.00.xxx.</p>
   <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Завантажити toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 КБ · macOS · Linux · Windows 10+</span>
 </div></div>
@@ -423,10 +425,10 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <h2><span class="num">01</span>Що робить</h2>
   <p class="sublede">Додає накладку CarPlay (маневр + дистанція) на HUD у кластері приладів, як штатна вбудована навігація. Дві надбудови над збіркою <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
-    <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code>, що у VBS enum означає <em>mph</em>. На EU HUD знак <code>50 км/год</code> малюється як <code>≈80</code> після конвертації mile→km. Наш фікс — значення <code>2</code> (km/h).</li>
+    <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code>, що у VBS enum означає <em>mph</em>. На EU HUD знак <code>50 км/год</code> малюється як <code>≈80</code> після конвертації mile→km. Мій фікс - значення <code>2</code> (km/h).</li>
     <li><strong>Демон-дзеркало ліміту швидкості.</strong> Маленький shell-скрипт, що пасивно слухає штатний потік <code>svcjcinavi.so</code> і копіює поточне значення у keep-alive-кадри шима. Без нього шим кожні 500 мс перезаписує slot нулем і значення падає в <code>---</code>.</li>
   </ul>
-  <p>Все інше — біт-у-біт оригінал KidMixer.</p>
+  <p>Все інше - біт-у-біт оригінал KidMixer.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -435,7 +437,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <li>Mazda CMU150, прошивка <code>74.00.324</code>, EU (перевірка: <code>cat /jci/version.ini</code>)</li>
     <li>USB-флешка (від 1 ГБ, формат FAT32)</li>
     <li>Комп'ютер з Wi-Fi (macOS, Linux або Windows 10+)</li>
-    <li>Wi-Fi hotspot на CMU (зазвичай активується wireless-CarPlay донглом)</li>
   </ul>
 </div></section>
 
@@ -445,7 +446,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
       <h3>Створити USB для root-доступу</h3>
-      <p>Форматує флешку у FAT32 з міткою MZD, копіює MP3-XSS payload який відкриває root+SSH на CMU. Вставте флешку в голову, тапніть будь-який MP3, потім тапніть SSH в XSS-меню — <code>sshd</code> стартує на порту 36000.</p>
+      <p>Форматує флешку у FAT32 з міткою MZD, копіює MP3-XSS payload який відкриває root+SSH на CMU. Вставте флешку в голову, тапніть будь-який MP3, потім тапніть SSH в XSS-меню - <code>sshd</code> стартує на порту 36000.</p>
     </div></div>
     <div class="opt"><div class="num2">2</div><div>
       <h3>Резервне копіювання CMU</h3>
@@ -453,11 +454,11 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
       <h3>Встановити патч</h3>
-      <p>3 етапи: (а) оригінальний <code>install.sh</code> додає <code>LD_PRELOAD</code> у <code>sm.conf</code> і ставить <code>NaviSupported=TRUE</code>, (б) підмінюється наш <code>.so</code> з km/h-фіксом, (в) копіюється демон-дзеркало та auto-launcher. Наприкінці ребут; ~2 хв, потім поновити SSH через флешку.</p>
+      <p>3 етапи: (а) оригінальний <code>install.sh</code> додає <code>LD_PRELOAD</code> у <code>sm.conf</code> і ставить <code>NaviSupported=TRUE</code>, (б) підмінюється мій <code>.so</code> з km/h-фіксом, (в) копіюється демон-дзеркало та auto-launcher. Наприкінці ребут; ~2 хв, потім поновити SSH через флешку.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
       <h3>Повний відкат</h3>
-      <p>Вбиває наш демон, видаляє надбудови, запускає оригінальний <code>uninstall.sh</code> що відновлює <code>sm.conf</code> і <code>NaviSupported=FALSE</code> з бекапів <code>.bak_precphud</code>. Наприкінці ребут.</p>
+      <p>Вбиває мій демон, видаляє надбудови, запускає оригінальний <code>uninstall.sh</code> що відновлює <code>sm.conf</code> і <code>NaviSupported=FALSE</code> з бекапів <code>.bak_precphud</code>. Наприкінці ребут.</p>
     </div></div>
   </div>
 </div></section>
@@ -478,18 +479,19 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">05</span>Примітки й обмеження</h2>
   <div class="callout mint">
-    <p><strong>Неможливо «окирпичити» голову.</strong> Шим працює лише через <code>LD_PRELOAD</code> — оригінальний <code>blmjcicarplay.so</code> не змінюється. Read-only rootfs гарантує повернення до робочого стану після ребуту.</p>
+    <p><strong>Неможливо «окирпичити» голову.</strong> Шим працює лише через <code>LD_PRELOAD</code> - оригінальний <code>blmjcicarplay.so</code> не змінюється. Read-only rootfs гарантує повернення до робочого стану після ребуту.</p>
   </div>
   <ul>
     <li>Демон <strong>не</strong> посилає жодних NNG-запитів. Слухає лише те, що штатний навігаційний сервіс уже транслює по D-Bus.</li>
-    <li>Стрілки рядності (<code>SetRecommLaneReq</code>) <strong>не</strong> реалізовані — Apple не передає дані рядності через iAP2, тільки через CarPlay video stream.</li>
+    <li>Стрілки рядності (<code>SetRecommLaneReq</code>) <strong>не</strong> реалізовані - Apple не передає дані рядності через iAP2, тільки через CarPlay video stream.</li>
+    <li>Стрілки на HUD показують тільки <strong>Apple Maps</strong> і <strong>Google Maps</strong>. <strong>Waze не працює</strong> - він не передає дані про маневри через iAP2 sidechannel, тому HUD залишається пустий. Це обмеження Waze CarPlay, а не CMU.</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">06</span>Підтримка</h2>
-  <p>Якщо SSH не відповідає на порту 36000 — <code>sshd</code> у голові було вбито read-only rootfs при завантаженні. Повторіть USB → XSS → SSH.</p>
-  <p>Якщо HUD залишається пустий — перевірте опцією 9, потім SSH-командою <code>ps | grep sm_svclauncher | grep jciCARPLAY</code>: процес <code>L_jciCARPLAY</code> має бути живим із <code>LD_PRELOAD</code> у <code>/proc/PID/environ</code>.</p>
+  <p>Якщо SSH не відповідає на порту 36000 - <code>sshd</code> у голові було вбито read-only rootfs при завантаженні. Повторіть USB → XSS → SSH.</p>
+  <p>Якщо HUD залишається пустий - перевірте опцією 9, потім SSH-командою <code>ps | grep sm_svclauncher | grep jciCARPLAY</code>: процес <code>L_jciCARPLAY</code> має бути живим із <code>LD_PRELOAD</code> у <code>/proc/PID/environ</code>.</p>
 </div></section>
 </div><!-- /uk -->
 
@@ -498,7 +500,8 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">turno-a-turno</span> en el HUD de Mazda.</h1>
-  <p class="lede">Build depurada del shim comunitario de KidMixer con un parche de una línea que arregla el indicador km/h para vehículos EU — y un pequeño daemon que mantiene el slot de velocidad vivo entre actualizaciones OEM.</p>
+  <p class="lede">Build depurada del shim comunitario de KidMixer con un parche de una línea que arregla el indicador km/h para vehículos EU - y un pequeño daemon que mantiene el slot de velocidad vivo entre actualizaciones OEM.</p>
+  <p class="sublede"><strong>Compatible con:</strong> Mazda CX-5 (KF, 2017-2021), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - mercado EU con CMU150 firmware 74.00.xxx.</p>
   <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Descargar toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
@@ -507,7 +510,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <h2><span class="num">01</span>Qué hace</h2>
   <p class="sublede">Añade el overlay de CarPlay (maniobra + distancia) al HUD del cuadro de instrumentos, igual que la navegación nativa. Dos añadidos sobre la build de <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
-    <li><strong>Corrección km/h.</strong> El shim usa <code>displaySpeedUnit = 1</code> que en el enum VBS es <em>mph</em>. En un HUD europeo un <code>50 km/h</code> se renderiza como <code>≈80</code> tras la conversión milla→km. Nuestro fix pone <code>2</code> (km/h).</li>
+    <li><strong>Corrección km/h.</strong> El shim usa <code>displaySpeedUnit = 1</code> que en el enum VBS es <em>mph</em>. En un HUD europeo un <code>50 km/h</code> se renderiza como <code>≈80</code> tras la conversión milla→km. Mi fix pone <code>2</code> (km/h).</li>
     <li><strong>Daemon-espejo.</strong> Script shell que escucha pasivamente el flujo OEM de <code>svcjcinavi.so</code> y copia el valor actual en los frames keep-alive del shim. Sin él, el shim sobrescribe el slot con <code>0</code> cada 500 ms y el valor cae a <code>---</code>.</li>
   </ul>
   <p>Todo lo demás es bit-a-bit el KidMixer original.</p>
@@ -519,7 +522,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <li>Mazda CMU150, firmware <code>74.00.324</code>, versión EU (verificar: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash (≥ 1 GB, formato FAT32)</li>
     <li>Ordenador con Wi-Fi (macOS, Linux o Windows 10+)</li>
-    <li>Wi-Fi hotspot en el CMU (viene con dongles de CarPlay inalámbrico)</li>
   </ul>
 </div></section>
 
@@ -529,7 +531,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
       <h3>Crear USB de desbloqueo</h3>
-      <p>Formatea la USB como FAT32/MZD, copia el payload MP3-XSS que abre root+SSH en el CMU. Insertar la USB, tocar cualquier MP3, luego tocar SSH en el overlay XSS — <code>sshd</code> arranca en el puerto 36000.</p>
+      <p>Formatea la USB como FAT32/MZD, copia el payload MP3-XSS que abre root+SSH en el CMU. Insertar la USB, tocar cualquier MP3, luego tocar SSH en el overlay XSS - <code>sshd</code> arranca en el puerto 36000.</p>
     </div></div>
     <div class="opt"><div class="num2">2</div><div>
       <h3>Backup del CMU</h3>
@@ -537,11 +539,11 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
       <h3>Instalar patch</h3>
-      <p>Despliegue en 3 pasos: (a) <code>install.sh</code> original añade <code>LD_PRELOAD</code> y pone <code>NaviSupported=TRUE</code>, (b) superpone nuestro <code>.so</code> con km/h fix, (c) copia daemon-espejo y auto-launcher. Termina con reboot.</p>
+      <p>Despliegue en 3 pasos: (a) <code>install.sh</code> original añade <code>LD_PRELOAD</code> y pone <code>NaviSupported=TRUE</code>, (b) superpone mi <code>.so</code> con km/h fix, (c) copia daemon-espejo y auto-launcher. Termina con reboot.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
       <h3>Rollback completo</h3>
-      <p>Mata nuestro daemon, elimina nuestros extras, ejecuta el <code>uninstall.sh</code> original que restaura <code>sm.conf</code> y <code>NaviSupported=FALSE</code>. Termina con reboot.</p>
+      <p>Mata mi daemon, elimina mis extras, ejecuta el <code>uninstall.sh</code> original que restaura <code>sm.conf</code> y <code>NaviSupported=FALSE</code>. Termina con reboot.</p>
     </div></div>
   </div>
 </div></section>
@@ -562,18 +564,19 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">05</span>Notas y limitaciones</h2>
   <div class="callout mint">
-    <p><strong>No puede brickear el head unit.</strong> El shim usa solo <code>LD_PRELOAD</code> — el <code>blmjcicarplay.so</code> original nunca se modifica. Rootfs de solo lectura garantiza retorno al estado stock tras reboot.</p>
+    <p><strong>No puede brickear el head unit.</strong> El shim usa solo <code>LD_PRELOAD</code> - el <code>blmjcicarplay.so</code> original nunca se modifica. Rootfs de solo lectura garantiza retorno al estado stock tras reboot.</p>
   </div>
   <ul>
     <li>El daemon <strong>no</strong> dispara requests NNG. Solo escucha lo que el servicio OEM ya emite en D-Bus.</li>
-    <li>Flechas de guía de carril (<code>SetRecommLaneReq</code>) <strong>no</strong> implementadas — Apple no transmite datos de carril por iAP2.</li>
+    <li>Flechas de guía de carril (<code>SetRecommLaneReq</code>) <strong>no</strong> implementadas - Apple no transmite datos de carril por iAP2.</li>
+    <li>Solo <strong>Apple Maps</strong> y <strong>Google Maps</strong> muestran flechas en el HUD. <strong>Waze no funciona</strong> - no transmite datos de maniobra por el canal iAP2 que lee el shim; el HUD queda en blanco cuando Waze está activo. Limitación de Waze CarPlay, no del CMU.</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">06</span>Soporte</h2>
   <p>Si SSH no conecta en el puerto 36000, el <code>sshd</code> fue eliminado por el rootfs read-only al arrancar. Repetir USB → XSS → SSH.</p>
-  <p>Si el HUD sigue en blanco tras instalar, verificar opción 9; luego SSH y comprobar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> — <code>L_jciCARPLAY</code> debe estar corriendo con <code>LD_PRELOAD</code> en <code>/proc/PID/environ</code>.</p>
+  <p>Si el HUD sigue en blanco tras instalar, verificar opción 9; luego SSH y comprobar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> debe estar corriendo con <code>LD_PRELOAD</code> en <code>/proc/PID/environ</code>.</p>
 </div></section>
 </div><!-- /es -->
 
@@ -582,7 +585,8 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">Turn-by-Turn</span> auf dem Mazda HUD.</h1>
-  <p class="lede">Verfeinerter Build des Community-Shim von KidMixer mit einem Einzeilen-Patch, der die km/h-Anzeige für EU-Fahrzeuge korrigiert — und einem kleinen Daemon, der den Speed-Slot zwischen OEM-Updates am Leben hält.</p>
+  <p class="lede">Verfeinerter Build des Community-Shim von KidMixer mit einem Einzeilen-Patch, der die km/h-Anzeige für EU-Fahrzeuge korrigiert - und einem kleinen Daemon, der den Speed-Slot zwischen OEM-Updates am Leben hält.</p>
+  <p class="sublede"><strong>Passend für:</strong> Mazda CX-5 (KF, 2017-2021), Mazda 6 (GJ Facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - EU-Markt mit CMU150 Firmware 74.00.xxx.</p>
   <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Toolkit herunterladen <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
@@ -591,7 +595,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <h2><span class="num">01</span>Was es macht</h2>
   <p class="sublede">Fügt das CarPlay-Overlay (Manöver + Entfernung) im HUD des Kombiinstruments hinzu, genau wie die eingebaute Werksnavigation. Zwei Ergänzungen zum <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>-Build:</p>
   <ul>
-    <li><strong>km/h-Fix.</strong> Der Shim nutzte <code>displaySpeedUnit = 1</code>, was das VBS-Enum als <em>mph</em> liest. Auf einem EU-HUD wird ein <code>50 km/h</code>-Schild nach Meilen→km-Umrechnung als <code>≈80</code> gezeichnet. Unser Fix setzt <code>2</code> (km/h).</li>
+    <li><strong>km/h-Fix.</strong> Der Shim nutzte <code>displaySpeedUnit = 1</code>, was das VBS-Enum als <em>mph</em> liest. Auf einem EU-HUD wird ein <code>50 km/h</code>-Schild nach Meilen→km-Umrechnung als <code>≈80</code> gezeichnet. Mein Fix setzt <code>2</code> (km/h).</li>
     <li><strong>Speed-Limit-Spiegel-Daemon.</strong> Kleines Shell-Skript, das passiv den OEM-HUD-Stream von <code>svcjcinavi.so</code> beobachtet und den aktuellen Wert in die Keep-alive-Frames des Shim kopiert. Ohne ihn überschreibt der Shim den Slot alle 500 ms mit <code>0</code> und der Wert fällt auf <code>---</code>.</li>
   </ul>
   <p>Alles andere ist bitgenau das KidMixer-Original.</p>
@@ -603,7 +607,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <li>Mazda CMU150, Firmware <code>74.00.324</code>, EU-Version (prüfen: <code>cat /jci/version.ini</code>)</li>
     <li>USB-Stick (≥ 1 GB, FAT32-formatiert)</li>
     <li>Computer mit WLAN (macOS, Linux oder Windows 10+)</li>
-    <li>WLAN-Hotspot am CMU (bei Wireless-CarPlay-Dongles)</li>
   </ul>
 </div></section>
 
@@ -613,7 +616,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
       <h3>USB-Unlock-Stick erstellen</h3>
-      <p>Formatiert USB als FAT32/MZD, kopiert die MP3-XSS-Payload für Root+SSH am CMU. USB einstecken, MP3 antippen, SSH im XSS-Overlay antippen — <code>sshd</code> startet auf Port 36000.</p>
+      <p>Formatiert USB als FAT32/MZD, kopiert die MP3-XSS-Payload für Root+SSH am CMU. USB einstecken, MP3 antippen, SSH im XSS-Overlay antippen - <code>sshd</code> startet auf Port 36000.</p>
     </div></div>
     <div class="opt"><div class="num2">2</div><div>
       <h3>CMU-Backup</h3>
@@ -621,11 +624,11 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
       <h3>Patch installieren</h3>
-      <p>3 Schritte: (a) originales <code>install.sh</code> fügt <code>LD_PRELOAD</code> zu <code>sm.conf</code> hinzu und setzt <code>NaviSupported=TRUE</code>, (b) unser <code>.so</code> mit km/h-Fix wird überlagert, (c) Spiegel-Daemon und Auto-Launcher werden kopiert. Endet mit Reboot.</p>
+      <p>3 Schritte: (a) originales <code>install.sh</code> fügt <code>LD_PRELOAD</code> zu <code>sm.conf</code> hinzu und setzt <code>NaviSupported=TRUE</code>, (b) mein <code>.so</code> mit km/h-Fix wird überlagert, (c) Spiegel-Daemon und Auto-Launcher werden kopiert. Endet mit Reboot.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
       <h3>Kompletter Rollback</h3>
-      <p>Beendet unseren Daemon, entfernt unsere Extras, führt das originale <code>uninstall.sh</code> aus, das <code>sm.conf</code> und <code>NaviSupported=FALSE</code> wiederherstellt. Endet mit Reboot.</p>
+      <p>Beendet meinen Daemon, entfernt meine Extras, führt das originale <code>uninstall.sh</code> aus, das <code>sm.conf</code> und <code>NaviSupported=FALSE</code> wiederherstellt. Endet mit Reboot.</p>
     </div></div>
   </div>
 </div></section>
@@ -646,18 +649,19 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">05</span>Hinweise und Einschränkungen</h2>
   <div class="callout mint">
-    <p><strong>Kann das Head Unit nicht bricken.</strong> Der Shim nutzt nur <code>LD_PRELOAD</code> — <code>blmjcicarplay.so</code> wird nie verändert. Read-only-Rootfs garantiert Rückkehr zum Werkszustand nach Reboot.</p>
+    <p><strong>Kann das Head Unit nicht bricken.</strong> Der Shim nutzt nur <code>LD_PRELOAD</code> - <code>blmjcicarplay.so</code> wird nie verändert. Read-only-Rootfs garantiert Rückkehr zum Werkszustand nach Reboot.</p>
   </div>
   <ul>
     <li>Der Daemon löst <strong>keine</strong> NNG-Requests aus. Nur passives Zuhören des OEM-D-Bus-Streams.</li>
-    <li>Fahrspurführungs-Pfeile (<code>SetRecommLaneReq</code>) <strong>nicht</strong> implementiert — Apple sendet keine Spurdaten über iAP2.</li>
+    <li>Fahrspurführungs-Pfeile (<code>SetRecommLaneReq</code>) <strong>nicht</strong> implementiert - Apple sendet keine Spurdaten über iAP2.</li>
+    <li>Nur <strong>Apple Maps</strong> und <strong>Google Maps</strong> zeigen Pfeile auf dem HUD. <strong>Waze funktioniert nicht</strong> - es sendet keine Manöverdaten über den iAP2-Sidechannel, den der Shim liest; das HUD bleibt leer, wenn Waze aktiv ist. Waze-CarPlay-Einschränkung, nicht des CMU.</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">06</span>Support</h2>
   <p>Wenn SSH auf Port 36000 nicht verbindet, wurde <code>sshd</code> beim Boot vom Read-only-Rootfs beendet. USB → XSS → SSH wiederholen.</p>
-  <p>Wenn das HUD nach Installation leer bleibt, Option 9 zur Verifikation, dann per SSH <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> prüfen — <code>L_jciCARPLAY</code>-Prozess muss mit <code>LD_PRELOAD</code> in <code>/proc/PID/environ</code> laufen.</p>
+  <p>Wenn das HUD nach Installation leer bleibt, Option 9 zur Verifikation, dann per SSH <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> prüfen - <code>L_jciCARPLAY</code>-Prozess muss mit <code>LD_PRELOAD</code> in <code>/proc/PID/environ</code> laufen.</p>
 </div></section>
 </div><!-- /de -->
 
@@ -666,7 +670,8 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">turn-by-turn</span> no HUD Mazda.</h1>
-  <p class="lede">Build refinada do shim comunitário KidMixer com um patch de uma linha que corrige o indicador km/h para veículos EU — e um pequeno daemon que mantém o slot de velocidade vivo entre atualizações OEM.</p>
+  <p class="lede">Build refinada do shim comunitário KidMixer com um patch de uma linha que corrige o indicador km/h para veículos EU - e um pequeno daemon que mantém o slot de velocidade vivo entre atualizações OEM.</p>
+  <p class="sublede"><strong>Compatível com:</strong> Mazda CX-5 (KF, 2017-2021), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - mercado EU com CMU150 firmware 74.00.xxx.</p>
   <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Baixar toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
@@ -687,7 +692,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <li>Mazda CMU150, firmware <code>74.00.324</code>, versão EU (verificar: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash (≥ 1 GB, formato FAT32)</li>
     <li>Computador com Wi-Fi (macOS, Linux ou Windows 10+)</li>
-    <li>Wi-Fi hotspot no CMU (vem com dongles CarPlay sem fio)</li>
   </ul>
 </div></section>
 
@@ -697,7 +701,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
       <h3>Criar USB de desbloqueio</h3>
-      <p>Formata USB como FAT32/MZD, copia o payload MP3-XSS que abre root+SSH no CMU. Inserir USB, tocar qualquer MP3, tocar SSH no overlay XSS — <code>sshd</code> inicia na porta 36000.</p>
+      <p>Formata USB como FAT32/MZD, copia o payload MP3-XSS que abre root+SSH no CMU. Inserir USB, tocar qualquer MP3, tocar SSH no overlay XSS - <code>sshd</code> inicia na porta 36000.</p>
     </div></div>
     <div class="opt"><div class="num2">2</div><div>
       <h3>Backup do CMU</h3>
@@ -705,11 +709,11 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
       <h3>Instalar patch</h3>
-      <p>Deploy em 3 passos: (a) <code>install.sh</code> original adiciona <code>LD_PRELOAD</code> e define <code>NaviSupported=TRUE</code>, (b) sobrepõe nosso <code>.so</code> com correção km/h, (c) copia daemon-espelho e auto-launcher. Termina com reboot.</p>
+      <p>Deploy em 3 passos: (a) <code>install.sh</code> original adiciona <code>LD_PRELOAD</code> e define <code>NaviSupported=TRUE</code>, (b) sobrepõe meu <code>.so</code> com correção km/h, (c) copia daemon-espelho e auto-launcher. Termina com reboot.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
       <h3>Rollback completo</h3>
-      <p>Mata nosso daemon, remove nossos extras, executa <code>uninstall.sh</code> original que restaura <code>sm.conf</code> e <code>NaviSupported=FALSE</code>. Termina com reboot.</p>
+      <p>Mata meu daemon, remove meus extras, executa <code>uninstall.sh</code> original que restaura <code>sm.conf</code> e <code>NaviSupported=FALSE</code>. Termina com reboot.</p>
     </div></div>
   </div>
 </div></section>
@@ -730,18 +734,19 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">05</span>Notas e limitações</h2>
   <div class="callout mint">
-    <p><strong>Não pode brickar o head unit.</strong> O shim usa apenas <code>LD_PRELOAD</code> — <code>blmjcicarplay.so</code> nunca é modificado. Rootfs read-only garante retorno ao stock após reboot.</p>
+    <p><strong>Não pode brickar o head unit.</strong> O shim usa apenas <code>LD_PRELOAD</code> - <code>blmjcicarplay.so</code> nunca é modificado. Rootfs read-only garante retorno ao stock após reboot.</p>
   </div>
   <ul>
     <li>O daemon <strong>não</strong> dispara requests NNG. Apenas escuta o que o serviço OEM já emite no D-Bus.</li>
-    <li>Setas de guia de faixa (<code>SetRecommLaneReq</code>) <strong>não</strong> implementadas — Apple não transmite dados de faixa por iAP2.</li>
+    <li>Setas de guia de faixa (<code>SetRecommLaneReq</code>) <strong>não</strong> implementadas - Apple não transmite dados de faixa por iAP2.</li>
+    <li>Apenas <strong>Apple Maps</strong> e <strong>Google Maps</strong> mostram setas no HUD. <strong>Waze não funciona</strong> - não transmite dados de manobra pelo canal iAP2 que o shim lê; o HUD fica em branco enquanto o Waze está ativo. Limitação do Waze CarPlay, não do CMU.</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">06</span>Suporte</h2>
   <p>Se SSH não conectar na porta 36000, o <code>sshd</code> foi eliminado pelo rootfs read-only no boot. Repetir USB → XSS → SSH.</p>
-  <p>Se o HUD permanecer em branco após instalar, verificar opção 9; depois SSH e checar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> — <code>L_jciCARPLAY</code> deve estar rodando com <code>LD_PRELOAD</code> em <code>/proc/PID/environ</code>.</p>
+  <p>Se o HUD permanecer em branco após instalar, verificar opção 9; depois SSH e checar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> deve estar rodando com <code>LD_PRELOAD</code> em <code>/proc/PID/environ</code>.</p>
 </div></section>
 </div><!-- /pt -->
 
