@@ -330,13 +330,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="eyebrow">CMU150 · FW 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">turn-by-turn</span> on the Mazda HUD.</h1>
   <p class="lede">A polished, tested build of KidMixer's community shim with a one-line source patch that fixes the km/h indicator for European vehicles — and a small daemon that keeps the speed slot alive between OEM updates.</p>
-  <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Download toolkit <span class="arrow">→</span></a>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Download toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
 
 <section><div class="wrap">
   <h2><span class="num">01</span>What it does</h2>
-  <p class="sublede">Adds the CarPlay maneuver + distance + street-name overlay to your instrument-cluster HUD, exactly like the built-in native navigation. Two additions on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> build:</p>
+  <p class="sublede">Adds the CarPlay maneuver + distance overlay to your instrument-cluster HUD, exactly like the built-in native navigation. Two additions on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> build:</p>
   <ul>
     <li><strong>km/h fix.</strong> The shim was written with <code>displaySpeedUnit = 1</code> which the VBS enum reads as <em>mph</em>. On an EU HUD that renders a <code>50 km/h</code> sign as <code>≈80</code> after mile→km conversion. Our fix flips it to <code>2</code> (km/h).</li>
     <li><strong>Speed-limit mirror daemon.</strong> A small shell script that passively watches the OEM <code>svcjcinavi.so</code> HUD stream and copies the current value into the shim's keep-alive frames. Without it the shim overwrites the speed slot with <code>0</code> every 500 ms and the value dies to <code>---</code> between OEM updates.</li>
@@ -398,7 +398,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>The daemon does <strong>not</strong> trigger any NNG requests. It only listens to what the OEM navigation service already broadcasts on D-Bus, so the HUD stays as close to stock behaviour as possible.</li>
     <li>Lane guidance arrows (<code>SetRecommLaneReq</code>) are <strong>not</strong> implemented — Apple does not transmit lane data over iAP2, only in the CarPlay video stream.</li>
-    <li>Cyrillic street names render correctly; the Ukrainian apostrophe (<code>’</code>) currently prints as <code>?</code> because the OEM HUD font lacks that glyph.</li>
   </ul>
 </div></section>
 
@@ -416,13 +415,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="eyebrow">CMU150 · Прошивка 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">поворот-за-поворотом</span> на Mazda HUD.</h1>
   <p class="lede">Опрацьована збірка комунітарного шима KidMixer з однорядковим патчем, який виправляє індикатор км/год для авто ЄС — та маленьким демоном, який тримає значення ліміту швидкості між оновленнями штатної навігації.</p>
-  <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Завантажити toolkit <span class="arrow">→</span></a>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Завантажити toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 КБ · macOS · Linux · Windows 10+</span>
 </div></div>
 
 <section><div class="wrap">
   <h2><span class="num">01</span>Що робить</h2>
-  <p class="sublede">Додає накладку CarPlay (маневр + дистанція + назва вулиці) на HUD у кластері приладів, як штатна вбудована навігація. Дві надбудови над збіркою <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <p class="sublede">Додає накладку CarPlay (маневр + дистанція) на HUD у кластері приладів, як штатна вбудована навігація. Дві надбудови над збіркою <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
     <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code>, що у VBS enum означає <em>mph</em>. На EU HUD знак <code>50 км/год</code> малюється як <code>≈80</code> після конвертації mile→km. Наш фікс — значення <code>2</code> (km/h).</li>
     <li><strong>Демон-дзеркало ліміту швидкості.</strong> Маленький shell-скрипт, що пасивно слухає штатний потік <code>svcjcinavi.so</code> і копіює поточне значення у keep-alive-кадри шима. Без нього шим кожні 500 мс перезаписує slot нулем і значення падає в <code>---</code>.</li>
@@ -484,7 +483,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>Демон <strong>не</strong> посилає жодних NNG-запитів. Слухає лише те, що штатний навігаційний сервіс уже транслює по D-Bus.</li>
     <li>Стрілки рядності (<code>SetRecommLaneReq</code>) <strong>не</strong> реалізовані — Apple не передає дані рядності через iAP2, тільки через CarPlay video stream.</li>
-    <li>Кириличні назви вулиць відображаються коректно; український апостроф (<code>’</code>) наразі рендериться як <code>?</code>, бо OEM-шрифт HUD не має цього гліфа.</li>
   </ul>
 </div></section>
 
@@ -501,13 +499,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">turno-a-turno</span> en el HUD de Mazda.</h1>
   <p class="lede">Build depurada del shim comunitario de KidMixer con un parche de una línea que arregla el indicador km/h para vehículos EU — y un pequeño daemon que mantiene el slot de velocidad vivo entre actualizaciones OEM.</p>
-  <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Descargar toolkit <span class="arrow">→</span></a>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Descargar toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
 
 <section><div class="wrap">
   <h2><span class="num">01</span>Qué hace</h2>
-  <p class="sublede">Añade el overlay de CarPlay (maniobra + distancia + nombre de calle) al HUD del cuadro de instrumentos, igual que la navegación nativa. Dos añadidos sobre la build de <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <p class="sublede">Añade el overlay de CarPlay (maniobra + distancia) al HUD del cuadro de instrumentos, igual que la navegación nativa. Dos añadidos sobre la build de <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
     <li><strong>Corrección km/h.</strong> El shim usa <code>displaySpeedUnit = 1</code> que en el enum VBS es <em>mph</em>. En un HUD europeo un <code>50 km/h</code> se renderiza como <code>≈80</code> tras la conversión milla→km. Nuestro fix pone <code>2</code> (km/h).</li>
     <li><strong>Daemon-espejo.</strong> Script shell que escucha pasivamente el flujo OEM de <code>svcjcinavi.so</code> y copia el valor actual en los frames keep-alive del shim. Sin él, el shim sobrescribe el slot con <code>0</code> cada 500 ms y el valor cae a <code>---</code>.</li>
@@ -569,7 +567,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>El daemon <strong>no</strong> dispara requests NNG. Solo escucha lo que el servicio OEM ya emite en D-Bus.</li>
     <li>Flechas de guía de carril (<code>SetRecommLaneReq</code>) <strong>no</strong> implementadas — Apple no transmite datos de carril por iAP2.</li>
-    <li>Nombres cirílicos se renderizan bien; el apóstrofo ucraniano (<code>’</code>) aparece como <code>?</code> por falta del glifo en la fuente OEM.</li>
   </ul>
 </div></section>
 
@@ -586,13 +583,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">Turn-by-Turn</span> auf dem Mazda HUD.</h1>
   <p class="lede">Verfeinerter Build des Community-Shim von KidMixer mit einem Einzeilen-Patch, der die km/h-Anzeige für EU-Fahrzeuge korrigiert — und einem kleinen Daemon, der den Speed-Slot zwischen OEM-Updates am Leben hält.</p>
-  <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Toolkit herunterladen <span class="arrow">→</span></a>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Toolkit herunterladen <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
 
 <section><div class="wrap">
   <h2><span class="num">01</span>Was es macht</h2>
-  <p class="sublede">Fügt das CarPlay-Overlay (Manöver + Entfernung + Straßenname) im HUD des Kombiinstruments hinzu, genau wie die eingebaute Werksnavigation. Zwei Ergänzungen zum <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>-Build:</p>
+  <p class="sublede">Fügt das CarPlay-Overlay (Manöver + Entfernung) im HUD des Kombiinstruments hinzu, genau wie die eingebaute Werksnavigation. Zwei Ergänzungen zum <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>-Build:</p>
   <ul>
     <li><strong>km/h-Fix.</strong> Der Shim nutzte <code>displaySpeedUnit = 1</code>, was das VBS-Enum als <em>mph</em> liest. Auf einem EU-HUD wird ein <code>50 km/h</code>-Schild nach Meilen→km-Umrechnung als <code>≈80</code> gezeichnet. Unser Fix setzt <code>2</code> (km/h).</li>
     <li><strong>Speed-Limit-Spiegel-Daemon.</strong> Kleines Shell-Skript, das passiv den OEM-HUD-Stream von <code>svcjcinavi.so</code> beobachtet und den aktuellen Wert in die Keep-alive-Frames des Shim kopiert. Ohne ihn überschreibt der Shim den Slot alle 500 ms mit <code>0</code> und der Wert fällt auf <code>---</code>.</li>
@@ -654,7 +651,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>Der Daemon löst <strong>keine</strong> NNG-Requests aus. Nur passives Zuhören des OEM-D-Bus-Streams.</li>
     <li>Fahrspurführungs-Pfeile (<code>SetRecommLaneReq</code>) <strong>nicht</strong> implementiert — Apple sendet keine Spurdaten über iAP2.</li>
-    <li>Kyrillische Straßennamen werden korrekt gerendert; ukrainisches Apostroph (<code>’</code>) erscheint als <code>?</code> — OEM-Schriftart hat den Glyph nicht.</li>
   </ul>
 </div></section>
 
@@ -671,13 +667,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
   <h1>Apple CarPlay <span class="accent">turn-by-turn</span> no HUD Mazda.</h1>
   <p class="lede">Build refinada do shim comunitário KidMixer com um patch de uma linha que corrige o indicador km/h para veículos EU — e um pequeno daemon que mantém o slot de velocidade vivo entre atualizações OEM.</p>
-  <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Baixar toolkit <span class="arrow">→</span></a>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Baixar toolkit <span class="arrow">→</span></a>
   <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
 </div></div>
 
 <section><div class="wrap">
   <h2><span class="num">01</span>O que faz</h2>
-  <p class="sublede">Adiciona a sobreposição CarPlay (manobra + distância + nome da rua) ao HUD do painel, igual à navegação nativa embutida. Dois acréscimos sobre a build <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <p class="sublede">Adiciona a sobreposição CarPlay (manobra + distância) ao HUD do painel, igual à navegação nativa embutida. Dois acréscimos sobre a build <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
     <li><strong>Correção km/h.</strong> O shim usava <code>displaySpeedUnit = 1</code>, que o enum VBS lê como <em>mph</em>. Num HUD europeu um <code>50 km/h</code> desenha como <code>≈80</code> após conversão milha→km. Nossa correção põe <code>2</code> (km/h).</li>
     <li><strong>Daemon-espelho.</strong> Script shell que escuta passivamente o fluxo OEM de <code>svcjcinavi.so</code> e copia o valor atual nos frames keep-alive do shim. Sem ele, o shim sobrescreve o slot com <code>0</code> a cada 500 ms e o valor cai para <code>---</code>.</li>
@@ -739,7 +735,6 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>O daemon <strong>não</strong> dispara requests NNG. Apenas escuta o que o serviço OEM já emite no D-Bus.</li>
     <li>Setas de guia de faixa (<code>SetRecommLaneReq</code>) <strong>não</strong> implementadas — Apple não transmite dados de faixa por iAP2.</li>
-    <li>Nomes cirílicos renderizam bem; o apóstrofo ucraniano (<code>’</code>) aparece como <code>?</code> — a fonte OEM do HUD não tem o glifo.</li>
   </ul>
 </div></section>
 
