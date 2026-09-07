@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mazda CarPlay HUD Toolkit</title>
+<meta name="description" content="Apple CarPlay turn-by-turn navigation on the instrument-cluster HUD for Mazda CMU150 — with correct km/h speed limit for the European market.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+:root {
+  color-scheme: light dark;
+
+  --ground-0: #0e1016;
+  --ground-1: #161923;
+  --ground-2: #1e222d;
+  --ground-3: #262a37;
+  --line: rgba(255,255,255,0.08);
+  --line-strong: rgba(255,255,255,0.16);
+  --text: #e5e8ef;
+  --text-dim: #94a0b3;
+  --text-mute: #5c6577;
+  --amber: #f5b642;
+  --amber-dim: #a37624;
+  --cyan: #6ac8ff;
+  --mint: #7de3a8;
+  --rose: #ff8b7b;
+  --hud-glow: 0 0 20px rgba(245, 182, 66, 0.35);
+}
+
+:root:not([data-theme="dark"]) {
+  --ground-0: #f5f2ea;
+  --ground-1: #ede9dd;
+  --ground-2: #e2ddce;
+  --ground-3: #d6d0bf;
+  --line: rgba(20,25,40,0.10);
+  --line-strong: rgba(20,25,40,0.22);
+  --text: #171b26;
+  --text-dim: #5a6478;
+  --text-mute: #8892a6;
+  --amber: #b57715;
+  --amber-dim: #d9a24a;
+  --cyan: #1d6a95;
+  --mint: #2f7a4d;
+  --rose: #a94232;
+  --hud-glow: 0 0 12px rgba(181,119,21,0.25);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --ground-0:#f5f2ea; --ground-1:#ede9dd; --ground-2:#e2ddce; --ground-3:#d6d0bf;
+    --line:rgba(20,25,40,0.10); --line-strong:rgba(20,25,40,0.22);
+    --text:#171b26; --text-dim:#5a6478; --text-mute:#8892a6;
+    --amber:#b57715; --amber-dim:#d9a24a; --cyan:#1d6a95; --mint:#2f7a4d; --rose:#a94232;
+    --hud-glow: 0 0 12px rgba(181,119,21,0.25);
+  }
+}
+:root[data-theme="dark"] {
+  --ground-0:#0e1016; --ground-1:#161923; --ground-2:#1e222d; --ground-3:#262a37;
+  --line:rgba(255,255,255,0.08); --line-strong:rgba(255,255,255,0.16);
+  --text:#e5e8ef; --text-dim:#94a0b3; --text-mute:#5c6577;
+  --amber:#f5b642; --amber-dim:#a37624; --cyan:#6ac8ff; --mint:#7de3a8; --rose:#ff8b7b;
+  --hud-glow: 0 0 20px rgba(245,182,66,0.35);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--ground-0);
+  color: var(--text);
+  font-family: "IBM Plex Sans", -apple-system, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+a { color: var(--cyan); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  background: var(--ground-2);
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: var(--amber);
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+  border-bottom: 1px solid var(--line);
+  background: var(--ground-1);
+  position: sticky; top: 0; z-index: 5;
+  backdrop-filter: blur(6px);
+}
+.topbar .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 14px; padding-bottom: 14px;
+  gap: 16px; flex-wrap: wrap;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-weight: 600; font-size: 17px;
+  letter-spacing: -0.005em;
+}
+.brand .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--amber); box-shadow: var(--hud-glow);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .brand .dot { animation: pulse 2.2s ease-in-out infinite; }
+}
+@keyframes pulse {
+  0%,100%{box-shadow:0 0 8px rgba(245,182,66,0.35);opacity:.7}
+  50%{box-shadow:0 0 20px rgba(245,182,66,0.75);opacity:1}
+}
+
+.langs {
+  display: flex; gap: 4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+}
+.lang-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: 120ms;
+  font-family: inherit; font-size: inherit;
+}
+.lang-btn:hover { color: var(--text); border-color: var(--line-strong); }
+.lang-btn.active {
+  color: var(--amber);
+  border-color: var(--amber-dim);
+  background: rgba(245,182,66,0.06);
+}
+
+/* ===== HERO ===== */
+.hero {
+  border-bottom: 1px solid var(--line);
+  padding: 56px 0 60px;
+  background:
+    radial-gradient(1200px 400px at 78% 0%, rgba(245,182,66,0.07), transparent 60%),
+    var(--ground-0);
+}
+.eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+h1 {
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-weight: 600;
+  font-size: clamp(36px, 5.5vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.018em;
+  margin: 14px 0 14px;
+  text-wrap: balance;
+  max-width: 20ch;
+}
+h1 .accent { color: var(--amber); }
+.lede {
+  font-size: 17px;
+  color: var(--text-dim);
+  max-width: 60ch;
+  margin: 0 0 32px;
+}
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  background: var(--amber);
+  color: #0e1016;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  transition: 120ms;
+  border: 1px solid var(--amber);
+}
+.cta:hover { background: transparent; color: var(--amber); text-decoration: none; }
+.cta .arrow { font-family: "IBM Plex Mono", monospace; font-size: 18px; }
+.cta-note {
+  display: inline-block; margin-left: 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; color: var(--text-mute);
+}
+
+/* ===== SECTIONS ===== */
+section { padding: 48px 0; border-top: 1px solid var(--line); }
+h2 {
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-weight: 600; font-size: 28px;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+h2 .num {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; color: var(--amber);
+  vertical-align: 5px;
+  margin-right: 12px; font-weight: 500;
+  letter-spacing: 0.06em;
+}
+p { max-width: 68ch; }
+p, li { color: var(--text); }
+ul { padding-left: 20px; }
+li { margin-bottom: 6px; }
+.sublede { color: var(--text-dim); max-width: 68ch; margin-bottom: 24px; }
+
+/* Menu options table */
+.opts { display: flex; flex-direction: column; gap: 12px; }
+.opt {
+  display: grid; grid-template-columns: 60px 1fr; gap: 20px;
+  padding: 18px 20px;
+  background: var(--ground-1);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+@media (max-width: 640px) {
+  .opt { grid-template-columns: 1fr; gap: 6px; }
+}
+.opt .num2 {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 22px; color: var(--amber);
+  font-variant-numeric: tabular-nums;
+  align-self: start;
+}
+.opt h3 {
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-weight: 600; font-size: 17px;
+  margin: 0 0 6px;
+}
+.opt p { margin: 0; color: var(--text-dim); font-size: 14.5px; }
+
+/* Steps */
+.steps { counter-reset: step; display: flex; flex-direction: column; gap: 14px; }
+.step {
+  display: grid; grid-template-columns: 34px 1fr; gap: 14px;
+}
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px; color: var(--amber);
+  padding-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.step .body { color: var(--text); font-size: 15px; }
+.step .body strong { color: var(--text); font-weight: 500; }
+
+/* Callouts */
+.callout {
+  background: var(--ground-1);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--amber);
+  padding: 16px 20px;
+  border-radius: 4px;
+  margin: 24px 0;
+}
+.callout.mint { border-left-color: var(--mint); }
+.callout.rose { border-left-color: var(--rose); }
+.callout p:last-child { margin-bottom: 0; }
+.callout p:first-child { margin-top: 0; }
+
+/* Grid for tech details */
+.techgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.techcard {
+  background: var(--ground-1);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 16px 18px;
+}
+.techcard .k {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--amber);
+  margin-bottom: 6px;
+}
+.techcard .v { color: var(--text); font-size: 14px; }
+.techcard code { font-size: 12px; }
+
+/* Language content */
+[data-lang] { display: none; }
+[data-lang].visible { display: block; }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 36px 0 60px;
+  color: var(--text-mute);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>Mazda HUD Toolkit</div>
+    <div class="langs" role="group" aria-label="Language">
+      <button class="lang-btn" data-set="en">EN</button>
+      <button class="lang-btn" data-set="uk">UK</button>
+      <button class="lang-btn" data-set="es">ES</button>
+      <button class="lang-btn" data-set="de">DE</button>
+      <button class="lang-btn" data-set="pt">PT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================== ENGLISH ================== -->
+<div data-lang="en">
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">CMU150 · FW 74.00.324 · EU</div>
+  <h1>Apple CarPlay <span class="accent">turn-by-turn</span> on the Mazda HUD.</h1>
+  <p class="lede">A polished, tested build of KidMixer's community shim with a one-line source patch that fixes the km/h indicator for European vehicles — and a small daemon that keeps the speed slot alive between OEM updates.</p>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Download toolkit <span class="arrow">→</span></a>
+  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+</div></div>
+
+<section><div class="wrap">
+  <h2><span class="num">01</span>What it does</h2>
+  <p class="sublede">Adds the CarPlay maneuver + distance + street-name overlay to your instrument-cluster HUD, exactly like the built-in native navigation. Two additions on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> build:</p>
+  <ul>
+    <li><strong>km/h fix.</strong> The shim was written with <code>displaySpeedUnit = 1</code> which the VBS enum reads as <em>mph</em>. On an EU HUD that renders a <code>50 km/h</code> sign as <code>≈80</code> after mile→km conversion. Our fix flips it to <code>2</code> (km/h).</li>
+    <li><strong>Speed-limit mirror daemon.</strong> A small shell script that passively watches the OEM <code>svcjcinavi.so</code> HUD stream and copies the current value into the shim's keep-alive frames. Without it the shim overwrites the speed slot with <code>0</code> every 500 ms and the value dies to <code>---</code> between OEM updates.</li>
+  </ul>
+  <p>Everything else is bit-for-bit the KidMixer original.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">02</span>Requirements</h2>
+  <ul>
+    <li>Mazda CMU150, firmware <code>74.00.324</code>, EU flavor (verify: <code>cat /jci/version.ini</code>)</li>
+    <li>USB flash drive (≥ 1 GB, FAT32-formatted)</li>
+    <li>A computer with Wi-Fi (macOS, Linux, or Windows 10+)</li>
+    <li>CMU Wi-Fi hotspot (usually comes with a wireless-CarPlay dongle)</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Menu options</h2>
+  <p class="sublede">Both <code>toolkit.sh</code> (macOS / Linux) and <code>toolkit.bat</code> (Windows 10+) show the same numbered menu.</p>
+  <div class="opts">
+    <div class="opt"><div class="num2">1</div><div>
+      <h3>Create USB unlock stick</h3>
+      <p>Wipes and formats a USB stick as FAT32 with the label MZD, then copies the MP3-XSS payload that opens root+SSH on the CMU. Insert the stick in the head unit, tap any MP3, then tap SSH in the XSS overlay — <code>sshd</code> starts on port 36000.</p>
+    </div></div>
+    <div class="opt"><div class="num2">2</div><div>
+      <h3>Backup CMU state</h3>
+      <p>Downloads every file the installer touches (<code>sm.conf</code>, <code>sm_WCP.conf</code>, <code>devmgr_config_master.xml</code>, <code>blmjcicarplay.so</code>, <code>/data_persist/cp-hud-mod/</code>, <code>version.ini</code>) as a tar.gz into <code>backups/YYYYMMDD_HHMMSS/</code>. Run this before installing anything.</p>
+    </div></div>
+    <div class="opt"><div class="num2">3</div><div>
+      <h3>Install KidMixer patch</h3>
+      <p>Three-step deploy: (a) runs the vanilla <code>install.sh</code> which adds the <code>LD_PRELOAD</code> line to <code>sm.conf</code> and sets <code>NaviSupported=TRUE</code>, (b) overlays our km/h-fixed <code>.so</code>, (c) drops in the speed-mirror daemon and its auto-launcher. Ends with a reboot; wait ~2 min then re-establish SSH via the USB stick.</p>
+    </div></div>
+    <div class="opt"><div class="num2">4</div><div>
+      <h3>Full rollback</h3>
+      <p>Kills our daemon, removes our extras, runs the vanilla <code>uninstall.sh</code> which restores <code>sm.conf</code> and <code>NaviSupported=FALSE</code> from the <code>.bak_precphud</code> backups made by <code>install.sh</code>. Ends with a reboot.</p>
+    </div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">04</span>First-time procedure</h2>
+  <div class="steps">
+    <div class="step"><div class="body">Format a USB stick, run <strong>option 1</strong> to prepare it.</div></div>
+    <div class="step"><div class="body">Insert the stick in the car. Media → USB → tap any MP3 → wait for the XSS overlay at the bottom of the screen → tap <strong>SSH</strong>. Green log lines appear, done.</div></div>
+    <div class="step"><div class="body">Connect your computer to the CMU Wi-Fi (<code>CMU-XX:XX:...</code> or <code>MAZDA-xxx</code>).</div></div>
+    <div class="step"><div class="body">Run <strong>option 9</strong> to verify SSH works, then <strong>option 2</strong> to back up.</div></div>
+    <div class="step"><div class="body">Run <strong>option 3</strong> to install. Wait for reboot.</div></div>
+    <div class="step"><div class="body">On the head unit, repeat step 2 (USB → SSH) to re-enable SSH after the reboot.</div></div>
+    <div class="step"><div class="body">Start a CarPlay navigation session. The maneuver arrow appears on the HUD; the speed-limit slot shows the current OEM value from map + TSR camera.</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">05</span>Notes and limitations</h2>
+  <div class="callout mint">
+    <p><strong>Cannot brick the head unit.</strong> The shim uses only <code>LD_PRELOAD</code> — the OEM <code>blmjcicarplay.so</code> is never modified on disk. The read-only rootfs guarantees a reboot always returns the unit to a working state.</p>
+  </div>
+  <ul>
+    <li>The daemon does <strong>not</strong> trigger any NNG requests. It only listens to what the OEM navigation service already broadcasts on D-Bus, so the HUD stays as close to stock behaviour as possible.</li>
+    <li>Lane guidance arrows (<code>SetRecommLaneReq</code>) are <strong>not</strong> implemented — Apple does not transmit lane data over iAP2, only in the CarPlay video stream.</li>
+    <li>Cyrillic street names render correctly; the Ukrainian apostrophe (<code>’</code>) currently prints as <code>?</code> because the OEM HUD font lacks that glyph.</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">06</span>Support</h2>
+  <p>If SSH refuses to connect on port 36000, the <code>sshd</code> on the head unit was killed by the read-only rootfs at boot. Re-run the USB → XSS → SSH step and it comes back up.</p>
+  <p>If the HUD stays blank after install, verify with option 9 first, then SSH in and check <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> — the <code>L_jciCARPLAY</code> process must be running with <code>LD_PRELOAD</code> in its <code>/proc/PID/environ</code>.</p>
+</div></section>
+
+</div><!-- /en -->
+
+<!-- ================== УКРАЇНСЬКА ================== -->
+<div data-lang="uk">
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">CMU150 · Прошивка 74.00.324 · EU</div>
+  <h1>Apple CarPlay <span class="accent">поворот-за-поворотом</span> на Mazda HUD.</h1>
+  <p class="lede">Опрацьована збірка комунітарного шима KidMixer з однорядковим патчем, який виправляє індикатор км/год для авто ЄС — та маленьким демоном, який тримає значення ліміту швидкості між оновленнями штатної навігації.</p>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Завантажити toolkit <span class="arrow">→</span></a>
+  <span class="cta-note">340 КБ · macOS · Linux · Windows 10+</span>
+</div></div>
+
+<section><div class="wrap">
+  <h2><span class="num">01</span>Що робить</h2>
+  <p class="sublede">Додає накладку CarPlay (маневр + дистанція + назва вулиці) на HUD у кластері приладів, як штатна вбудована навігація. Дві надбудови над збіркою <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <ul>
+    <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code>, що у VBS enum означає <em>mph</em>. На EU HUD знак <code>50 км/год</code> малюється як <code>≈80</code> після конвертації mile→km. Наш фікс — значення <code>2</code> (km/h).</li>
+    <li><strong>Демон-дзеркало ліміту швидкості.</strong> Маленький shell-скрипт, що пасивно слухає штатний потік <code>svcjcinavi.so</code> і копіює поточне значення у keep-alive-кадри шима. Без нього шим кожні 500 мс перезаписує slot нулем і значення падає в <code>---</code>.</li>
+  </ul>
+  <p>Все інше — біт-у-біт оригінал KidMixer.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">02</span>Вимоги</h2>
+  <ul>
+    <li>Mazda CMU150, прошивка <code>74.00.324</code>, EU (перевірка: <code>cat /jci/version.ini</code>)</li>
+    <li>USB-флешка (від 1 ГБ, формат FAT32)</li>
+    <li>Комп'ютер з Wi-Fi (macOS, Linux або Windows 10+)</li>
+    <li>Wi-Fi hotspot на CMU (зазвичай активується wireless-CarPlay донглом)</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Опції меню</h2>
+  <p class="sublede">І <code>toolkit.sh</code> (macOS/Linux), і <code>toolkit.bat</code> (Windows 10+) показують те саме нумероване меню.</p>
+  <div class="opts">
+    <div class="opt"><div class="num2">1</div><div>
+      <h3>Створити USB для root-доступу</h3>
+      <p>Форматує флешку у FAT32 з міткою MZD, копіює MP3-XSS payload який відкриває root+SSH на CMU. Вставте флешку в голову, тапніть будь-який MP3, потім тапніть SSH в XSS-меню — <code>sshd</code> стартує на порту 36000.</p>
+    </div></div>
+    <div class="opt"><div class="num2">2</div><div>
+      <h3>Резервне копіювання CMU</h3>
+      <p>Завантажує всі файли, які змінює інсталятор (<code>sm.conf</code>, <code>sm_WCP.conf</code>, <code>devmgr_config_master.xml</code>, <code>blmjcicarplay.so</code>, <code>/data_persist/cp-hud-mod/</code>, <code>version.ini</code>) як tar.gz в <code>backups/YYYYMMDD_HHMMSS/</code>. Робити ПЕРЕД встановленням.</p>
+    </div></div>
+    <div class="opt"><div class="num2">3</div><div>
+      <h3>Встановити патч</h3>
+      <p>3 етапи: (а) оригінальний <code>install.sh</code> додає <code>LD_PRELOAD</code> у <code>sm.conf</code> і ставить <code>NaviSupported=TRUE</code>, (б) підмінюється наш <code>.so</code> з km/h-фіксом, (в) копіюється демон-дзеркало та auto-launcher. Наприкінці ребут; ~2 хв, потім поновити SSH через флешку.</p>
+    </div></div>
+    <div class="opt"><div class="num2">4</div><div>
+      <h3>Повний відкат</h3>
+      <p>Вбиває наш демон, видаляє надбудови, запускає оригінальний <code>uninstall.sh</code> що відновлює <code>sm.conf</code> і <code>NaviSupported=FALSE</code> з бекапів <code>.bak_precphud</code>. Наприкінці ребут.</p>
+    </div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">04</span>Перше встановлення</h2>
+  <div class="steps">
+    <div class="step"><div class="body">Форматуйте флешку, запустіть <strong>опцію 1</strong> для її підготовки.</div></div>
+    <div class="step"><div class="body">Вставте в авто. Media → USB → тапніть будь-який MP3 → чекайте XSS-меню внизу → тап <strong>SSH</strong>. З'являться зелені логи, готово.</div></div>
+    <div class="step"><div class="body">Підключіть комп'ютер до Wi-Fi CMU (<code>CMU-XX:XX:...</code> чи <code>MAZDA-xxx</code>).</div></div>
+    <div class="step"><div class="body"><strong>Опція 9</strong> для перевірки SSH, потім <strong>опція 2</strong> для бекапу.</div></div>
+    <div class="step"><div class="body"><strong>Опція 3</strong> для встановлення. Дочекайтесь ребуту.</div></div>
+    <div class="step"><div class="body">У голові повторіть крок 2 (USB → SSH) щоб знову увімкнути SSH.</div></div>
+    <div class="step"><div class="body">Запустіть навігацію в CarPlay. На HUD з'явиться стрілка маневру; slot ліміту швидкості показуватиме поточне OEM-значення (карта + камера TSR).</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">05</span>Примітки й обмеження</h2>
+  <div class="callout mint">
+    <p><strong>Неможливо «окирпичити» голову.</strong> Шим працює лише через <code>LD_PRELOAD</code> — оригінальний <code>blmjcicarplay.so</code> не змінюється. Read-only rootfs гарантує повернення до робочого стану після ребуту.</p>
+  </div>
+  <ul>
+    <li>Демон <strong>не</strong> посилає жодних NNG-запитів. Слухає лише те, що штатний навігаційний сервіс уже транслює по D-Bus.</li>
+    <li>Стрілки рядності (<code>SetRecommLaneReq</code>) <strong>не</strong> реалізовані — Apple не передає дані рядності через iAP2, тільки через CarPlay video stream.</li>
+    <li>Кириличні назви вулиць відображаються коректно; український апостроф (<code>’</code>) наразі рендериться як <code>?</code>, бо OEM-шрифт HUD не має цього гліфа.</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">06</span>Підтримка</h2>
+  <p>Якщо SSH не відповідає на порту 36000 — <code>sshd</code> у голові було вбито read-only rootfs при завантаженні. Повторіть USB → XSS → SSH.</p>
+  <p>Якщо HUD залишається пустий — перевірте опцією 9, потім SSH-командою <code>ps | grep sm_svclauncher | grep jciCARPLAY</code>: процес <code>L_jciCARPLAY</code> має бути живим із <code>LD_PRELOAD</code> у <code>/proc/PID/environ</code>.</p>
+</div></section>
+</div><!-- /uk -->
+
+<!-- ================== ESPAÑOL ================== -->
+<div data-lang="es">
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
+  <h1>Apple CarPlay <span class="accent">turno-a-turno</span> en el HUD de Mazda.</h1>
+  <p class="lede">Build depurada del shim comunitario de KidMixer con un parche de una línea que arregla el indicador km/h para vehículos EU — y un pequeño daemon que mantiene el slot de velocidad vivo entre actualizaciones OEM.</p>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Descargar toolkit <span class="arrow">→</span></a>
+  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+</div></div>
+
+<section><div class="wrap">
+  <h2><span class="num">01</span>Qué hace</h2>
+  <p class="sublede">Añade el overlay de CarPlay (maniobra + distancia + nombre de calle) al HUD del cuadro de instrumentos, igual que la navegación nativa. Dos añadidos sobre la build de <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <ul>
+    <li><strong>Corrección km/h.</strong> El shim usa <code>displaySpeedUnit = 1</code> que en el enum VBS es <em>mph</em>. En un HUD europeo un <code>50 km/h</code> se renderiza como <code>≈80</code> tras la conversión milla→km. Nuestro fix pone <code>2</code> (km/h).</li>
+    <li><strong>Daemon-espejo.</strong> Script shell que escucha pasivamente el flujo OEM de <code>svcjcinavi.so</code> y copia el valor actual en los frames keep-alive del shim. Sin él, el shim sobrescribe el slot con <code>0</code> cada 500 ms y el valor cae a <code>---</code>.</li>
+  </ul>
+  <p>Todo lo demás es bit-a-bit el KidMixer original.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">02</span>Requisitos</h2>
+  <ul>
+    <li>Mazda CMU150, firmware <code>74.00.324</code>, versión EU (verificar: <code>cat /jci/version.ini</code>)</li>
+    <li>USB flash (≥ 1 GB, formato FAT32)</li>
+    <li>Ordenador con Wi-Fi (macOS, Linux o Windows 10+)</li>
+    <li>Wi-Fi hotspot en el CMU (viene con dongles de CarPlay inalámbrico)</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Opciones del menú</h2>
+  <p class="sublede">Tanto <code>toolkit.sh</code> (macOS/Linux) como <code>toolkit.bat</code> (Windows 10+) muestran el mismo menú numerado.</p>
+  <div class="opts">
+    <div class="opt"><div class="num2">1</div><div>
+      <h3>Crear USB de desbloqueo</h3>
+      <p>Formatea la USB como FAT32/MZD, copia el payload MP3-XSS que abre root+SSH en el CMU. Insertar la USB, tocar cualquier MP3, luego tocar SSH en el overlay XSS — <code>sshd</code> arranca en el puerto 36000.</p>
+    </div></div>
+    <div class="opt"><div class="num2">2</div><div>
+      <h3>Backup del CMU</h3>
+      <p>Descarga todos los archivos que toca el instalador en <code>backups/YYYYMMDD_HHMMSS/</code>. Ejecutar ANTES de instalar.</p>
+    </div></div>
+    <div class="opt"><div class="num2">3</div><div>
+      <h3>Instalar patch</h3>
+      <p>Despliegue en 3 pasos: (a) <code>install.sh</code> original añade <code>LD_PRELOAD</code> y pone <code>NaviSupported=TRUE</code>, (b) superpone nuestro <code>.so</code> con km/h fix, (c) copia daemon-espejo y auto-launcher. Termina con reboot.</p>
+    </div></div>
+    <div class="opt"><div class="num2">4</div><div>
+      <h3>Rollback completo</h3>
+      <p>Mata nuestro daemon, elimina nuestros extras, ejecuta el <code>uninstall.sh</code> original que restaura <code>sm.conf</code> y <code>NaviSupported=FALSE</code>. Termina con reboot.</p>
+    </div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">04</span>Procedimiento primera vez</h2>
+  <div class="steps">
+    <div class="step"><div class="body">Formatea USB, ejecuta <strong>opción 1</strong> para prepararla.</div></div>
+    <div class="step"><div class="body">Inserta USB en el coche. Media → USB → toca cualquier MP3 → espera overlay XSS abajo → toca <strong>SSH</strong>.</div></div>
+    <div class="step"><div class="body">Conecta el ordenador al Wi-Fi del CMU (<code>CMU-XX:XX:...</code> o <code>MAZDA-xxx</code>).</div></div>
+    <div class="step"><div class="body"><strong>Opción 9</strong> para verificar SSH, luego <strong>opción 2</strong> para backup.</div></div>
+    <div class="step"><div class="body"><strong>Opción 3</strong> para instalar. Espera al reboot.</div></div>
+    <div class="step"><div class="body">Repite paso 2 (USB → SSH) para reactivar SSH tras el reboot.</div></div>
+    <div class="step"><div class="body">Inicia navegación en CarPlay. Flecha de maniobra en HUD; slot de límite muestra valor OEM actual (mapa + cámara TSR).</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">05</span>Notas y limitaciones</h2>
+  <div class="callout mint">
+    <p><strong>No puede brickear el head unit.</strong> El shim usa solo <code>LD_PRELOAD</code> — el <code>blmjcicarplay.so</code> original nunca se modifica. Rootfs de solo lectura garantiza retorno al estado stock tras reboot.</p>
+  </div>
+  <ul>
+    <li>El daemon <strong>no</strong> dispara requests NNG. Solo escucha lo que el servicio OEM ya emite en D-Bus.</li>
+    <li>Flechas de guía de carril (<code>SetRecommLaneReq</code>) <strong>no</strong> implementadas — Apple no transmite datos de carril por iAP2.</li>
+    <li>Nombres cirílicos se renderizan bien; el apóstrofo ucraniano (<code>’</code>) aparece como <code>?</code> por falta del glifo en la fuente OEM.</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">06</span>Soporte</h2>
+  <p>Si SSH no conecta en el puerto 36000, el <code>sshd</code> fue eliminado por el rootfs read-only al arrancar. Repetir USB → XSS → SSH.</p>
+  <p>Si el HUD sigue en blanco tras instalar, verificar opción 9; luego SSH y comprobar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> — <code>L_jciCARPLAY</code> debe estar corriendo con <code>LD_PRELOAD</code> en <code>/proc/PID/environ</code>.</p>
+</div></section>
+</div><!-- /es -->
+
+<!-- ================== DEUTSCH ================== -->
+<div data-lang="de">
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
+  <h1>Apple CarPlay <span class="accent">Turn-by-Turn</span> auf dem Mazda HUD.</h1>
+  <p class="lede">Verfeinerter Build des Community-Shim von KidMixer mit einem Einzeilen-Patch, der die km/h-Anzeige für EU-Fahrzeuge korrigiert — und einem kleinen Daemon, der den Speed-Slot zwischen OEM-Updates am Leben hält.</p>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Toolkit herunterladen <span class="arrow">→</span></a>
+  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+</div></div>
+
+<section><div class="wrap">
+  <h2><span class="num">01</span>Was es macht</h2>
+  <p class="sublede">Fügt das CarPlay-Overlay (Manöver + Entfernung + Straßenname) im HUD des Kombiinstruments hinzu, genau wie die eingebaute Werksnavigation. Zwei Ergänzungen zum <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>-Build:</p>
+  <ul>
+    <li><strong>km/h-Fix.</strong> Der Shim nutzte <code>displaySpeedUnit = 1</code>, was das VBS-Enum als <em>mph</em> liest. Auf einem EU-HUD wird ein <code>50 km/h</code>-Schild nach Meilen→km-Umrechnung als <code>≈80</code> gezeichnet. Unser Fix setzt <code>2</code> (km/h).</li>
+    <li><strong>Speed-Limit-Spiegel-Daemon.</strong> Kleines Shell-Skript, das passiv den OEM-HUD-Stream von <code>svcjcinavi.so</code> beobachtet und den aktuellen Wert in die Keep-alive-Frames des Shim kopiert. Ohne ihn überschreibt der Shim den Slot alle 500 ms mit <code>0</code> und der Wert fällt auf <code>---</code>.</li>
+  </ul>
+  <p>Alles andere ist bitgenau das KidMixer-Original.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">02</span>Voraussetzungen</h2>
+  <ul>
+    <li>Mazda CMU150, Firmware <code>74.00.324</code>, EU-Version (prüfen: <code>cat /jci/version.ini</code>)</li>
+    <li>USB-Stick (≥ 1 GB, FAT32-formatiert)</li>
+    <li>Computer mit WLAN (macOS, Linux oder Windows 10+)</li>
+    <li>WLAN-Hotspot am CMU (bei Wireless-CarPlay-Dongles)</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Menüoptionen</h2>
+  <p class="sublede">Sowohl <code>toolkit.sh</code> (macOS/Linux) als auch <code>toolkit.bat</code> (Windows 10+) zeigen dasselbe nummerierte Menü.</p>
+  <div class="opts">
+    <div class="opt"><div class="num2">1</div><div>
+      <h3>USB-Unlock-Stick erstellen</h3>
+      <p>Formatiert USB als FAT32/MZD, kopiert die MP3-XSS-Payload für Root+SSH am CMU. USB einstecken, MP3 antippen, SSH im XSS-Overlay antippen — <code>sshd</code> startet auf Port 36000.</p>
+    </div></div>
+    <div class="opt"><div class="num2">2</div><div>
+      <h3>CMU-Backup</h3>
+      <p>Lädt alle vom Installer angefassten Dateien nach <code>backups/YYYYMMDD_HHMMSS/</code>. VOR der Installation ausführen.</p>
+    </div></div>
+    <div class="opt"><div class="num2">3</div><div>
+      <h3>Patch installieren</h3>
+      <p>3 Schritte: (a) originales <code>install.sh</code> fügt <code>LD_PRELOAD</code> zu <code>sm.conf</code> hinzu und setzt <code>NaviSupported=TRUE</code>, (b) unser <code>.so</code> mit km/h-Fix wird überlagert, (c) Spiegel-Daemon und Auto-Launcher werden kopiert. Endet mit Reboot.</p>
+    </div></div>
+    <div class="opt"><div class="num2">4</div><div>
+      <h3>Kompletter Rollback</h3>
+      <p>Beendet unseren Daemon, entfernt unsere Extras, führt das originale <code>uninstall.sh</code> aus, das <code>sm.conf</code> und <code>NaviSupported=FALSE</code> wiederherstellt. Endet mit Reboot.</p>
+    </div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">04</span>Erste Installation</h2>
+  <div class="steps">
+    <div class="step"><div class="body">USB formatieren, <strong>Option 1</strong> zum Vorbereiten ausführen.</div></div>
+    <div class="step"><div class="body">USB ins Auto. Media → USB → beliebige MP3 antippen → auf XSS-Overlay warten → <strong>SSH</strong> antippen.</div></div>
+    <div class="step"><div class="body">Computer mit CMU-WLAN verbinden (<code>CMU-XX:XX:...</code> oder <code>MAZDA-xxx</code>).</div></div>
+    <div class="step"><div class="body"><strong>Option 9</strong> für SSH-Check, dann <strong>Option 2</strong> für Backup.</div></div>
+    <div class="step"><div class="body"><strong>Option 3</strong> zur Installation. Auf Reboot warten.</div></div>
+    <div class="step"><div class="body">Schritt 2 wiederholen (USB → SSH) nach dem Reboot.</div></div>
+    <div class="step"><div class="body">CarPlay-Navigation starten. Manöverpfeil erscheint am HUD; Speed-Slot zeigt aktuellen OEM-Wert (Karte + TSR-Kamera).</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">05</span>Hinweise und Einschränkungen</h2>
+  <div class="callout mint">
+    <p><strong>Kann das Head Unit nicht bricken.</strong> Der Shim nutzt nur <code>LD_PRELOAD</code> — <code>blmjcicarplay.so</code> wird nie verändert. Read-only-Rootfs garantiert Rückkehr zum Werkszustand nach Reboot.</p>
+  </div>
+  <ul>
+    <li>Der Daemon löst <strong>keine</strong> NNG-Requests aus. Nur passives Zuhören des OEM-D-Bus-Streams.</li>
+    <li>Fahrspurführungs-Pfeile (<code>SetRecommLaneReq</code>) <strong>nicht</strong> implementiert — Apple sendet keine Spurdaten über iAP2.</li>
+    <li>Kyrillische Straßennamen werden korrekt gerendert; ukrainisches Apostroph (<code>’</code>) erscheint als <code>?</code> — OEM-Schriftart hat den Glyph nicht.</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">06</span>Support</h2>
+  <p>Wenn SSH auf Port 36000 nicht verbindet, wurde <code>sshd</code> beim Boot vom Read-only-Rootfs beendet. USB → XSS → SSH wiederholen.</p>
+  <p>Wenn das HUD nach Installation leer bleibt, Option 9 zur Verifikation, dann per SSH <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> prüfen — <code>L_jciCARPLAY</code>-Prozess muss mit <code>LD_PRELOAD</code> in <code>/proc/PID/environ</code> laufen.</p>
+</div></section>
+</div><!-- /de -->
+
+<!-- ================== PORTUGUÊS ================== -->
+<div data-lang="pt">
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
+  <h1>Apple CarPlay <span class="accent">turn-by-turn</span> no HUD Mazda.</h1>
+  <p class="lede">Build refinada do shim comunitário KidMixer com um patch de uma linha que corrige o indicador km/h para veículos EU — e um pequeno daemon que mantém o slot de velocidade vivo entre atualizações OEM.</p>
+  <a class="cta" href="__GDRIVE_LINK__" target="_blank" rel="noopener">Baixar toolkit <span class="arrow">→</span></a>
+  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+</div></div>
+
+<section><div class="wrap">
+  <h2><span class="num">01</span>O que faz</h2>
+  <p class="sublede">Adiciona a sobreposição CarPlay (manobra + distância + nome da rua) ao HUD do painel, igual à navegação nativa embutida. Dois acréscimos sobre a build <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <ul>
+    <li><strong>Correção km/h.</strong> O shim usava <code>displaySpeedUnit = 1</code>, que o enum VBS lê como <em>mph</em>. Num HUD europeu um <code>50 km/h</code> desenha como <code>≈80</code> após conversão milha→km. Nossa correção põe <code>2</code> (km/h).</li>
+    <li><strong>Daemon-espelho.</strong> Script shell que escuta passivamente o fluxo OEM de <code>svcjcinavi.so</code> e copia o valor atual nos frames keep-alive do shim. Sem ele, o shim sobrescreve o slot com <code>0</code> a cada 500 ms e o valor cai para <code>---</code>.</li>
+  </ul>
+  <p>Todo o resto é bit-a-bit o KidMixer original.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">02</span>Requisitos</h2>
+  <ul>
+    <li>Mazda CMU150, firmware <code>74.00.324</code>, versão EU (verificar: <code>cat /jci/version.ini</code>)</li>
+    <li>USB flash (≥ 1 GB, formato FAT32)</li>
+    <li>Computador com Wi-Fi (macOS, Linux ou Windows 10+)</li>
+    <li>Wi-Fi hotspot no CMU (vem com dongles CarPlay sem fio)</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Opções do menu</h2>
+  <p class="sublede">Tanto <code>toolkit.sh</code> (macOS/Linux) quanto <code>toolkit.bat</code> (Windows 10+) exibem o mesmo menu numerado.</p>
+  <div class="opts">
+    <div class="opt"><div class="num2">1</div><div>
+      <h3>Criar USB de desbloqueio</h3>
+      <p>Formata USB como FAT32/MZD, copia o payload MP3-XSS que abre root+SSH no CMU. Inserir USB, tocar qualquer MP3, tocar SSH no overlay XSS — <code>sshd</code> inicia na porta 36000.</p>
+    </div></div>
+    <div class="opt"><div class="num2">2</div><div>
+      <h3>Backup do CMU</h3>
+      <p>Baixa todos os ficheiros que o instalador toca para <code>backups/YYYYMMDD_HHMMSS/</code>. Executar ANTES de instalar.</p>
+    </div></div>
+    <div class="opt"><div class="num2">3</div><div>
+      <h3>Instalar patch</h3>
+      <p>Deploy em 3 passos: (a) <code>install.sh</code> original adiciona <code>LD_PRELOAD</code> e define <code>NaviSupported=TRUE</code>, (b) sobrepõe nosso <code>.so</code> com correção km/h, (c) copia daemon-espelho e auto-launcher. Termina com reboot.</p>
+    </div></div>
+    <div class="opt"><div class="num2">4</div><div>
+      <h3>Rollback completo</h3>
+      <p>Mata nosso daemon, remove nossos extras, executa <code>uninstall.sh</code> original que restaura <code>sm.conf</code> e <code>NaviSupported=FALSE</code>. Termina com reboot.</p>
+    </div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">04</span>Procedimento inicial</h2>
+  <div class="steps">
+    <div class="step"><div class="body">Formatar USB, executar <strong>opção 1</strong> para preparar.</div></div>
+    <div class="step"><div class="body">Inserir USB no carro. Media → USB → tocar qualquer MP3 → aguardar overlay XSS embaixo → tocar <strong>SSH</strong>.</div></div>
+    <div class="step"><div class="body">Conectar computador ao Wi-Fi do CMU (<code>CMU-XX:XX:...</code> ou <code>MAZDA-xxx</code>).</div></div>
+    <div class="step"><div class="body"><strong>Opção 9</strong> para verificar SSH, depois <strong>opção 2</strong> para backup.</div></div>
+    <div class="step"><div class="body"><strong>Opção 3</strong> para instalar. Aguardar reboot.</div></div>
+    <div class="step"><div class="body">Repetir passo 2 (USB → SSH) para reativar SSH após reboot.</div></div>
+    <div class="step"><div class="body">Iniciar navegação CarPlay. Seta de manobra no HUD; slot de limite mostra valor OEM atual (mapa + câmera TSR).</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">05</span>Notas e limitações</h2>
+  <div class="callout mint">
+    <p><strong>Não pode brickar o head unit.</strong> O shim usa apenas <code>LD_PRELOAD</code> — <code>blmjcicarplay.so</code> nunca é modificado. Rootfs read-only garante retorno ao stock após reboot.</p>
+  </div>
+  <ul>
+    <li>O daemon <strong>não</strong> dispara requests NNG. Apenas escuta o que o serviço OEM já emite no D-Bus.</li>
+    <li>Setas de guia de faixa (<code>SetRecommLaneReq</code>) <strong>não</strong> implementadas — Apple não transmite dados de faixa por iAP2.</li>
+    <li>Nomes cirílicos renderizam bem; o apóstrofo ucraniano (<code>’</code>) aparece como <code>?</code> — a fonte OEM do HUD não tem o glifo.</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">06</span>Suporte</h2>
+  <p>Se SSH não conectar na porta 36000, o <code>sshd</code> foi eliminado pelo rootfs read-only no boot. Repetir USB → XSS → SSH.</p>
+  <p>Se o HUD permanecer em branco após instalar, verificar opção 9; depois SSH e checar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> — <code>L_jciCARPLAY</code> deve estar rodando com <code>LD_PRELOAD</code> em <code>/proc/PID/environ</code>.</p>
+</div></section>
+</div><!-- /pt -->
+
+<footer><div class="wrap">
+  <span>Mazda CarPlay HUD Toolkit</span>
+  <span>Based on KidMixer/mazda-carplay-hud · AGPL-3.0</span>
+</div></footer>
+
+<script>
+(function(){
+  var SUPPORTED = ['en','uk','es','de','pt'];
+  var LS_KEY = 'mazda-toolkit-lang';
+
+  function pickLang() {
+    // 1. saved preference
+    try {
+      var saved = localStorage.getItem(LS_KEY);
+      if (saved && SUPPORTED.indexOf(saved) !== -1) return saved;
+    } catch(e){}
+    // 2. browser language
+    var navs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+    for (var i = 0; i < navs.length; i++) {
+      var short = (navs[i] || '').toLowerCase().slice(0,2);
+      if (SUPPORTED.indexOf(short) !== -1) return short;
+    }
+    return 'en';
+  }
+
+  function apply(lang) {
+    if (SUPPORTED.indexOf(lang) === -1) lang = 'en';
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-lang]').forEach(function(el){
+      el.classList.toggle('visible', el.getAttribute('data-lang') === lang);
+    });
+    document.querySelectorAll('.lang-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-set') === lang);
+    });
+    try { localStorage.setItem(LS_KEY, lang); } catch(e){}
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ apply(btn.getAttribute('data-set')); });
+  });
+
+  apply(pickLang());
+})();
+</script>
+
+</body>
+</html>
