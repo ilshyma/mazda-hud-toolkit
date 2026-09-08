@@ -240,6 +240,22 @@ li { margin-bottom: 6px; }
   margin: 0 0 6px;
 }
 .opt p { margin: 0; color: var(--text-dim); font-size: 14.5px; }
+.pill {
+  display: inline-block;
+  vertical-align: 2px;
+  margin-left: 8px;
+  padding: 2px 8px 3px;
+  font-family: "Noto Sans Mono", "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+  border-radius: 999px;
+  white-space: nowrap;
+}
 
 /* Steps */
 .steps { counter-reset: step; display: flex; flex-direction: column; gap: 14px; }
@@ -367,10 +383,14 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <p>Downloads every file the installer touches (<code>sm.conf</code>, <code>sm_WCP.conf</code>, <code>devmgr_config_master.xml</code>, <code>blmjcicarplay.so</code>, <code>/data_persist/cp-hud-mod/</code>, <code>version.ini</code>) as a tar.gz into <code>backups/YYYYMMDD_HHMMSS/</code>. Run this before installing anything.</p>
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
-      <h3>Install KidMixer patch</h3>
-      <p>Three-step deploy: (a) runs the vanilla <code>install.sh</code> which adds the <code>LD_PRELOAD</code> line to <code>sm.conf</code> and sets <code>NaviSupported=TRUE</code>, (b) overlays my km/h-fixed <code>.so</code>, (c) drops in the speed-mirror daemon and its auto-launcher. Ends with a reboot; wait ~2 min then re-establish SSH via the USB stick.</p>
+      <h3>Install PURE KidMixer Patch</h3>
+      <p>Plain upstream build. Fast and safe, but on EU vehicles it has a known issue: the HUD speed-limit slot shows ~80 km/h from a mile→km conversion the shim does on its own, and dies to <code>---</code> between OEM updates. Use this if you want the plain upstream behaviour or as a baseline before switching to option 4.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
+      <h3>Install ilshyma HUD Patch <span class="pill">★ recommended</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">speed limit fixed</small></h3>
+      <p>KidMixer base + my km/h source patch (<code>displaySpeedUnit</code> from mph=1 to km/h=2) + a small daemon that mirrors the current OEM speed-limit into the shim's frames so the value stays alive between updates. Three-step deploy: (a) vanilla <code>install.sh</code> writes <code>LD_PRELOAD</code> and sets <code>NaviSupported=TRUE</code>, (b) my patched <code>.so</code> is overlaid, (c) the mirror daemon + auto-launcher are copied. Ends with a reboot; wait ~2 min then re-establish SSH via the USB stick.</p>
+    </div></div>
+    <div class="opt"><div class="num2">5</div><div>
       <h3>Full rollback</h3>
       <p>Kills my daemon, removes my extras, runs the vanilla <code>uninstall.sh</code> which restores <code>sm.conf</code> and <code>NaviSupported=FALSE</code> from the <code>.bak_precphud</code> backups made by <code>install.sh</code>. Ends with a reboot.</p>
     </div></div>
@@ -384,7 +404,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <div class="step"><div class="body">Insert the stick in the car. Media → USB → tap any MP3 → wait for the XSS overlay at the bottom of the screen → tap <strong>SSH</strong>. Green log lines appear, done.</div></div>
     <div class="step"><div class="body">Connect your computer to the CMU Wi-Fi (<code>CMU-XX:XX:...</code> or <code>MAZDA-xxx</code>).</div></div>
     <div class="step"><div class="body">Run <strong>option 9</strong> to verify SSH works, then <strong>option 2</strong> to back up.</div></div>
-    <div class="step"><div class="body">Run <strong>option 3</strong> to install. Wait for reboot.</div></div>
+    <div class="step"><div class="body">Run <strong>option 4</strong> (ilshyma HUD Patch) to install. Wait for reboot.</div></div>
     <div class="step"><div class="body">On the head unit, repeat step 2 (USB → SSH) to re-enable SSH after the reboot.</div></div>
     <div class="step"><div class="body">Start a CarPlay navigation session. The maneuver arrow appears on the HUD; the speed-limit slot shows the current OEM value from map + TSR camera.</div></div>
   </div>
@@ -453,10 +473,14 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <p>Завантажує всі файли, які змінює інсталятор (<code>sm.conf</code>, <code>sm_WCP.conf</code>, <code>devmgr_config_master.xml</code>, <code>blmjcicarplay.so</code>, <code>/data_persist/cp-hud-mod/</code>, <code>version.ini</code>) як tar.gz в <code>backups/YYYYMMDD_HHMMSS/</code>. Робити ПЕРЕД встановленням.</p>
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
-      <h3>Встановити патч</h3>
-      <p>3 етапи: (а) оригінальний <code>install.sh</code> додає <code>LD_PRELOAD</code> у <code>sm.conf</code> і ставить <code>NaviSupported=TRUE</code>, (б) підмінюється мій <code>.so</code> з km/h-фіксом, (в) копіюється демон-дзеркало та auto-launcher. Наприкінці ребут; ~2 хв, потім поновити SSH через флешку.</p>
+      <h3>Встановити PURE KidMixer Patch</h3>
+      <p>Оригінальний upstream. Швидко і безпечно, але на авто ЄС має відому проблему: slot ліміту швидкості на HUD показує ~80 км/год через mile→km-конвертацію, яку робить сам шим, і згасає до <code>---</code> між OEM-оновленнями. Обирайте цей варіант якщо хочете чистий upstream або як базу перед переходом на опцію 4.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
+      <h3>Встановити ilshyma HUD Patch <span class="pill">★ рекомендовано</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">ліміт швидкості виправлено</small></h3>
+      <p>База KidMixer + мій патч (<code>displaySpeedUnit</code> з mph=1 на km/h=2) + маленький демон, який дзеркалить поточний OEM-ліміт швидкості в фрейми шима, тож значення живе між оновленнями. 3 етапи: (а) оригінальний <code>install.sh</code> додає <code>LD_PRELOAD</code> у <code>sm.conf</code> і ставить <code>NaviSupported=TRUE</code>, (б) підмінюється мій пропатчений <code>.so</code>, (в) копіюється демон-дзеркало та auto-launcher. Наприкінці ребут; ~2 хв, потім поновити SSH через флешку.</p>
+    </div></div>
+    <div class="opt"><div class="num2">5</div><div>
       <h3>Повний відкат</h3>
       <p>Вбиває мій демон, видаляє надбудови, запускає оригінальний <code>uninstall.sh</code> що відновлює <code>sm.conf</code> і <code>NaviSupported=FALSE</code> з бекапів <code>.bak_precphud</code>. Наприкінці ребут.</p>
     </div></div>
@@ -470,7 +494,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <div class="step"><div class="body">Вставте в авто. Media → USB → тапніть будь-який MP3 → чекайте XSS-меню внизу → тап <strong>SSH</strong>. З'являться зелені логи, готово.</div></div>
     <div class="step"><div class="body">Підключіть комп'ютер до Wi-Fi CMU (<code>CMU-XX:XX:...</code> чи <code>MAZDA-xxx</code>).</div></div>
     <div class="step"><div class="body"><strong>Опція 9</strong> для перевірки SSH, потім <strong>опція 2</strong> для бекапу.</div></div>
-    <div class="step"><div class="body"><strong>Опція 3</strong> для встановлення. Дочекайтесь ребуту.</div></div>
+    <div class="step"><div class="body"><strong>Опція 4</strong> (ilshyma HUD Patch) для встановлення. Дочекайтесь ребуту.</div></div>
     <div class="step"><div class="body">У голові повторіть крок 2 (USB → SSH) щоб знову увімкнути SSH.</div></div>
     <div class="step"><div class="body">Запустіть навігацію в CarPlay. На HUD з'явиться стрілка маневру; slot ліміту швидкості показуватиме поточне OEM-значення (карта + камера TSR).</div></div>
   </div>
@@ -538,10 +562,14 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <p>Descarga todos los archivos que toca el instalador en <code>backups/YYYYMMDD_HHMMSS/</code>. Ejecutar ANTES de instalar.</p>
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
-      <h3>Instalar patch</h3>
-      <p>Despliegue en 3 pasos: (a) <code>install.sh</code> original añade <code>LD_PRELOAD</code> y pone <code>NaviSupported=TRUE</code>, (b) superpone mi <code>.so</code> con km/h fix, (c) copia daemon-espejo y auto-launcher. Termina con reboot.</p>
+      <h3>Instalar PURE KidMixer Patch</h3>
+      <p>Build upstream sin modificar. Rápido y seguro, pero en vehículos EU tiene un problema conocido: el slot del límite de velocidad muestra ~80 km/h por una conversión mile→km que hace el propio shim, y muere a <code>---</code> entre actualizaciones OEM. Úsalo si quieres el comportamiento upstream puro o como base antes de pasar a la opción 4.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
+      <h3>Instalar ilshyma HUD Patch <span class="pill">★ recomendado</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">límite de velocidad arreglado</small></h3>
+      <p>Base KidMixer + mi parche km/h (<code>displaySpeedUnit</code> de mph=1 a km/h=2) + un pequeño daemon que refleja el límite OEM actual en los frames del shim, así el valor sigue vivo entre actualizaciones. Despliegue en 3 pasos: (a) <code>install.sh</code> original añade <code>LD_PRELOAD</code> y pone <code>NaviSupported=TRUE</code>, (b) superpone mi <code>.so</code> parcheado, (c) copia daemon-espejo y auto-launcher. Termina con reboot.</p>
+    </div></div>
+    <div class="opt"><div class="num2">5</div><div>
       <h3>Rollback completo</h3>
       <p>Mata mi daemon, elimina mis extras, ejecuta el <code>uninstall.sh</code> original que restaura <code>sm.conf</code> y <code>NaviSupported=FALSE</code>. Termina con reboot.</p>
     </div></div>
@@ -555,7 +583,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <div class="step"><div class="body">Inserta USB en el coche. Media → USB → toca cualquier MP3 → espera overlay XSS abajo → toca <strong>SSH</strong>.</div></div>
     <div class="step"><div class="body">Conecta el ordenador al Wi-Fi del CMU (<code>CMU-XX:XX:...</code> o <code>MAZDA-xxx</code>).</div></div>
     <div class="step"><div class="body"><strong>Opción 9</strong> para verificar SSH, luego <strong>opción 2</strong> para backup.</div></div>
-    <div class="step"><div class="body"><strong>Opción 3</strong> para instalar. Espera al reboot.</div></div>
+    <div class="step"><div class="body"><strong>Opción 4</strong> (ilshyma HUD Patch) para instalar. Espera al reboot.</div></div>
     <div class="step"><div class="body">Repite paso 2 (USB → SSH) para reactivar SSH tras el reboot.</div></div>
     <div class="step"><div class="body">Inicia navegación en CarPlay. Flecha de maniobra en HUD; slot de límite muestra valor OEM actual (mapa + cámara TSR).</div></div>
   </div>
@@ -623,10 +651,14 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <p>Lädt alle vom Installer angefassten Dateien nach <code>backups/YYYYMMDD_HHMMSS/</code>. VOR der Installation ausführen.</p>
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
-      <h3>Patch installieren</h3>
-      <p>3 Schritte: (a) originales <code>install.sh</code> fügt <code>LD_PRELOAD</code> zu <code>sm.conf</code> hinzu und setzt <code>NaviSupported=TRUE</code>, (b) mein <code>.so</code> mit km/h-Fix wird überlagert, (c) Spiegel-Daemon und Auto-Launcher werden kopiert. Endet mit Reboot.</p>
+      <h3>PURE KidMixer Patch installieren</h3>
+      <p>Unveränderter Upstream-Build. Schnell und sicher, aber auf EU-Fahrzeugen hat er ein bekanntes Problem: der Speed-Limit-Slot am HUD zeigt ~80 km/h wegen einer mile→km-Umrechnung, die der Shim selbst macht, und fällt zwischen OEM-Updates auf <code>---</code>. Wähle diese Option für reines Upstream-Verhalten oder als Basis vor dem Wechsel zu Option 4.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
+      <h3>ilshyma HUD Patch installieren <span class="pill">★ empfohlen</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">Speed-Limit korrigiert</small></h3>
+      <p>KidMixer-Basis + mein km/h-Quellcode-Patch (<code>displaySpeedUnit</code> von mph=1 auf km/h=2) + ein kleiner Daemon, der das aktuelle OEM-Speed-Limit in die Frames des Shims spiegelt, damit der Wert zwischen Updates am Leben bleibt. 3 Schritte: (a) originales <code>install.sh</code> fügt <code>LD_PRELOAD</code> zu <code>sm.conf</code> hinzu und setzt <code>NaviSupported=TRUE</code>, (b) mein gepatchtes <code>.so</code> wird überlagert, (c) Spiegel-Daemon und Auto-Launcher werden kopiert. Endet mit Reboot.</p>
+    </div></div>
+    <div class="opt"><div class="num2">5</div><div>
       <h3>Kompletter Rollback</h3>
       <p>Beendet meinen Daemon, entfernt meine Extras, führt das originale <code>uninstall.sh</code> aus, das <code>sm.conf</code> und <code>NaviSupported=FALSE</code> wiederherstellt. Endet mit Reboot.</p>
     </div></div>
@@ -640,7 +672,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <div class="step"><div class="body">USB ins Auto. Media → USB → beliebige MP3 antippen → auf XSS-Overlay warten → <strong>SSH</strong> antippen.</div></div>
     <div class="step"><div class="body">Computer mit CMU-WLAN verbinden (<code>CMU-XX:XX:...</code> oder <code>MAZDA-xxx</code>).</div></div>
     <div class="step"><div class="body"><strong>Option 9</strong> für SSH-Check, dann <strong>Option 2</strong> für Backup.</div></div>
-    <div class="step"><div class="body"><strong>Option 3</strong> zur Installation. Auf Reboot warten.</div></div>
+    <div class="step"><div class="body"><strong>Option 4</strong> (ilshyma HUD Patch) zur Installation. Auf Reboot warten.</div></div>
     <div class="step"><div class="body">Schritt 2 wiederholen (USB → SSH) nach dem Reboot.</div></div>
     <div class="step"><div class="body">CarPlay-Navigation starten. Manöverpfeil erscheint am HUD; Speed-Slot zeigt aktuellen OEM-Wert (Karte + TSR-Kamera).</div></div>
   </div>
@@ -708,10 +740,14 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <p>Baixa todos os ficheiros que o instalador toca para <code>backups/YYYYMMDD_HHMMSS/</code>. Executar ANTES de instalar.</p>
     </div></div>
     <div class="opt"><div class="num2">3</div><div>
-      <h3>Instalar patch</h3>
-      <p>Deploy em 3 passos: (a) <code>install.sh</code> original adiciona <code>LD_PRELOAD</code> e define <code>NaviSupported=TRUE</code>, (b) sobrepõe meu <code>.so</code> com correção km/h, (c) copia daemon-espelho e auto-launcher. Termina com reboot.</p>
+      <h3>Instalar PURE KidMixer Patch</h3>
+      <p>Build upstream sem modificação. Rápido e seguro, mas em veículos EU tem um problema conhecido: o slot de limite de velocidade mostra ~80 km/h por uma conversão mile→km que o próprio shim faz, e morre para <code>---</code> entre atualizações OEM. Use isto se quiser o comportamento upstream puro ou como base antes de passar à opção 4.</p>
     </div></div>
     <div class="opt"><div class="num2">4</div><div>
+      <h3>Instalar ilshyma HUD Patch <span class="pill">★ recomendado</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">limite de velocidade corrigido</small></h3>
+      <p>Base KidMixer + meu patch km/h (<code>displaySpeedUnit</code> de mph=1 para km/h=2) + um pequeno daemon que espelha o limite OEM atual nos frames do shim, para o valor sobreviver entre atualizações. Deploy em 3 passos: (a) <code>install.sh</code> original adiciona <code>LD_PRELOAD</code> e define <code>NaviSupported=TRUE</code>, (b) sobrepõe meu <code>.so</code> patched, (c) copia daemon-espelho e auto-launcher. Termina com reboot.</p>
+    </div></div>
+    <div class="opt"><div class="num2">5</div><div>
       <h3>Rollback completo</h3>
       <p>Mata meu daemon, remove meus extras, executa <code>uninstall.sh</code> original que restaura <code>sm.conf</code> e <code>NaviSupported=FALSE</code>. Termina com reboot.</p>
     </div></div>
@@ -725,7 +761,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
     <div class="step"><div class="body">Inserir USB no carro. Media → USB → tocar qualquer MP3 → aguardar overlay XSS embaixo → tocar <strong>SSH</strong>.</div></div>
     <div class="step"><div class="body">Conectar computador ao Wi-Fi do CMU (<code>CMU-XX:XX:...</code> ou <code>MAZDA-xxx</code>).</div></div>
     <div class="step"><div class="body"><strong>Opção 9</strong> para verificar SSH, depois <strong>opção 2</strong> para backup.</div></div>
-    <div class="step"><div class="body"><strong>Opção 3</strong> para instalar. Aguardar reboot.</div></div>
+    <div class="step"><div class="body"><strong>Opção 4</strong> (ilshyma HUD Patch) para instalar. Aguardar reboot.</div></div>
     <div class="step"><div class="body">Repetir passo 2 (USB → SSH) para reativar SSH após reboot.</div></div>
     <div class="step"><div class="body">Iniciar navegação CarPlay. Seta de manobra no HUD; slot de limite mostra valor OEM atual (mapa + câmera TSR).</div></div>
   </div>
