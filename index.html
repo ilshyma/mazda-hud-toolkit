@@ -188,6 +188,8 @@ h1 .accent { color: var(--amber); }
 }
 .cta:hover { background: transparent; color: var(--amber); text-decoration: none; }
 .cta .arrow { font-family: "Noto Sans Mono", "JetBrains Mono", ui-monospace, monospace; font-size: 18px; }
+.cta.cta-secondary { background: transparent; color: var(--mint); border-color: var(--mint); }
+.cta.cta-secondary:hover { background: var(--mint); color: #ffffff; }
 .cta-note {
   display: inline-block; margin-left: 14px;
   font-family: "Noto Sans Mono", "JetBrains Mono", ui-monospace, monospace;
@@ -197,18 +199,22 @@ h1 .accent { color: var(--amber); }
 /* ===== SECTIONS ===== */
 section { padding: 48px 0; border-top: 1px solid var(--line); }
 h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
   font-family: "Noto Sans", "Noto Sans JP", -apple-system, system-ui, sans-serif;
   font-weight: 600; font-size: 28px;
   letter-spacing: -0.01em;
   margin: 0 0 8px;
-  text-wrap: balance;
 }
 h2 .num {
   font-family: "Noto Sans Mono", "JetBrains Mono", ui-monospace, monospace;
-  font-size: 12px; color: var(--amber);
-  vertical-align: 5px;
-  margin-right: 12px; font-weight: 500;
-  letter-spacing: 0.06em;
+  font-size: 34px; color: var(--amber);
+  opacity: 0.4;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 p { max-width: 68ch; }
 p, li { color: var(--text); }
@@ -426,6 +432,12 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <p>If the HUD stays blank after install, verify with option 9 first, then SSH in and check <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - the <code>L_jciCARPLAY</code> process must be running with <code>LD_PRELOAD</code> in its <code>/proc/PID/environ</code>.</p>
 </div></section>
 
+<section><div class="wrap">
+  <h2><span class="num">07</span>Support this project</h2>
+  <p>Getting the speed-limit display right took a lot of digging - there's no documentation for how the head unit's speed-limit indicator actually works, so I reverse-engineered it from scratch and built a small background helper that quietly feeds it the real limit from your car's own built-in maps, on top of the turn-by-turn directions you already get from Google Maps or Apple Maps. It took many hours and a lot of trial and error on my own car to get right. If this saved you time, or just made your drive a little nicer, a donation is very welcome.</p>
+  <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Send a donation <span class="arrow">→</span></a>
+</div></section>
+
 </div><!-- /en -->
 
 <!-- ================== УКРАЇНСЬКА ================== -->
@@ -513,6 +525,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <p>Якщо SSH не відповідає на порту 36000 - <code>sshd</code> у голові було вбито read-only rootfs при завантаженні. Повторіть USB → XSS → SSH.</p>
   <p>Якщо HUD залишається пустий - перевірте опцією 9, потім SSH-командою <code>ps | grep sm_svclauncher | grep jciCARPLAY</code>: процес <code>L_jciCARPLAY</code> має бути живим із <code>LD_PRELOAD</code> у <code>/proc/PID/environ</code>.</p>
 </div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">07</span>Підтримати проєкт</h2>
+  <p>Змусити індикатор ліміту швидкості працювати правильно виявилось непросто - документації про те, як насправді працює цей індикатор у магнітолі, не існує, тож довелося реверсити логіку з нуля і написати маленький фоновий помічник, який непомітно передає туди реальний ліміт швидкості зі штатних карт авто - на додачу до підказок маршруту від Google Maps чи Apple Maps. Це зайняло багато годин і чимало спроб на власному авто. Якщо це заощадило вам час або просто зробило поїздки приємнішими - буду вдячний за донат.</p>
+  <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Задонатити <span class="arrow">→</span></a>
+</div></section>
+
 </div><!-- /uk -->
 
 <!-- ================== ESPAÑOL ================== -->
@@ -600,6 +619,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <p>Si SSH no conecta en el puerto 36000, el <code>sshd</code> fue eliminado por el rootfs read-only al arrancar. Repetir USB → XSS → SSH.</p>
   <p>Si el HUD sigue en blanco tras instalar, verificar opción 9; luego SSH y comprobar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> debe estar corriendo con <code>LD_PRELOAD</code> en <code>/proc/PID/environ</code>.</p>
 </div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">07</span>Apoya este proyecto</h2>
+  <p>Conseguir que el indicador de límite de velocidad funcionara bien no fue nada fácil - no existe documentación sobre cómo funciona realmente ese indicador en el head unit, así que tuve que hacer ingeniería inversa desde cero y crear un pequeño ayudante en segundo plano que le pasa discretamente el límite real desde los mapas propios del coche, además de las indicaciones de Google Maps o Apple Maps. Me llevó muchas horas y bastante prueba y error en mi propio coche. Si esto te ahorró tiempo o hizo tu viaje un poco mejor, una donación es muy bienvenida.</p>
+  <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Hacer una donación <span class="arrow">→</span></a>
+</div></section>
+
 </div><!-- /es -->
 
 <!-- ================== DEUTSCH ================== -->
@@ -687,6 +713,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <p>Wenn SSH auf Port 36000 nicht verbindet, wurde <code>sshd</code> beim Boot vom Read-only-Rootfs beendet. USB → XSS → SSH wiederholen.</p>
   <p>Wenn das HUD nach Installation leer bleibt, Option 9 zur Verifikation, dann per SSH <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> prüfen - <code>L_jciCARPLAY</code>-Prozess muss mit <code>LD_PRELOAD</code> in <code>/proc/PID/environ</code> laufen.</p>
 </div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">07</span>Dieses Projekt unterstützen</h2>
+  <p>Die Geschwindigkeitsbegrenzungsanzeige zum Laufen zu bringen war nicht einfach - es gibt keine Dokumentation darüber, wie diese Anzeige im Head Unit wirklich funktioniert, also musste ich sie von Grund auf per Reverse Engineering entschlüsseln und einen kleinen Hintergrund-Helfer bauen, der ihr unauffällig das echte Limit aus den werkseigenen Karten des Autos zuspielt - zusätzlich zu den Wegbeschreibungen von Google Maps oder Apple Maps. Das hat viele Stunden und einiges an Ausprobieren im eigenen Auto gekostet. Wenn dir das Zeit gespart oder die Fahrt etwas angenehmer gemacht hat, freue ich mich sehr über eine Spende.</p>
+  <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Spenden <span class="arrow">→</span></a>
+</div></section>
+
 </div><!-- /de -->
 
 <!-- ================== PORTUGUÊS ================== -->
@@ -774,6 +807,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <p>Se SSH não conectar na porta 36000, o <code>sshd</code> foi eliminado pelo rootfs read-only no boot. Repetir USB → XSS → SSH.</p>
   <p>Se o HUD permanecer em branco após instalar, verificar opção 9; depois SSH e checar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> deve estar rodando com <code>LD_PRELOAD</code> em <code>/proc/PID/environ</code>.</p>
 </div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">07</span>Apoie este projeto</h2>
+  <p>Fazer o indicador de limite de velocidade funcionar direito não foi nada fácil - não existe documentação sobre como esse indicador realmente funciona no head unit, então tive que fazer engenharia reversa do zero e criar um pequeno auxiliar em segundo plano que alimenta discretamente o limite real vindo dos mapas do próprio carro, além das indicações do Google Maps ou Apple Maps. Levou muitas horas e bastante tentativa e erro no meu próprio carro. Se isso poupou seu tempo, ou só tornou a viagem um pouco melhor, uma doação é muito bem-vinda.</p>
+  <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Fazer uma doação <span class="arrow">→</span></a>
+</div></section>
+
 </div><!-- /pt -->
 
 <footer><div class="wrap">
