@@ -2,7 +2,7 @@
 
 Turn-by-turn-Navigation von **Apple CarPlay** auf dem **Head-Up Display** des Kombiinstruments für Mazda CMU150 (Firmware 74.00.324) — mit korrekter **km/h**-Geschwindigkeitsbegrenzungsanzeige für den europäischen Markt.
 
-**Passend für:** CX-5 KF, CX-8, CX-9 (2018) und andere Fahrzeuge derselben Plattform mit EU-Firmware.
+**Passend für:** CX-5 KF, CX-8, CX-9 (2016-2023) und andere Fahrzeuge derselben Plattform mit EU-Firmware.
 
 **Übersetzungen:** [English](README.md) · [Українська](README.uk.md) · [Español](README.es.md) · [Português](README.pt.md)
 
