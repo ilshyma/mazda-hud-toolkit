@@ -295,6 +295,23 @@ li { margin-bottom: 6px; }
 .callout p:last-child { margin-bottom: 0; }
 .callout p:first-child { margin-top: 0; }
 
+/* Video embed */
+.video-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0 0;
+}
+.video-embed iframe {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  border: 0;
+}
+
 /* Terminal preview card */
 .term {
   background: #1a1d24;
@@ -441,7 +458,15 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">02</span>What it does</h2>
+  <h2><span class="num">02</span>Video guide</h2>
+  <p class="sublede">Full walkthrough - from creating the USB stick to a validated install.</p>
+  <div class="video-embed">
+    <iframe src="https://www.youtube-nocookie.com/embed/ye9IAQk6aa0" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>What it does</h2>
   <p class="sublede">Adds the CarPlay maneuver + distance overlay to your instrument-cluster HUD, exactly like the built-in native navigation. Two additions on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> build:</p>
   <ul>
     <li><strong>km/h fix.</strong> The shim was written with <code>displaySpeedUnit = 1</code> which the VBS enum reads as <em>mph</em>. On an EU HUD that renders a <code>50 km/h</code> sign as <code>≈80</code> after mile→km conversion. My fix flips it to <code>2</code> (km/h).</li>
@@ -451,7 +476,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">03</span>Requirements</h2>
+  <h2><span class="num">04</span>Requirements</h2>
   <ul>
     <li>Mazda CMU150, firmware <code>74.00.324</code>, EU flavor (verify: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash drive (≥ 1 GB, FAT32-formatted)</li>
@@ -460,7 +485,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">04</span>Menu options</h2>
+  <h2><span class="num">05</span>Menu options</h2>
   <p class="sublede">Both <code>toolkit.sh</code> (macOS / Linux) and <code>toolkit.bat</code> (Windows 10+) show the same numbered menu.</p>
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
@@ -487,7 +512,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Notes and limitations</h2>
+  <h2><span class="num">06</span>Notes and limitations</h2>
   <div class="callout mint">
     <p><strong>Cannot brick the head unit.</strong> The shim uses only <code>LD_PRELOAD</code> - the OEM <code>blmjcicarplay.so</code> is never modified on disk. The read-only rootfs guarantees a reboot always returns the unit to a working state.</p>
   </div>
@@ -499,13 +524,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">06</span>Support</h2>
+  <h2><span class="num">07</span>Support</h2>
   <p>If SSH refuses to connect on port 36000, the <code>sshd</code> on the head unit was killed by the read-only rootfs at boot. Re-run the USB → XSS → SSH step and it comes back up.</p>
   <p>If the HUD stays blank after install, verify with option 9 first, then SSH in and check <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - the <code>L_jciCARPLAY</code> process must be running with <code>LD_PRELOAD</code> in its <code>/proc/PID/environ</code>.</p>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">07</span>Support this project</h2>
+  <h2><span class="num">08</span>Support this project</h2>
   <p>Getting the speed-limit display right took a lot of digging - there's no documentation for how the head unit's speed-limit indicator actually works, so I reverse-engineered it from scratch and built a small background helper that quietly feeds it the real limit from your car's own built-in maps, on top of the turn-by-turn directions you already get from Google Maps or Apple Maps. It took many hours and a lot of trial and error on my own car to get right. If this saved you time, or just made your drive a little nicer, a donation is very welcome.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Send a donation <span class="arrow">→</span></a>
 </div></section>
@@ -566,7 +591,15 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">02</span>Що робить</h2>
+  <h2><span class="num">02</span>Відеоінструкція</h2>
+  <p class="sublede">Повний покроковий розбір - від підготовки USB-флешки до перевіреного встановлення.</p>
+  <div class="video-embed">
+    <iframe src="https://www.youtube-nocookie.com/embed/ye9IAQk6aa0" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Що робить</h2>
   <p class="sublede">Додає накладку CarPlay (маневр + дистанція) на HUD у кластері приладів, як штатна вбудована навігація. Дві надбудови над збіркою <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
     <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code>, що у VBS enum означає <em>mph</em>. На EU HUD знак <code>50 км/год</code> малюється як <code>≈80</code> після конвертації mile→km. Мій фікс - значення <code>2</code> (km/h).</li>
@@ -576,7 +609,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">03</span>Вимоги</h2>
+  <h2><span class="num">04</span>Вимоги</h2>
   <ul>
     <li>Mazda CMU150, прошивка <code>74.00.324</code>, EU (перевірка: <code>cat /jci/version.ini</code>)</li>
     <li>USB-флешка (від 1 ГБ, формат FAT32)</li>
@@ -585,7 +618,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">04</span>Опції меню</h2>
+  <h2><span class="num">05</span>Опції меню</h2>
   <p class="sublede">І <code>toolkit.sh</code> (macOS/Linux), і <code>toolkit.bat</code> (Windows 10+) показують те саме нумероване меню.</p>
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
@@ -612,7 +645,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Примітки й обмеження</h2>
+  <h2><span class="num">06</span>Примітки й обмеження</h2>
   <div class="callout mint">
     <p><strong>Неможливо «окирпичити» голову.</strong> Шим працює лише через <code>LD_PRELOAD</code> - оригінальний <code>blmjcicarplay.so</code> не змінюється. Read-only rootfs гарантує повернення до робочого стану після ребуту.</p>
   </div>
@@ -624,13 +657,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">06</span>Підтримка</h2>
+  <h2><span class="num">07</span>Підтримка</h2>
   <p>Якщо SSH не відповідає на порту 36000 - <code>sshd</code> у голові було вбито read-only rootfs при завантаженні. Повторіть USB → XSS → SSH.</p>
   <p>Якщо HUD залишається пустий - перевірте опцією 9, потім SSH-командою <code>ps | grep sm_svclauncher | grep jciCARPLAY</code>: процес <code>L_jciCARPLAY</code> має бути живим із <code>LD_PRELOAD</code> у <code>/proc/PID/environ</code>.</p>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">07</span>Підтримати проєкт</h2>
+  <h2><span class="num">08</span>Підтримати проєкт</h2>
   <p>Змусити індикатор ліміту швидкості працювати правильно виявилось непросто - документації про те, як насправді працює цей індикатор у магнітолі, не існує, тож довелося реверсити логіку з нуля і написати маленький фоновий помічник, який непомітно передає туди реальний ліміт швидкості зі штатних карт авто - на додачу до підказок маршруту від Google Maps чи Apple Maps. Це зайняло багато годин і чимало спроб на власному авто. Якщо це заощадило вам час або просто зробило поїздки приємнішими - буду вдячний за донат.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Задонатити <span class="arrow">→</span></a>
 </div></section>
@@ -691,7 +724,15 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">02</span>Qué hace</h2>
+  <h2><span class="num">02</span>Guía en vídeo</h2>
+  <p class="sublede">Recorrido completo - desde crear la USB hasta una instalación validada.</p>
+  <div class="video-embed">
+    <iframe src="https://www.youtube-nocookie.com/embed/ye9IAQk6aa0" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Qué hace</h2>
   <p class="sublede">Añade el overlay de CarPlay (maniobra + distancia) al HUD del cuadro de instrumentos, igual que la navegación nativa. Dos añadidos sobre la build de <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
     <li><strong>Corrección km/h.</strong> El shim usa <code>displaySpeedUnit = 1</code> que en el enum VBS es <em>mph</em>. En un HUD europeo un <code>50 km/h</code> se renderiza como <code>≈80</code> tras la conversión milla→km. Mi fix pone <code>2</code> (km/h).</li>
@@ -701,7 +742,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">03</span>Requisitos</h2>
+  <h2><span class="num">04</span>Requisitos</h2>
   <ul>
     <li>Mazda CMU150, firmware <code>74.00.324</code>, versión EU (verificar: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash (≥ 1 GB, formato FAT32)</li>
@@ -710,7 +751,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">04</span>Opciones del menú</h2>
+  <h2><span class="num">05</span>Opciones del menú</h2>
   <p class="sublede">Tanto <code>toolkit.sh</code> (macOS/Linux) como <code>toolkit.bat</code> (Windows 10+) muestran el mismo menú numerado.</p>
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
@@ -737,7 +778,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Notas y limitaciones</h2>
+  <h2><span class="num">06</span>Notas y limitaciones</h2>
   <div class="callout mint">
     <p><strong>No puede brickear el head unit.</strong> El shim usa solo <code>LD_PRELOAD</code> - el <code>blmjcicarplay.so</code> original nunca se modifica. Rootfs de solo lectura garantiza retorno al estado stock tras reboot.</p>
   </div>
@@ -749,13 +790,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">06</span>Soporte</h2>
+  <h2><span class="num">07</span>Soporte</h2>
   <p>Si SSH no conecta en el puerto 36000, el <code>sshd</code> fue eliminado por el rootfs read-only al arrancar. Repetir USB → XSS → SSH.</p>
   <p>Si el HUD sigue en blanco tras instalar, verificar opción 9; luego SSH y comprobar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> debe estar corriendo con <code>LD_PRELOAD</code> en <code>/proc/PID/environ</code>.</p>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">07</span>Apoya este proyecto</h2>
+  <h2><span class="num">08</span>Apoya este proyecto</h2>
   <p>Conseguir que el indicador de límite de velocidad funcionara bien no fue nada fácil - no existe documentación sobre cómo funciona realmente ese indicador en el head unit, así que tuve que hacer ingeniería inversa desde cero y crear un pequeño ayudante en segundo plano que le pasa discretamente el límite real desde los mapas propios del coche, además de las indicaciones de Google Maps o Apple Maps. Me llevó muchas horas y bastante prueba y error en mi propio coche. Si esto te ahorró tiempo o hizo tu viaje un poco mejor, una donación es muy bienvenida.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Hacer una donación <span class="arrow">→</span></a>
 </div></section>
@@ -816,7 +857,15 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">02</span>Was es macht</h2>
+  <h2><span class="num">02</span>Videoanleitung</h2>
+  <p class="sublede">Komplette Schritt-für-Schritt-Anleitung - vom USB-Stick bis zur validierten Installation.</p>
+  <div class="video-embed">
+    <iframe src="https://www.youtube-nocookie.com/embed/ye9IAQk6aa0" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>Was es macht</h2>
   <p class="sublede">Fügt das CarPlay-Overlay (Manöver + Entfernung) im HUD des Kombiinstruments hinzu, genau wie die eingebaute Werksnavigation. Zwei Ergänzungen zum <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>-Build:</p>
   <ul>
     <li><strong>km/h-Fix.</strong> Der Shim nutzte <code>displaySpeedUnit = 1</code>, was das VBS-Enum als <em>mph</em> liest. Auf einem EU-HUD wird ein <code>50 km/h</code>-Schild nach Meilen→km-Umrechnung als <code>≈80</code> gezeichnet. Mein Fix setzt <code>2</code> (km/h).</li>
@@ -826,7 +875,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">03</span>Voraussetzungen</h2>
+  <h2><span class="num">04</span>Voraussetzungen</h2>
   <ul>
     <li>Mazda CMU150, Firmware <code>74.00.324</code>, EU-Version (prüfen: <code>cat /jci/version.ini</code>)</li>
     <li>USB-Stick (≥ 1 GB, FAT32-formatiert)</li>
@@ -835,7 +884,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">04</span>Menüoptionen</h2>
+  <h2><span class="num">05</span>Menüoptionen</h2>
   <p class="sublede">Sowohl <code>toolkit.sh</code> (macOS/Linux) als auch <code>toolkit.bat</code> (Windows 10+) zeigen dasselbe nummerierte Menü.</p>
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
@@ -862,7 +911,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Hinweise und Einschränkungen</h2>
+  <h2><span class="num">06</span>Hinweise und Einschränkungen</h2>
   <div class="callout mint">
     <p><strong>Kann das Head Unit nicht bricken.</strong> Der Shim nutzt nur <code>LD_PRELOAD</code> - <code>blmjcicarplay.so</code> wird nie verändert. Read-only-Rootfs garantiert Rückkehr zum Werkszustand nach Reboot.</p>
   </div>
@@ -874,13 +923,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">06</span>Support</h2>
+  <h2><span class="num">07</span>Support</h2>
   <p>Wenn SSH auf Port 36000 nicht verbindet, wurde <code>sshd</code> beim Boot vom Read-only-Rootfs beendet. USB → XSS → SSH wiederholen.</p>
   <p>Wenn das HUD nach Installation leer bleibt, Option 9 zur Verifikation, dann per SSH <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> prüfen - <code>L_jciCARPLAY</code>-Prozess muss mit <code>LD_PRELOAD</code> in <code>/proc/PID/environ</code> laufen.</p>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">07</span>Dieses Projekt unterstützen</h2>
+  <h2><span class="num">08</span>Dieses Projekt unterstützen</h2>
   <p>Die Geschwindigkeitsbegrenzungsanzeige zum Laufen zu bringen war nicht einfach - es gibt keine Dokumentation darüber, wie diese Anzeige im Head Unit wirklich funktioniert, also musste ich sie von Grund auf per Reverse Engineering entschlüsseln und einen kleinen Hintergrund-Helfer bauen, der ihr unauffällig das echte Limit aus den werkseigenen Karten des Autos zuspielt - zusätzlich zu den Wegbeschreibungen von Google Maps oder Apple Maps. Das hat viele Stunden und einiges an Ausprobieren im eigenen Auto gekostet. Wenn dir das Zeit gespart oder die Fahrt etwas angenehmer gemacht hat, freue ich mich sehr über eine Spende.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Spenden <span class="arrow">→</span></a>
 </div></section>
@@ -941,7 +990,15 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">02</span>O que faz</h2>
+  <h2><span class="num">02</span>Guia em vídeo</h2>
+  <p class="sublede">Passo a passo completo - desde criar o pendrive até uma instalação validada.</p>
+  <div class="video-embed">
+    <iframe src="https://www.youtube-nocookie.com/embed/ye9IAQk6aa0" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2><span class="num">03</span>O que faz</h2>
   <p class="sublede">Adiciona a sobreposição CarPlay (manobra + distância) ao HUD do painel, igual à navegação nativa embutida. Dois acréscimos sobre a build <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
   <ul>
     <li><strong>Correção km/h.</strong> O shim usava <code>displaySpeedUnit = 1</code>, que o enum VBS lê como <em>mph</em>. Num HUD europeu um <code>50 km/h</code> desenha como <code>≈80</code> após conversão milha→km. Nossa correção põe <code>2</code> (km/h).</li>
@@ -951,7 +1008,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">03</span>Requisitos</h2>
+  <h2><span class="num">04</span>Requisitos</h2>
   <ul>
     <li>Mazda CMU150, firmware <code>74.00.324</code>, versão EU (verificar: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash (≥ 1 GB, formato FAT32)</li>
@@ -960,7 +1017,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">04</span>Opções do menu</h2>
+  <h2><span class="num">05</span>Opções do menu</h2>
   <p class="sublede">Tanto <code>toolkit.sh</code> (macOS/Linux) quanto <code>toolkit.bat</code> (Windows 10+) exibem o mesmo menu numerado.</p>
   <div class="opts">
     <div class="opt"><div class="num2">1</div><div>
@@ -987,7 +1044,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Notas e limitações</h2>
+  <h2><span class="num">06</span>Notas e limitações</h2>
   <div class="callout mint">
     <p><strong>Não pode brickar o head unit.</strong> O shim usa apenas <code>LD_PRELOAD</code> - <code>blmjcicarplay.so</code> nunca é modificado. Rootfs read-only garante retorno ao stock após reboot.</p>
   </div>
@@ -999,13 +1056,13 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">06</span>Suporte</h2>
+  <h2><span class="num">07</span>Suporte</h2>
   <p>Se SSH não conectar na porta 36000, o <code>sshd</code> foi eliminado pelo rootfs read-only no boot. Repetir USB → XSS → SSH.</p>
   <p>Se o HUD permanecer em branco após instalar, verificar opção 9; depois SSH e checar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> deve estar rodando com <code>LD_PRELOAD</code> em <code>/proc/PID/environ</code>.</p>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">07</span>Apoie este projeto</h2>
+  <h2><span class="num">08</span>Apoie este projeto</h2>
   <p>Fazer o indicador de limite de velocidade funcionar direito não foi nada fácil - não existe documentação sobre como esse indicador realmente funciona no head unit, então tive que fazer engenharia reversa do zero e criar um pequeno auxiliar em segundo plano que alimenta discretamente o limite real vindo dos mapas do próprio carro, além das indicações do Google Maps ou Apple Maps. Levou muitas horas e bastante tentativa e erro no meu próprio carro. Se isso poupou seu tempo, ou só tornou a viagem um pouco melhor, uma doação é muito bem-vinda.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Fazer uma doação <span class="arrow">→</span></a>
 </div></section>
