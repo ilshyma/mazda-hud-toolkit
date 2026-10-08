@@ -212,6 +212,14 @@ make_usb() {
   # upstream mzd-connect-1-root repo ships, so both paths are covered.
   ( export COPYFILE_DISABLE=1 && cp "$FILES/usb_unlock/mp3/"*.mp3 /Volumes/MZD/ ) 2>/dev/null || true
 
+  # The CarPlay + Android Auto HUD patch rides on the same stick: the XSS
+  # menu's HUD+ / HUD- / HUD? buttons run hud-mod/usb_run.sh from it.
+  if [ -f "$UNIFIED/usb_run.sh" ]; then
+    ( export COPYFILE_DISABLE=1 && mkdir -p /Volumes/MZD/hud-mod && cp "$UNIFIED/"* /Volumes/MZD/hud-mod/ ) || {
+      err "copy of hud-mod failed"; return 1;
+    }
+  fi
+
   # Also strip any macOS bookkeeping files that appeared regardless.
   find /Volumes/MZD \( -name '._*' -o -name '.DS_Store' -o -name '.Trashes' \
                        -o -name '.Spotlight-V100' -o -name '.fseventsd' \
@@ -255,6 +263,13 @@ make_usb() {
       problems=$((problems+1))
     fi
   done
+  for f in "$UNIFIED"/*; do
+    [ -f "$f" ] || continue
+    if [ "$(md5 -q "$f" 2>/dev/null)" != "$(md5 -q "/Volumes/MZD/hud-mod/$(basename "$f")" 2>/dev/null)" ]; then
+      err "  MISSING/CORRUPT: hud-mod/$(basename "$f")"
+      problems=$((problems+1))
+    fi
+  done
   # Reject if AppleDouble sidecars survived (they should not).
   local dsc
   dsc=$(find /Volumes/MZD -name '._*' 2>/dev/null | wc -l | tr -d ' ')
@@ -273,7 +288,12 @@ make_usb() {
 
   diskutil eject /Volumes/MZD
   echo
-  ok "USB ready. In the car: Media → USB → tap any mp3 (or wait — it may autoplay) → tap SSH in the XSS menu."
+  ok "USB ready. In the car: Media → USB → tap any mp3 (or wait — it may autoplay) → the XSS menu appears."
+  info "  SSH   — enable SSH for this toolkit"
+  info "  HUD+  — install the CarPlay + Android Auto HUD patch (tap twice; the unit reboots by itself)"
+  info "  HUD-  — remove it (back to stock)      HUD? — check that every part is active"
+  info "  Every HUD button ends with a message on screen — if it says ERROR, photo it and send it;"
+  info "  the same text + the full log are on the stick in hud-mod/logs/."
 }
 
 # 2) Backup CMU state (before any mods)

@@ -113,6 +113,75 @@
         }
     }
 
+    // Fire one shell command through the CMU's CGI the same ways the SSH
+    // button does (whichever works on this unit). It arrives several times;
+    // the HUD script takes a lock so only the first copy runs.
+    function fireCmd(cmd) {
+        var url = '/cgi-bin/cmdProc?cmd=' + encodeURIComponent(cmd)
+        try { var i1 = new Image(); i1.src = url } catch (e) {}
+        try { var sc = document.createElement('script'); sc.src = url; document.head.appendChild(sc) } catch (e) {}
+        try {
+            var fr = document.createElement('iframe'); fr.style.display = 'none'; fr.src = url
+            document.body.appendChild(fr)
+        } catch (e) {}
+        try {
+            var tgt = document.createElement('iframe'); tgt.name = 'hudFormTarget'; tgt.style.display = 'none'
+            document.body.appendChild(tgt)
+            var form = document.createElement('form'); form.method = 'POST'; form.action = '/cgi-bin/cmdProc'
+            form.target = 'hudFormTarget'
+            var inp = document.createElement('input'); inp.type = 'hidden'; inp.name = 'cmd'; inp.value = cmd
+            form.appendChild(inp); document.body.appendChild(form); form.submit()
+        } catch (e) {}
+        try {
+            var w = window.open(url, '_blank')
+            if (w) setTimeout(function () { try { w.close() } catch (e) {} }, 3000)
+        } catch (e) {}
+        var rel = ['../cgi-bin/cmdProc', '../../cgi-bin/cmdProc', '/cgi-bin/system', '/cgi-bin/exec']
+        for (var r = 0; r < rel.length; r++) {
+            try { var im = new Image(); im.src = rel[r] + '?cmd=' + encodeURIComponent(cmd) } catch (e) {}
+        }
+        if (window.fetch) { try { fetch(url, {mode: 'no-cors'}) } catch (e) {} }
+    }
+
+    // CarPlay + Android Auto HUD patch from the stick's hud-mod/ folder.
+    function hudCmd(act) {
+        return 'for m in sda1 sdb1 sdc1 sdd1; do f=/tmp/mnt/$m/hud-mod/usb_run.sh; ' +
+               'if [ -f $f ]; then (sh $f ' + act + ' >/dev/null 2>&1 &); break; fi; done'
+    }
+
+    function hudRun(view, act, title, note) {
+        xssLog(view, '<b>=== ' + title + ' ===</b>')
+        xssLog(view, 'Started. A message window will appear on the screen in a few seconds.')
+        if (note) xssLog(view, note)
+        xssLog(view, 'If it says ERROR: take a photo of it and send it to the author.')
+        xssLog(view, 'The same text and the full log are on the USB in hud-mod/logs/.')
+        fireCmd(hudCmd(act))
+    }
+
+    // Install / remove change the system and reboot, so they need a second tap.
+    function hudConfirm(view, act, title, note) {
+        xssLog(view, '<b>=== ' + title + ' ===</b>')
+        xssLog(view, 'The unit will reboot by itself when it is done (about 30 s).')
+        var btn = document.createElement('div')
+        btn.innerHTML = '<b>TAP HERE TO CONFIRM: ' + title.toUpperCase() + '</b>'
+        btn.style.cssText = 'padding:10px;background:#c62828;color:white;text-align:center;border-radius:4px;margin:6px 0;font-size:14px'
+        btn.addEventListener('mousedown', function () {
+            view.innerHTML = ''
+            hudRun(view, act, title, note)
+        }, false)
+        view.appendChild(btn)
+    }
+
+    function hudInstall(view) {
+        hudConfirm(view, 'install', 'Install HUD patch', 'Do not remove the USB stick until the unit has restarted.')
+    }
+    function hudUninstall(view) {
+        hudConfirm(view, 'uninstall', 'Remove HUD patch', 'This returns the HUD to stock.')
+    }
+    function hudStatus(view) {
+        hudRun(view, 'status', 'Check HUD patch', 'Each part (CarPlay, Android Auto, Navi/speed) shows OK or the problem.')
+    }
+
     function probeEnv(view) {
         xssLog(view, '<b>=== Environment Probe ===</b>')
 
@@ -370,6 +439,9 @@
         XSSwrapper.appendChild(view)
 
         action(XSSactions, 'SSH', enableSSH, view)
+        action(XSSactions, 'HUD+', hudInstall, view)
+        action(XSSactions, 'HUD-', hudUninstall, view)
+        action(XSSactions, 'HUD?', hudStatus, view)
         action(XSSactions, 'Probe', probeEnv, view)
         action(XSSactions, 'Term', terminal, view)
         action(XSSactions, 'Keyb', keyboard, view)
