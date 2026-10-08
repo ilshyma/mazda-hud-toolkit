@@ -57,6 +57,17 @@ mazda-hud-toolkit/
 | **R** | **Remove CarPlay + Android Auto patch** — back to stock (all HUD patches removed), reboot. |
 | **9** | SSH health check |
 
+
+### Installing the HUD patch from the USB stick (no laptop)
+
+The stick from option 1 also carries the CarPlay + Android Auto HUD patch (`hud-mod/`). In the car, open it the usual way: Media → USB → tap an mp3. The menu at the top of the screen has three extra buttons:
+
+- **HUD+** installs the patch. Tap it, then tap the red confirmation button. The unit reboots by itself after about 30 s.
+- **HUD-** removes it, back to stock. Confirmed the same way.
+- **HUD?** checks that every part is active: CarPlay, Android Auto, Navi/speed.
+
+Every button ends with a message on the screen. If it starts with **ERROR** or **CHECK S1**, take a photo of it and send it. It carries an error code, the firmware version, the region and what to do next. The same text (`RESULT.txt`) and the full log are on the stick in `hud-mod/logs/`.
+
 ## First-time procedure
 
 1. Format a USB stick, run **option 1** to prepare it.

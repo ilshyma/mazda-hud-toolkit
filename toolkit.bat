@@ -13,6 +13,13 @@
 ::                                     WAITS for SSH to come back, auto-validates
 ::    5  Validate installation     — re-run any time; auto-fixes the daemon
 ::
+::  U  Install CarPlay + Android Auto HUD Patch — unified package in files\unified,
+::       one installer for both phones, speed limit from the stock nav;
+::       md5-verifies, reboots, waits for SSH, checks the 4 shims
+::  R  Remove CarPlay + Android Auto patch — back to stock
+::  (option 5 detects the unified patch and checks it instead)
+::  The USB stick (option 1) also carries hud-mod\ for the XSS HUD+/HUD-/HUD? buttons.
+::
 ::  ADVANCED (P/X/D/F/T/C) — not needed for normal use:
 ::    P  Install PURE KidMixer Patch    (upstream, has speed-limit issue)
 ::    X  Install legacy pre-v16 mod .so (fallback if v16's read_splim guard fires wrongly)
@@ -75,6 +82,10 @@ echo   4  Install ilshyma HUD Patch  * recommended
 echo        auto-retries -^> waits for reboot -^> auto-validates
 echo   5  Validate installation  (re-run any time)
 echo.
+echo   U  Install CarPlay + Android Auto HUD Patch  * new
+echo        one patch for both phones, speed limit from the stock nav
+echo   R  Remove CarPlay + Android Auto patch  ^(back to stock^)
+echo.
 echo   ADVANCED / TROUBLESHOOTING
 echo   ----------------------------------------
 echo   P  Install PURE KidMixer Patch  (no speed-limit fix)
@@ -95,6 +106,8 @@ if /I "%C%"=="2" goto backup
 if /I "%C%"=="3" goto rollback
 if /I "%C%"=="4" goto install_mod
 if /I "%C%"=="5" goto validate
+if /I "%C%"=="U" goto install_unified
+if /I "%C%"=="R" goto uninstall_unified
 if /I "%C%"=="P" goto install_pure
 if /I "%C%"=="X" goto install_mod_legacy
 if /I "%C%"=="D" goto diagnose
@@ -206,8 +219,25 @@ if errorlevel 1 (echo copy failed & goto menu)
 :: audio track on insert, which is what makes the XSS trigger without a manual tap.
 xcopy /Y "%FILES%\usb_unlock\mp3\*.mp3" "!TARGET!\" >nul 2>nul
 
+:: The CarPlay + Android Auto HUD patch rides on the same stick: the XSS menu's
+:: HUD+ / HUD- / HUD? buttons run hud-mod\usb_run.sh from it. Every file is
+:: md5-compared with the toolkit copy (a half-written stick is a common failure).
+if exist "%FILES%\unified\usb_run.sh" (
+  echo copying the CarPlay + Android Auto HUD patch to !TARGET!\hud-mod\ ...
+  xcopy /E /I /Y "%FILES%\unified\*" "!TARGET!\hud-mod\" >nul
+  if errorlevel 1 (echo copy of hud-mod failed & goto menu)
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "$bad=0; Get-ChildItem -LiteralPath '%FILES%\unified' -File | ForEach-Object { $d=Join-Path '!TARGET!\hud-mod' $_.Name; if ((Test-Path -LiteralPath $d) -eq $false -or (Get-FileHash -Algorithm MD5 -LiteralPath $_.FullName).Hash -ne (Get-FileHash -Algorithm MD5 -LiteralPath $d).Hash) { Write-Output ('  CORRUPT/MISSING: hud-mod\' + $_.Name); $bad++ } }; exit $bad"
+  if errorlevel 1 (echo hud-mod on the stick does not match the toolkit -- format the stick again and re-run option 1 & goto menu)
+  echo * hud-mod verified
+)
+
 echo done. Safely eject and take to the car.
-echo In CMU: Media -^> USB -^> tap any mp3 ^(or let it autoplay^) -^> tap SSH in the XSS menu.
+echo In CMU: Media -^> USB -^> tap any mp3 ^(or let it autoplay^) -^> the XSS menu appears.
+echo   SSH   enable SSH for this toolkit
+echo   HUD+  install the CarPlay + Android Auto HUD patch ^(tap twice; the unit reboots by itself^)
+echo   HUD-  remove it ^(back to stock^)      HUD?  check that every part is active
+echo   Every HUD button ends with a message on screen. If it says ERROR, take a photo
+echo   and send it; the same text and the full log are on the stick in hud-mod\logs\
 goto menu
 
 :: ===============================================================
@@ -378,6 +408,112 @@ echo running automatic post-install validation...
 goto validate
 
 :: ===============================================================
+:: Helper: md5_local FILE  ->  LMD5 (lowercase hex)
+:: PowerShell, not certutil: certutil's output format differs between
+:: Windows versions (spaces in older builds).
+:: ===============================================================
+:md5_local
+set "LMD5="
+for /f "usebackq delims=" %%h in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-FileHash -Algorithm MD5 -LiteralPath '%~1').Hash.ToLower()"`) do set "LMD5=%%h"
+exit /b 0
+
+:: ===============================================================
+:: U) Install CarPlay + Android Auto HUD Patch  (unified, files\unified)
+:: Package from github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa:
+:: 4 shims (CarPlay, Android Auto x2, svcjcinavi speed-limit arbiter) + its own
+:: install.sh / uninstall.sh. MD5SUMS pins the shims.
+:: ===============================================================
+:install_unified
+call :check_conn
+if errorlevel 1 goto menu
+echo. & echo === Install CarPlay + Android Auto HUD Patch ^(one patch for both phones^) ===
+echo   arrows + distance on the HUD for CarPlay AND Android Auto,
+echo   speed-limit sign from the stock navigation for both ^(needs the nav SD card^).
+echo   Replaces any earlier HUD patch; every edited file is backed up.
+if not exist "%FILES%\unified\MD5SUMS" (echo files\unified is missing -- re-download the toolkit & goto menu)
+echo.
+echo 1/3 . copying the package ^(md5-verified^)
+ssh %SSHOPTS% -p %PORT% %CMU% "rm -rf /tmp/hud-mod && mkdir -p /tmp/hud-mod"
+if errorlevel 1 (echo cannot prepare /tmp/hud-mod on the CMU & goto menu)
+for %%F in ("%FILES%\unified\*") do (
+  if /I not "%%~nxF"=="MD5SUMS" (
+    call :md5_local "%%~fF"
+    findstr /I /C:"%%~nxF" "%FILES%\unified\MD5SUMS" >nul && (findstr /I /B /C:"!LMD5! %%~nxF" "%FILES%\unified\MD5SUMS" >nul || (echo local file damaged: %%~nxF -- re-download the toolkit & goto menu))
+    set "PV_SRC=%%~fF"
+    set "PV_DST=/tmp/hud-mod/%%~nxF"
+    set "PV_WANT=!LMD5!"
+    call :push_verify
+    if errorlevel 1 (echo aborted -- package did not land correctly, nothing was changed & goto menu)
+  )
+)
+echo 2/3 . running the installer on the CMU
+set "INSTLOG=%TEMP%\hudmod_install.txt"
+ssh %SSHOPTS% -p %PORT% %CMU% "cd /tmp/hud-mod && sh install.sh" > "!INSTLOG!" 2>&1
+type "!INSTLOG!"
+findstr /L /C:"DONE. Reboot" "!INSTLOG!" >nul
+if errorlevel 1 (echo. & echo WARNING: the installer did not finish -- nothing to reboot for. The lines above say why. & goto menu)
+echo * installed -- rebooting the CMU
+ssh %SSHOPTS% -p %PORT% %CMU% "sync && reboot" >nul 2>&1
+echo 3/3 . after the reboot
+call :wait_for_ssh
+if errorlevel 1 goto menu
+goto validate_unified
+
+:: ===============================================================
+:: Check the unified patch: usb_run.sh "check" prints one OK/FAIL/MISS line
+:: per shim; exit 0 = all loaded, 1 = problem, 3 = not installed.
+:: ===============================================================
+:validate_unified
+echo. & echo === Validate CarPlay + Android Auto patch ===
+echo waiting 5s for services to settle...
+timeout /t 5 /nobreak >nul
+call :md5_local "%FILES%\unified\usb_run.sh"
+set "PV_SRC=%FILES%\unified\usb_run.sh"
+set "PV_DST=/tmp/hud_check.sh"
+set "PV_WANT=!LMD5!"
+call :push_verify >nul
+if errorlevel 1 (echo could not copy the check script to the CMU & goto menu)
+set "CHKLOG=%TEMP%\hudmod_check.txt"
+ssh %SSHOPTS% -p %PORT% %CMU% "sh /tmp/hud_check.sh check" > "!CHKLOG!" 2>&1
+set "CHKRC=!errorlevel!"
+type "!CHKLOG!"
+echo.
+if "!CHKRC!"=="0" (
+  echo * all 4 shims loaded -- start a CarPlay or Android Auto route and watch the HUD
+) else if "!CHKRC!"=="3" (
+  echo WARNING: the HUD patch is not installed -- use option U
+) else (
+  echo WARNING: some parts are not active -- wait a minute and re-run option 5. If it stays, run option D.
+)
+goto menu
+
+:: ===============================================================
+:: R) Remove CarPlay + Android Auto patch  (back to stock)
+:: ===============================================================
+:uninstall_unified
+call :check_conn
+if errorlevel 1 goto menu
+echo. & echo === Remove CarPlay + Android Auto patch ^(back to stock^) ===
+set "OK="
+set /p "OK=This removes every HUD patch from the CMU and reboots. Continue? [y/N] > "
+if /I not "!OK!"=="y" (echo cancelled & goto menu)
+if not exist "%FILES%\unified\uninstall.sh" (echo files\unified\uninstall.sh is missing -- re-download the toolkit & goto menu)
+call :md5_local "%FILES%\unified\uninstall.sh"
+set "PV_SRC=%FILES%\unified\uninstall.sh"
+set "PV_DST=/tmp/hud-mod-uninstall.sh"
+set "PV_WANT=!LMD5!"
+call :push_verify
+if errorlevel 1 (echo aborted -- uninstall.sh did not land correctly & goto menu)
+ssh %SSHOPTS% -p %PORT% %CMU% "sh /tmp/hud-mod-uninstall.sh"
+echo * removed -- rebooting the CMU
+ssh %SSHOPTS% -p %PORT% %CMU% "sync && reboot" >nul 2>&1
+call :wait_for_ssh
+if errorlevel 1 goto menu
+echo confirming stock state ^(expect 0^):
+ssh %SSHOPTS% -p %PORT% %CMU% "cat /jci/sm/sm.conf /jci/sm/sm_WCP.conf 2>/dev/null | grep -c libpatch-"
+goto menu
+
+:: ===============================================================
 :: P) Install PURE KidMixer Patch  (upstream, known speed-limit issue)
 :: ===============================================================
 :install_pure
@@ -461,6 +597,9 @@ goto validate
 :: the menu we need it too. Cheap to double-check.
 call :check_conn
 if errorlevel 1 goto menu
+:: The unified CarPlay + Android Auto patch has its own checks.
+ssh %SSHOPTS% -p %PORT% %CMU% "[ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ]" >nul 2>&1
+if not errorlevel 1 goto validate_unified
 echo. & echo === Validate installation ===
 mkdir "%DIR%logs" 2>nul
 for /f %%a in ('powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set "TS=%%a"
