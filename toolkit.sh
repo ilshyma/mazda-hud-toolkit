@@ -28,6 +28,13 @@ fi
 #                                    the splim data file; auto-restarts the daemon
 #                                    if it's dead and tells you plainly if it can't
 #
+#    U  Install CarPlay + Android Auto HUD Patch — the unified patch from
+#                                    files/unified (one installer for both phones,
+#                                    speed limit from the stock nav); md5-verifies,
+#                                    reboots, waits for SSH, validates the 4 shims
+#    R  Remove CarPlay + Android Auto patch — unified uninstall.sh, back to stock
+#    (option 5 detects the unified patch and validates it instead)
+#
 #  ADVANCED / TROUBLESHOOTING (menu P/X/D/F/T/C) — not needed for normal use:
 #    P  Install PURE KidMixer Patch    — upstream, no speed-limit fix (known issue)
 #    X  Install legacy pre-v16 mod .so — speed-limit-slot fallback if v16's
@@ -609,6 +616,7 @@ install_mod() {
 # speed daemon if it's dead, and gives a clear pass/fail verdict + a saved log.
 # Safe to re-run any time (e.g. days later if the speed limit stops updating).
 validate() {
+  if unified_installed; then validate_unified; return; fi
   hdr "Validate installation"
   mkdir -p "$DIR/logs"
   local ts logfile problems=0
@@ -779,6 +787,123 @@ validate() {
     err "full diagnostic saved to: $logfile"
     err "option D = verbose dump · option F = retry starting the daemon"
     return 1
+  fi
+}
+
+# ============================================================================
+#  MAIN FLOW — menu U / R  (CarPlay + Android Auto, one patch)
+# ============================================================================
+# files/unified/ is the release package of the unified branch
+# (github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa):
+#   4 shims — CarPlay (blmjcicarplay), Android Auto (blmjciaapa + aap_service)
+#   and the svcjcinavi HUD arbiter that gives both phones the stock-nav speed
+#   limit — plus its own install.sh / uninstall.sh, libpatch.conf and the AA
+#   system-attribute XMLs. MD5SUMS pins the shims.
+UNIFIED="$FILES/unified"
+UNIFIED_REMOTE=/tmp/hud-mod
+UNIFIED_DIR=/data_persist/oem-aa-mod
+
+unified_installed() {
+  $SSH "[ -f $UNIFIED_DIR/libpatch-svcjcinavi.so ] && grep -q 'oem-aa-mod/libpatch-blmjcicarplay' /jci/sm/sm.conf /jci/sm/sm_WCP.conf" 2>/dev/null
+}
+
+# Copy the package to the unit, every file md5-verified (retried by push_verify).
+unified_push() {
+  [ -f "$UNIFIED/MD5SUMS" ] || { err "missing $UNIFIED — the toolkit tree is incomplete, re-download it"; return 1; }
+  $SSH "rm -rf $UNIFIED_REMOTE && mkdir -p $UNIFIED_REMOTE" || { err "cannot create $UNIFIED_REMOTE on the CMU"; return 1; }
+  local f want
+  for f in "$UNIFIED"/*; do
+    [ "$(basename "$f")" = MD5SUMS ] && continue
+    want=$(awk -v n="$(basename "$f")" '$2 == n {print $1}' "$UNIFIED/MD5SUMS")
+    if [ -z "$want" ]; then   # scripts/config: verify the transfer against the local copy
+      want=$(md5 -q "$f" 2>/dev/null || md5sum "$f" | awk '{print $1}')
+    fi
+    push_verify "$f" "$UNIFIED_REMOTE/$(basename "$f")" "$want" || return 1
+  done
+}
+
+validate_unified() {
+  hdr "Validate CarPlay + Android Auto patch"
+  info "waiting 5s for services to settle..."
+  sleep 5
+  local out problems=0
+  out=$($SSH 'sh -s' <<'REMOTE'
+pid_of() { ps | awk -v p="$1" 'index($0, p) && !/awk/ { print $1; exit }'; }
+for pair in L_jciCARPLAY:blmjcicarplay L_jciAAPA:blmjciaapa L_jcinavi:svcjcinavi /usr/bin/aap_service:aap_service; do
+  svc=${pair%%:*}; so=${pair##*:}
+  pid=$(pid_of "$svc")
+  if [ -z "$pid" ]; then echo "MISS $svc not running"
+  elif grep -q "libpatch-$so.so" /proc/$pid/maps 2>/dev/null; then echo "OK   $svc pid=$pid has libpatch-$so.so"
+  else echo "FAIL $svc pid=$pid does NOT have libpatch-$so.so"; fi
+done
+echo "INFO NaviSupported=$(grep -oE '<name>NaviSupported</name><value>[A-Z]+' /etc/devmgr_config_master.xml | grep -oE '[A-Z]+$')"
+echo "INFO config: $(grep -E '^(hud_transport|force_street_name|force_street_name_native|use_protocol_v1_6)' /data_persist/oem-aa-mod/libpatch.conf | tr '\n' ' ')"
+echo "INFO stock-nav speed shared with CarPlay: $(cat /tmp/hud_oem_speed 2>/dev/null || echo 'none yet (appears with the first stock-nav HUD frame)')"
+REMOTE
+)
+  echo "$out" | while IFS= read -r l; do
+    case "$l" in
+      OK*)   ok   "${l#OK   }" ;;
+      FAIL*) err  "${l#FAIL }" ;;
+      MISS*) warn "${l#MISS }" ;;
+      *)     info "${l#INFO }" ;;
+    esac
+  done
+  problems=$(echo "$out" | grep -cE '^(FAIL|MISS)')
+  if [ "$problems" -eq 0 ] && echo "$out" | grep -q '^OK'; then
+    ok "all 4 shims loaded — start a CarPlay or Android Auto route and watch the HUD"
+  else
+    err "$problems of 4 services not running or without their shim — wait a minute and re-run option 5; if it stays, run option D"
+    return 1
+  fi
+}
+
+install_unified() {
+  hdr "Install CarPlay + Android Auto HUD Patch (one patch for both phones)"
+  info "arrows + distance on the HUD for CarPlay AND Android Auto,"
+  info "speed-limit sign from the stock navigation for both (needs the nav SD card)."
+  info "replaces any earlier HUD patch (KidMixer / ilshyma v16 / oem-aa-mod); every edited file is backed up."
+  echo
+  info "1/3 · copying the package (md5-verified)"
+  unified_push || { err "aborted — package did not land correctly, nothing was changed"; return 1; }
+
+  info "2/3 · running the installer on the CMU"
+  local log
+  log=$($SSH "cd $UNIFIED_REMOTE && sh install.sh" 2>&1)
+  echo "$log" | sed 's/^/      /'
+  if ! echo "$log" | grep -q 'DONE\. Reboot'; then
+    err "installer did not finish — nothing to reboot for. The lines above say why."
+    return 1
+  fi
+  # the old KidMixer speed daemon is retired by install.sh; make sure it is gone now, too
+  $SSH 'for p in $(ps | grep "[s]plim_udpd" | awk "{print \$1}"); do kill $p; done' 2>/dev/null || true
+
+  ok "installed — rebooting the CMU"
+  $SSH 'sync && reboot' 2>&1 | head -3 || true
+
+  info "3/3 · after the reboot"
+  if wait_for_ssh 300; then
+    validate_unified
+  else
+    warn "validation skipped — once SSH is back, run option 5"
+  fi
+}
+
+uninstall_unified() {
+  hdr "Remove CarPlay + Android Auto patch (back to stock)"
+  printf "  This removes every HUD patch from the CMU and reboots. Continue? [y/N] "
+  read C
+  case "$C" in y|Y) : ;; *) warn "cancelled"; return 0 ;; esac
+  local f="$UNIFIED/uninstall.sh"
+  require_local "$f" || return 1
+  push_verify "$f" /tmp/hud-mod-uninstall.sh "$(md5 -q "$f" 2>/dev/null || md5sum "$f" | awk '{print $1}')" || return 1
+  $SSH 'sh /tmp/hud-mod-uninstall.sh' 2>&1 | sed 's/^/      /'
+  ok "removed — rebooting the CMU"
+  $SSH 'sync && reboot' 2>&1 | head -3 || true
+  if wait_for_ssh 300; then
+    local n
+    n=$($SSH "grep -c 'libpatch-' /jci/sm/sm.conf /jci/sm/sm_WCP.conf | awk -F: '{s+=\$2} END {print s}'" 2>/dev/null)
+    [ "${n:-1}" = 0 ] && ok "back to stock (no LD_PRELOAD lines left)" || warn "sm config still has ${n:-?} libpatch line(s) — run option D"
   fi
 }
 
@@ -1113,6 +1238,9 @@ while :; do
   printf "  %s4%s   Install ilshyma HUD Patch  %s★ recommended%s\n"              "$C_BOLD" "$C_0" "$C_BM" "$C_0"
   printf "        auto-retries → waits for reboot → auto-validates\n"
   printf "  %s5%s   Validate installation  (re-run any time)\n"                  "$C_BOLD" "$C_0"
+  printf "\n  %sU%s   Install CarPlay + Android Auto HUD Patch  %s★ new%s\n"          "$C_BOLD" "$C_0" "$C_BM" "$C_0"
+  printf "        one patch for both phones · speed limit from the stock nav\n"
+  printf "  %sR%s   Remove CarPlay + Android Auto patch  (back to stock)\n"       "$C_BOLD" "$C_0"
 
   printf "\n%s══════════════════════════════════════════════════════════%s\n" "$C_BY" "$C_0"
   printf "%s  ADVANCED / TROUBLESHOOTING  — not needed for normal use%s\n" "$C_BY" "$C_0"
@@ -1137,6 +1265,8 @@ while :; do
     3) check && rollback ;;
     4) check && install_mod ;;
     5) check && validate ;;
+    U|u) check && install_unified ;;
+    R|r) check && uninstall_unified ;;
     P|p) check && install_pure ;;
     X|x) check && install_mod_legacy ;;
     D|d) check && diagnose ;;

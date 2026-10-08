@@ -53,6 +53,8 @@ mazda-hud-toolkit/
 | **3** | **Install PURE KidMixer Patch** — plain upstream build. Fast and safe, but on EU vehicles has a known issue: the HUD speed-limit slot shows ~80 km/h from a mile→km conversion the shim does on its own, and dies to `---` between OEM updates. Use this only if you want plain upstream behaviour or as a baseline before switching to option 4. |
 | **4** | **Install ilshyma HUD Patch** ★ recommended — three-step deploy: (a) vanilla `install.sh` writes the `LD_PRELOAD` line to `sm.conf` and sets `NaviSupported=TRUE`, (b) my patched `.so` (km/h fix + `read_splim` future-ts guard) is overlaid, (c) the v16 speed-mirror daemon + auto-launcher are copied. Ends with a reboot; wait ~2 min then re-establish SSH via the USB stick. |
 | **5** | **Full rollback** — kills my daemon, removes my extras, runs the vanilla `uninstall.sh` which restores `sm.conf` and `NaviSupported=FALSE` from `.bak_precphud` backups made by `install.sh`. Ends with a reboot. |
+| **U** | **Install CarPlay + Android Auto HUD Patch** ★ new — one patch for both phones: arrows + distance for CarPlay and Android Auto, speed-limit sign from the stock navigation for both (needs the nav SD card). Replaces any earlier HUD patch, backs up every edited file, reboots, waits for SSH and checks that all 4 shims loaded. Source: [mazda-carplay-hud `unified-carplay-aa`](https://github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa). The street-name line does not show on EU HUDs. |
+| **R** | **Remove CarPlay + Android Auto patch** — back to stock (all HUD patches removed), reboot. |
 | **9** | SSH health check |
 
 ## First-time procedure
