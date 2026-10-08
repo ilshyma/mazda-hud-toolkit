@@ -40,9 +40,9 @@
     font-size: 14px;
     display: flex;
     flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 4px;
-    padding-bottom: 4px;
+    /* wrap: 10 buttons do not fit the 800 px CMU screen in one row */
+    flex-wrap: wrap;
+    padding-bottom: 0;
     flex-shrink: 0;
 }
 
@@ -67,6 +67,8 @@
     color: #fff;
     font-size: 13px;
     white-space: nowrap;
+    /* spacing via margin: the CMU's old Opera ignores flex `gap` */
+    margin: 0 9px 5px 0;
 }
 
 .xss-log {

@@ -7,6 +7,9 @@
 #  from its on-screen XSS menu (buttons HUD+ / HUD- / HUD?) through the same
 #  CGI its SSH button uses:
 #     sh /tmp/mnt/sdX1/hud-mod/usb_run.sh install|uninstall|status
+#  "check" is the console variant of status for the toolkits over SSH: prints
+#  one OK/FAIL/MISS line per shim, no dialog, no lock, no log; exit 0 = all
+#  loaded, 1 = problem, 3 = not installed.
 #  That menu fires every command several ways at once, so this script takes
 #  a lock and only the first copy does anything.
 #
@@ -23,7 +26,32 @@ TITLE="HUD patch: CarPlay + Android Auto"
 DLG=/jci/tools/jci-dialog
 PHOTO="Photo this screen and send it to the author."
 
-case "$ACTION" in install|uninstall|status) ;; *) echo "usage: $0 install|uninstall|status"; exit 2 ;; esac
+pid_of() { ps | awk -v p="$1" 'index($0, p) && !/awk/ { print $1; exit }'; }
+SHIMS="L_jciCARPLAY:blmjcicarplay:CarPlay L_jciAAPA:blmjciaapa:AndroidAuto /usr/bin/aap_service:aap_service:AA-1.6 L_jcinavi:svcjcinavi:Navi/speed"
+# shim_state SPEC -> prints "OK|NOT loaded|not running" for one shim
+shim_state() {
+  svc=${1%%:*}; rest=${1#*:}; so=${rest%%:*}
+  pid=$(pid_of "$svc")
+  if [ -z "$pid" ]; then echo "not running"
+  elif grep -q "libpatch-$so.so" "/proc/$pid/maps" 2>/dev/null; then echo "OK"
+  else echo "NOT loaded"; fi
+}
+
+case "$ACTION" in
+  install|uninstall|status) ;;
+  check)
+    [ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ] || { echo "MISS the HUD patch is not installed"; exit 3; }
+    rc=0
+    for spec in $SHIMS; do
+      label=${spec##*:}; st=$(shim_state "$spec")
+      case "$st" in OK) echo "OK   $label: shim loaded" ;; "not running") echo "MISS $label: service not running"; rc=1 ;; *) echo "FAIL $label: shim NOT loaded"; rc=1 ;; esac
+    done
+    echo "INFO NaviSupported=$(grep -oE '<name>NaviSupported</name><value>[A-Z]+' /etc/devmgr_config_master.xml | grep -oE '[A-Z]+$')"
+    echo "INFO config: $(grep -E '^(hud_transport|force_street_name|force_street_name_native|use_protocol_v1_6)' /data_persist/oem-aa-mod/libpatch.conf | tr '\n' ' ')"
+    echo "INFO stock-nav speed shared with CarPlay: $(cat /tmp/hud_oem_speed 2>/dev/null || echo 'none yet')"
+    exit $rc ;;
+  *) echo "usage: $0 install|uninstall|status|check"; exit 2 ;;
+esac
 mkdir "$LOCK" 2>/dev/null || exit 0          # another copy is already running
 
 mount -o rw,remount "$D" 2>/dev/null         # FAT stick may be mounted ro
@@ -137,16 +165,11 @@ uninstall)
 
 status)
   # What a user can photograph when "it does not work": is each shim loaded?
-  pid_of() { ps | awk -v p="$1" 'index($0, p) && !/awk/ { print $1; exit }'; }
   lines=""; bad=0
-  for pair in L_jciCARPLAY:blmjcicarplay:CarPlay L_jciAAPA:blmjciaapa:AndroidAuto \
-              /usr/bin/aap_service:aap_service:AA-1.6 L_jcinavi:svcjcinavi:Navi/speed; do
-    svc=${pair%%:*}; rest=${pair#*:}; so=${rest%%:*}; label=${rest#*:}
-    pid=$(pid_of "$svc")
-    if [ -z "$pid" ]; then st="not running"; bad=$((bad + 1))
-    elif grep -q "libpatch-$so.so" "/proc/$pid/maps" 2>/dev/null; then st="OK"
-    else st="NOT loaded"; bad=$((bad + 1)); fi
-    lines="${lines:+$lines\n}$label: $st"
+  for spec in $SHIMS; do
+    st=$(shim_state "$spec")
+    [ "$st" = OK ] || bad=$((bad + 1))
+    lines="${lines:+$lines\n}${spec##*:}: $st"
   done
   installed=$([ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ] && echo yes || echo no)
   speed=$(cat /tmp/hud_oem_speed 2>/dev/null || echo none)

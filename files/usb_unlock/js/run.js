@@ -411,8 +411,11 @@
 
     function xssDestroy() {
         window.xssMounted = false
-        window.XSSwrapper.remove()
-        window.XSStoggle.remove()
+        // Element.remove() does not exist in the CMU's old Opera — this is why X did nothing
+        var els = [window.XSSwrapper, window.XSStoggle]
+        for (var i = 0; i < els.length; i++) {
+            if (els[i] && els[i].parentNode) els[i].parentNode.removeChild(els[i])
+        }
     }
 
     function action(parent, name, cb, view) {
