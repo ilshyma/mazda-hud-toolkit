@@ -14,37 +14,25 @@ fi
 # ============================================================================
 #  Mazda CMU CarPlay-HUD toolkit — macOS/Linux
 # ============================================================================
-#  MAIN FLOW (menu 1-5) — do these once, in order, to go from a stock CMU to
-#  a validated, working install:
-#    1  Create USB unlock stick   — root-access XSS payload (mp3 autoplay trick)
-#    2  Backup CMU                — safety net before touching anything
-#    3  Full rollback             — optional: force a known-clean starting point
-#    4  Install ilshyma HUD Patch — retries + md5-verifies every file, reboots,
-#                                    WAITS for SSH to come back, then AUTOMATICALLY
-#                                    runs validation (menu 5) and auto-fixes the
-#                                    speed daemon if the shim didn't spawn it
-#    5  Validate installation     — re-run any time; checks LD_PRELOAD, the shim,
-#                                    the .so on disk, the speed-mirror daemon and
-#                                    the splim data file; auto-restarts the daemon
-#                                    if it's dead and tells you plainly if it can't
+#  MAIN MENU — everything a normal user needs:
+#    1  Create USB stick — FAT32 "MZD" with the MP3-XSS unlock (SSH button)
+#                          AND the HUD patch in hud-mod/ (HUD+ / HUD- / HUD?
+#                          buttons install, remove and check it without a laptop)
+#    2  Backup CMU       — safety net before touching anything
+#    3  Rollback         — removes EVERY HUD patch (CarPlay + Android Auto,
+#                          ilshyma v16 + speed daemon, KidMixer, oem-aa-mod),
+#                          back to stock, reboots, confirms
+#    4  Install HUD patch — CarPlay + Android Auto (files/unified): md5-verifies,
+#                          installs, reboots, waits for SSH, validates the 4 shims
 #
-#    U  Install CarPlay + Android Auto HUD Patch — the unified patch from
-#                                    files/unified (one installer for both phones,
-#                                    speed limit from the stock nav); md5-verifies,
-#                                    reboots, waits for SSH, validates the 4 shims
-#    R  Remove CarPlay + Android Auto patch — unified uninstall.sh, back to stock
-#    (option 5 detects the unified patch and validates it instead)
-#
-#  ADVANCED / TROUBLESHOOTING (menu P/X/D/F/T/C) — not needed for normal use:
-#    P  Install PURE KidMixer Patch    — upstream, no speed-limit fix (known issue)
-#    X  Install legacy pre-v16 mod .so — speed-limit-slot fallback if v16's
-#                                          future-ts guard ever misbehaves
-#                                          (not an arrow fix — same shim either way)
-#    D  Full diagnostic dump           — verbose raw state, for deep troubleshooting
-#    F  Force-start the speed daemon   — manual kick, same thing validate() does
-#    T  Live-tail the daemon log
-#    C  CarPlay HUD arrow debug log    — /tmp/carplay_bridge.log (hud_send's own
-#                                          log; separate subsystem from the daemon)
+#  ADVANCED (A):
+#    V  Validate installation (also runs after install; detects which patch)
+#    S  Check SSH connection          D  Full diagnostic dump
+#    Older CarPlay-only patches and their tools:
+#    L  Install ilshyma HUD Patch v16   P  Install PURE KidMixer Patch
+#    X  Install legacy pre-v16 mod .so  K  KidMixer rollback (old path)
+#    F  Force-start the v16 speed daemon   T  Live-tail its log
+#    C  CarPlay HUD arrow debug log
 #
 #  Payloads in ./files:
 #    install.sh                        — KidMixer's own installer (LD_PRELOAD, NaviSupported=TRUE)
@@ -487,7 +475,7 @@ wait_for_ssh() {
   done
   printf "\r%-70s\n" " "
   warn "SSH did not come back within ${max_wait}s"
-  warn "once you've done USB → XSS → SSH, run option 5 (Validate) manually"
+  warn "once you've done USB → XSS → SSH, run Advanced → V (Validate)"
   return 1
 }
 
@@ -560,10 +548,10 @@ rollback() {
        && ! echo "$st" | grep -qE "PRELOAD_WCP=[1-9]"; then
       ok "CMU confirmed back to factory state"
     else
-      warn "CMU may still have residue — run option D for a full dump"
+      warn "CMU may still have residue — run Advanced → D for a full dump"
     fi
   else
-    warn "run option 9 once SSH is back to confirm manually"
+    warn "run Advanced → S once SSH is back to confirm manually"
   fi
 }
 
@@ -625,7 +613,7 @@ install_mod() {
     info "running automatic post-install validation..."
     validate
   else
-    warn "validation skipped — run option 5 once SSH is back"
+    warn "validation skipped — run Advanced → V once SSH is back"
   fi
 }
 
@@ -778,11 +766,11 @@ validate() {
               ssh_cmd_retry 2 'ps'
             } >> "$logfile"
             err "  full diagnostic + launcher log saved to: $logfile"
-            err "  try option D for a live verbose dump, or option F to retry manually"
+            err "  try Advanced → D for a live verbose dump, or Advanced → F to retry manually"
             problems=$((problems+1))
           fi
         else
-          err "  cannot auto-fix: daemon binary or launcher missing on CMU — re-run option 4"
+          err "  cannot auto-fix: daemon binary or launcher missing on CMU — re-run Advanced → L"
           problems=$((problems+1))
         fi
       fi
@@ -805,7 +793,7 @@ validate() {
   else
     err "═══ VALIDATION FOUND $problems PROBLEM(S) ═══"
     err "full diagnostic saved to: $logfile"
-    err "option D = verbose dump · option F = retry starting the daemon"
+    err "Advanced → D = verbose dump · Advanced → F = retry starting the daemon"
     return 1
   fi
 }
@@ -873,7 +861,7 @@ REMOTE
   if [ "$problems" -eq 0 ] && echo "$out" | grep -q '^OK'; then
     ok "all 4 shims loaded — start a CarPlay or Android Auto route and watch the HUD"
   else
-    err "$problems of 4 services not running or without their shim — wait a minute and re-run option 5; if it stays, run option D"
+    err "$problems of 4 services not running or without their shim — wait a minute and re-run Advanced → V; if it stays, run Advanced → D"
     return 1
   fi
 }
@@ -905,25 +893,40 @@ install_unified() {
   if wait_for_ssh 300; then
     validate_unified
   else
-    warn "validation skipped — once SSH is back, run option 5"
+    warn "validation skipped — once SSH is back, run Advanced → V"
   fi
 }
 
-uninstall_unified() {
-  hdr "Remove CarPlay + Android Auto patch (back to stock)"
-  printf "  This removes every HUD patch from the CMU and reboots. Continue? [y/N] "
+# Rollback for everyone (main menu 3): removes EVERY HUD patch this toolkit
+# ever installed — the unified CarPlay + Android Auto patch, ilshyma v16 and
+# its speed daemon, pure KidMixer, oem-aa-mod — and returns to stock.
+# Uses the unified uninstall.sh, which strips every libpatch LD_PRELOAD from
+# both sm configs, sets NaviSupported=FALSE and restores the AA XMLs.
+rollback_all() {
+  hdr "Rollback — remove every HUD patch, back to stock"
+  printf "  This removes all HUD patches from the CMU and reboots. Continue? [y/N] "
   read C
   case "$C" in y|Y) : ;; *) warn "cancelled"; return 0 ;; esac
   local f="$UNIFIED/uninstall.sh"
   require_local "$f" || return 1
+
+  info "1/3 · stopping the old speed daemon (v16), if any"
+  wipe_speed_mod
+
+  info "2/3 · removing the patches"
   push_verify "$f" /tmp/hud-mod-uninstall.sh "$(md5 -q "$f" 2>/dev/null || md5sum "$f" | awk '{print $1}')" || return 1
-  $SSH 'sh /tmp/hud-mod-uninstall.sh' 2>&1 | sed 's/^/      /'
+  $SSH 'sh /tmp/hud-mod-uninstall.sh; rm -rf /data_persist/cp-hud-mod /data_persist/splim_udpd_start.sh; sync' 2>&1 | sed 's/^/      /'
   ok "removed — rebooting the CMU"
   $SSH 'sync && reboot' 2>&1 | head -3 || true
+
+  info "3/3 · confirming after the reboot"
   if wait_for_ssh 300; then
-    local n
-    n=$($SSH "grep -c 'libpatch-' /jci/sm/sm.conf /jci/sm/sm_WCP.conf | awk -F: '{s+=\$2} END {print s}'" 2>/dev/null)
-    [ "${n:-1}" = 0 ] && ok "back to stock (no LD_PRELOAD lines left)" || warn "sm config still has ${n:-?} libpatch line(s) — run option D"
+    local out
+    out=$($SSH "echo \$(cat /jci/sm/sm.conf /jci/sm/sm_WCP.conf 2>/dev/null | grep -c libpatch-) \$(grep -oE '<name>NaviSupported</name><value>[A-Z]+' /etc/devmgr_config_master.xml | grep -oE '[A-Z]+\$')" 2>/dev/null)
+    case "$out" in
+      "0 FALSE") ok "back to stock: no patch preloads, NaviSupported=FALSE" ;;
+      *)         warn "unexpected state after rollback: preload lines + NaviSupported = '$out' — run Advanced → D" ;;
+    esac
   fi
 }
 
@@ -958,7 +961,7 @@ install_pure() {
     info "running automatic post-install validation..."
     validate
   else
-    warn "validation skipped — run option 5 once SSH is back"
+    warn "validation skipped — run Advanced → V once SSH is back"
   fi
 }
 
@@ -1010,7 +1013,7 @@ install_mod_legacy() {
     info "running automatic post-install validation..."
     validate
   else
-    warn "validation skipped — run option 5 once SSH is back"
+    warn "validation skipped — run Advanced → V once SSH is back"
   fi
 }
 
@@ -1245,55 +1248,64 @@ check() {
 # ============================================================================
 #  MENU
 # ============================================================================
+advanced_menu() {
+  while :; do
+    echo
+    printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BY" "$C_0"
+    printf "%s  ADVANCED — not needed for normal use%s\n" "$C_BY" "$C_0"
+    printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BY" "$C_0"
+    printf "  %sV%s   Validate installation  (also runs by itself after install)\n" "$C_BOLD" "$C_0"
+    printf "  %sS%s   Check SSH connection\n"                                       "$C_BOLD" "$C_0"
+    printf "  %sD%s   Full diagnostic dump  (verbose)\n"                            "$C_BOLD" "$C_0"
+    printf "\n  %sOlder CarPlay-only patches%s\n" "$C_DIM" "$C_0"
+    printf "  %sL%s   Install ilshyma HUD Patch v16  (CarPlay only)\n"             "$C_BOLD" "$C_0"
+    printf "  %sP%s   Install PURE KidMixer Patch  (CarPlay only, no speed-limit fix)\n" "$C_BOLD" "$C_0"
+    printf "  %sX%s   Install legacy pre-v16 mod .so  (speed-limit fallback)\n"    "$C_BOLD" "$C_0"
+    printf "  %sK%s   KidMixer rollback  (old v16 rollback path)\n"                "$C_BOLD" "$C_0"
+    printf "  %sF%s   Force-start v16 speed daemon\n"                              "$C_BOLD" "$C_0"
+    printf "  %sT%s   Live-tail v16 daemon log\n"                                  "$C_BOLD" "$C_0"
+    printf "  %sC%s   CarPlay HUD arrow debug log\n"                               "$C_BOLD" "$C_0"
+    printf "\n  %s0%s   Back\n" "$C_BOLD" "$C_0"
+    echo
+    printf "> "
+    read C
+    case "$C" in
+      V|v) check && validate ;;
+      S|s) check ;;
+      D|d) check && diagnose ;;
+      L|l) check && install_mod ;;
+      P|p) check && install_pure ;;
+      X|x) check && install_mod_legacy ;;
+      K|k) check && rollback ;;
+      F|f) check && force_start_daemon ;;
+      T|t) check && tail_log ;;
+      C|c) check && carplay_log ;;
+      0|q|Q|"") return 0 ;;
+      *) warn "invalid" ;;
+    esac
+  done
+}
+
 while :; do
   echo
-  printf "%s Mazda CMU CarPlay-HUD toolkit %s\n" "$C_BOLD" "$C_0"
-
-  printf "\n%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
-  printf "%s  MAIN FLOW  — do these once, in order%s\n" "$C_BG" "$C_0"
+  printf "%s Mazda CMU HUD toolkit — CarPlay + Android Auto %s\n" "$C_BOLD" "$C_0"
   printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
-  printf "  %s1%s   Create USB unlock stick\n"                                   "$C_BOLD" "$C_0"
-  printf "  %s2%s   Backup CMU (factory state)\n"                                "$C_BOLD" "$C_0"
-  printf "  %s3%s   Full rollback  (start clean — optional but recommended)\n"   "$C_BOLD" "$C_0"
-  printf "  %s4%s   Install ilshyma HUD Patch  %s★ recommended%s\n"              "$C_BOLD" "$C_0" "$C_BM" "$C_0"
-  printf "        auto-retries → waits for reboot → auto-validates\n"
-  printf "  %s5%s   Validate installation  (re-run any time)\n"                  "$C_BOLD" "$C_0"
-  printf "\n  %sU%s   Install CarPlay + Android Auto HUD Patch  %s★ new%s\n"          "$C_BOLD" "$C_0" "$C_BM" "$C_0"
-  printf "        one patch for both phones · speed limit from the stock nav\n"
-  printf "  %sR%s   Remove CarPlay + Android Auto patch  (back to stock)\n"       "$C_BOLD" "$C_0"
-
-  printf "\n%s══════════════════════════════════════════════════════════%s\n" "$C_BY" "$C_0"
-  printf "%s  ADVANCED / TROUBLESHOOTING  — not needed for normal use%s\n" "$C_BY" "$C_0"
-  printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BY" "$C_0"
-  printf "  %sP%s   Install PURE KidMixer Patch  (no speed-limit fix — known issue)\n" "$C_BOLD" "$C_0"
-  printf "  %sX%s   Install legacy pre-v16 mod .so  (speed-limit fallback, not an arrow fix)\n" "$C_BOLD" "$C_0"
-  printf "  %sD%s   Full diagnostic dump  (verbose)\n"                                "$C_BOLD" "$C_0"
-  printf "  %sF%s   Force-start speed daemon  (manual kick)\n"                        "$C_BOLD" "$C_0"
-  printf "  %sT%s   Live-tail daemon log\n"                                           "$C_BOLD" "$C_0"
-  printf "  %sC%s   CarPlay HUD arrow debug log  (why doesn't the arrow update?)\n"   "$C_BOLD" "$C_0"
-
-  printf "\n%s══════════════════════════════════════════════════════════%s\n" "$C_DIM" "$C_0"
-  printf "  %s9%s   Check SSH connection\n" "$C_BOLD" "$C_0"
-  printf "  %s0%s   Exit\n"                 "$C_BOLD" "$C_0"
+  printf "  %s1%s   Create USB stick  (SSH unlock + HUD patch on one stick)\n" "$C_BOLD" "$C_0"
+  printf "  %s2%s   Backup CMU\n"                                               "$C_BOLD" "$C_0"
+  printf "  %s3%s   Rollback  (remove every HUD patch, back to stock)\n"        "$C_BOLD" "$C_0"
+  printf "  %s4%s   Install HUD patch  (CarPlay + Android Auto)\n"              "$C_BOLD" "$C_0"
+  printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
+  printf "  %sA%s   Advanced options\n" "$C_BOLD" "$C_0"
+  printf "  %s0%s   Exit\n"             "$C_BOLD" "$C_0"
   echo
-
   printf "> "
   read C
   case "$C" in
     1) make_usb ;;
     2) check && backup ;;
-    3) check && rollback ;;
-    4) check && install_mod ;;
-    5) check && validate ;;
-    U|u) check && install_unified ;;
-    R|r) check && uninstall_unified ;;
-    P|p) check && install_pure ;;
-    X|x) check && install_mod_legacy ;;
-    D|d) check && diagnose ;;
-    F|f) check && force_start_daemon ;;
-    T|t) check && tail_log ;;
-    C|c) check && carplay_log ;;
-    9) check ;;
+    3) check && rollback_all ;;
+    4) check && install_unified ;;
+    A|a) advanced_menu ;;
     0|q|Q|"") exit 0 ;;
     *) warn "invalid" ;;
   esac

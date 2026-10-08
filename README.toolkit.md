@@ -48,14 +48,11 @@ mazda-hud-toolkit/
 
 | # | Action |
 |---|---|
-| **1** | **Create USB unlock stick** — formats a USB drive as FAT32/MZD and copies the MP3-XSS payload that gives you root+SSH on the CMU. Uses [mzd-connect-1-root](https://github.com/mzd-evo/mzd-connect-1-root) technique. Insert the stick in the head unit, tap any of the MP3 files, then tap **SSH** in the XSS overlay that appears — `sshd` starts on port 36000 with the key in this folder. |
-| **2** | **Backup CMU state** — SSH-fetches an archive of every file the installer touches (`sm.conf`, `sm_WCP.conf`, `devmgr_config_master.xml`, `blmjcicarplay.so`, `/data_persist/cp-hud-mod/`, `version.ini`) into `backups/YYYYMMDD_HHMMSS/`. Run this *before* installing anything. |
-| **3** | **Install PURE KidMixer Patch** — plain upstream build. Fast and safe, but on EU vehicles has a known issue: the HUD speed-limit slot shows ~80 km/h from a mile→km conversion the shim does on its own, and dies to `---` between OEM updates. Use this only if you want plain upstream behaviour or as a baseline before switching to option 4. |
-| **4** | **Install ilshyma HUD Patch** ★ recommended — three-step deploy: (a) vanilla `install.sh` writes the `LD_PRELOAD` line to `sm.conf` and sets `NaviSupported=TRUE`, (b) my patched `.so` (km/h fix + `read_splim` future-ts guard) is overlaid, (c) the v16 speed-mirror daemon + auto-launcher are copied. Ends with a reboot; wait ~2 min then re-establish SSH via the USB stick. |
-| **5** | **Full rollback** — kills my daemon, removes my extras, runs the vanilla `uninstall.sh` which restores `sm.conf` and `NaviSupported=FALSE` from `.bak_precphud` backups made by `install.sh`. Ends with a reboot. |
-| **U** | **Install CarPlay + Android Auto HUD Patch** ★ new — one patch for both phones: arrows + distance for CarPlay and Android Auto, speed-limit sign from the stock navigation for both (needs the nav SD card). Replaces any earlier HUD patch, backs up every edited file, reboots, waits for SSH and checks that all 4 shims loaded. Source: [mazda-carplay-hud `unified-carplay-aa`](https://github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa). The street-name line does not show on EU HUDs. |
-| **R** | **Remove CarPlay + Android Auto patch** — back to stock (all HUD patches removed), reboot. |
-| **9** | SSH health check |
+| **1** | **Create USB stick** — formats a USB drive (FAT32, label MZD) with the MP3-XSS unlock (SSH button) **and** the HUD patch (`hud-mod/`). In the car the on-screen menu offers **SSH**, **HUD+** (install), **HUD-** (remove) and **HUD?** (check), so the patch can be installed without a laptop. |
+| **2** | **Backup CMU** — SSH-fetches an archive of every file a patch touches into `backups/YYYYMMDD_HHMMSS/`. Run this before installing. |
+| **3** | **Rollback** — removes **every** HUD patch: CarPlay + Android Auto, ilshyma v16 with its speed daemon, KidMixer and oem-aa-mod. Returns to stock, reboots and confirms. |
+| **4** | **Install HUD patch (CarPlay + Android Auto)** — one patch for both phones: arrows and distance for CarPlay and Android Auto, and the speed-limit sign from the stock navigation (needs the nav SD card). Every file is md5-verified. The toolkit reboots the unit, waits for SSH and checks that all 4 parts loaded. Source: [mazda-carplay-hud `unified-carplay-aa`](https://github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa). The street-name line does not show on EU HUDs. |
+| **A** | **Advanced** — validate the installation, SSH check, diagnostic dump, and the older CarPlay-only patches (v16, pure KidMixer, legacy) with their tools. |
 
 
 ### Installing the HUD patch from the USB stick (no laptop)

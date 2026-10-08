@@ -5,28 +5,17 @@
 ::  Requires: OpenSSH Client (Win10 1803+ has it by default; on Win11 verify in
 ::  Settings > Optional Features), and PowerShell (bundled with every Windows).
 ::
-::  MAIN FLOW (1..5) — do these once, in order:
-::    1  Create USB unlock stick   — number-picker of removable drives
-::    2  Backup CMU                — safety net before touching anything
-::    3  Full rollback             — optional, force a clean starting point
-::    4  Install ilshyma HUD Patch — retries + md5-verifies every file, reboots,
-::                                     WAITS for SSH to come back, auto-validates
-::    5  Validate installation     — re-run any time; auto-fixes the daemon
+::  MAIN MENU -- everything a normal user needs:
+::    1  Create USB stick  -- MP3-XSS unlock (SSH button) + the HUD patch in
+::                            hud-mod\ (HUD+ / HUD- / HUD? buttons, no laptop)
+::    2  Backup CMU
+::    3  Rollback          -- removes EVERY HUD patch, back to stock
+::    4  Install HUD patch -- CarPlay + Android Auto (files\unified), md5-verified,
+::                            reboots, waits for SSH, validates the 4 shims
 ::
-::  U  Install CarPlay + Android Auto HUD Patch — unified package in files\unified,
-::       one installer for both phones, speed limit from the stock nav;
-::       md5-verifies, reboots, waits for SSH, checks the 4 shims
-::  R  Remove CarPlay + Android Auto patch — back to stock
-::  (option 5 detects the unified patch and checks it instead)
-::  The USB stick (option 1) also carries hud-mod\ for the XSS HUD+/HUD-/HUD? buttons.
-::
-::  ADVANCED (P/X/D/F/T/C) — not needed for normal use:
-::    P  Install PURE KidMixer Patch    (upstream, has speed-limit issue)
-::    X  Install legacy pre-v16 mod .so (fallback if v16's read_splim guard fires wrongly)
-::    D  Full diagnostic dump
-::    F  Force-start the speed daemon
-::    T  Live-tail the daemon log
-::    C  CarPlay HUD arrow debug log
+::  ADVANCED (A): V validate, S SSH check, D diagnostic dump; older CarPlay-only
+::  patches: L v16, P pure KidMixer, X legacy pre-v16, K KidMixer rollback,
+::  F/T v16 speed daemon start/log, C CarPlay arrow debug log.
 ::
 ::  Sync-parity with the macOS/Linux toolkit.sh: same variants, same md5s, same
 ::  auto-validate-after-reboot flow. Same-day fixes applied here: no `pkill -f`
@@ -70,32 +59,14 @@ icacls "%KEY%" /inheritance:r /grant:r "%USERNAME%":R >nul 2>&1
 :menu
 echo.
 echo ==========================================================
-echo  Mazda CMU CarPlay-HUD toolkit
+echo  Mazda CMU HUD toolkit -- CarPlay + Android Auto
 echo ==========================================================
-echo.
-echo   MAIN FLOW  ^-^-  do these once, in order
-echo   ----------------------------------------
-echo   1  Create USB unlock stick
-echo   2  Backup CMU (factory state)
-echo   3  Full rollback  (start clean ^-^- optional but recommended)
-echo   4  Install ilshyma HUD Patch  * recommended
-echo        auto-retries -^> waits for reboot -^> auto-validates
-echo   5  Validate installation  (re-run any time)
-echo.
-echo   U  Install CarPlay + Android Auto HUD Patch  * new
-echo        one patch for both phones, speed limit from the stock nav
-echo   R  Remove CarPlay + Android Auto patch  ^(back to stock^)
-echo.
-echo   ADVANCED / TROUBLESHOOTING
-echo   ----------------------------------------
-echo   P  Install PURE KidMixer Patch  (no speed-limit fix)
-echo   X  Install legacy pre-v16 mod .so  (speed-limit fallback)
-echo   D  Full diagnostic dump
-echo   F  Force-start speed daemon
-echo   T  Live-tail speed-daemon log
-echo   C  CarPlay HUD arrow debug log
-echo.
-echo   9  Check SSH connection
+echo   1  Create USB stick  ^(SSH unlock + HUD patch on one stick^)
+echo   2  Backup CMU
+echo   3  Rollback  ^(remove every HUD patch, back to stock^)
+echo   4  Install HUD patch  ^(CarPlay + Android Auto^)
+echo ==========================================================
+echo   A  Advanced options
 echo   0  Exit
 echo.
 set "C="
@@ -103,22 +74,50 @@ set /p "C=> "
 
 if /I "%C%"=="1" goto usb
 if /I "%C%"=="2" goto backup
-if /I "%C%"=="3" goto rollback
-if /I "%C%"=="4" goto install_mod
-if /I "%C%"=="5" goto validate
-if /I "%C%"=="U" goto install_unified
-if /I "%C%"=="R" goto uninstall_unified
-if /I "%C%"=="P" goto install_pure
-if /I "%C%"=="X" goto install_mod_legacy
-if /I "%C%"=="D" goto diagnose
-if /I "%C%"=="F" goto force_start_daemon
-if /I "%C%"=="T" goto tail_log
-if /I "%C%"=="C" goto carplay_log
-if /I "%C%"=="9" goto check
+if /I "%C%"=="3" goto rollback_all
+if /I "%C%"=="4" goto install_unified
+if /I "%C%"=="A" goto advanced
 if /I "%C%"=="0" exit /b 0
 if "%C%"=="" goto menu
 echo invalid.
 goto menu
+
+:advanced
+echo.
+echo ==========================================================
+echo  ADVANCED -- not needed for normal use
+echo ==========================================================
+echo   V  Validate installation  ^(also runs by itself after install^)
+echo   S  Check SSH connection
+echo   D  Full diagnostic dump
+echo.
+echo   Older CarPlay-only patches
+echo   L  Install ilshyma HUD Patch v16  ^(CarPlay only^)
+echo   P  Install PURE KidMixer Patch  ^(CarPlay only, no speed-limit fix^)
+echo   X  Install legacy pre-v16 mod .so  ^(speed-limit fallback^)
+echo   K  KidMixer rollback  ^(old v16 rollback path^)
+echo   F  Force-start v16 speed daemon
+echo   T  Live-tail v16 daemon log
+echo   C  CarPlay HUD arrow debug log
+echo.
+echo   0  Back
+echo.
+set "C="
+set /p "C=> "
+if /I "%C%"=="V" goto validate
+if /I "%C%"=="S" goto check
+if /I "%C%"=="D" goto diagnose
+if /I "%C%"=="L" goto install_mod
+if /I "%C%"=="P" goto install_pure
+if /I "%C%"=="X" goto install_mod_legacy
+if /I "%C%"=="K" goto rollback
+if /I "%C%"=="F" goto force_start_daemon
+if /I "%C%"=="T" goto tail_log
+if /I "%C%"=="C" goto carplay_log
+if /I "%C%"=="0" goto menu
+if "%C%"=="" goto menu
+echo invalid.
+goto advanced
 
 :: ===============================================================
 :: SSH check (menu 9 + used before every SSH-requiring action)
@@ -158,7 +157,7 @@ if not errorlevel 1 (
   if not errorlevel 1 (echo. & echo * SSH is back ^(after !WAIT_ELAPSED!s^) & exit /b 0)
 )
 set /a WAIT_ELAPSED+=5
-if !WAIT_ELAPSED! GEQ 300 (echo. & echo ! SSH did not come back within 300s. Run option 5 ^(Validate^) manually when back. & exit /b 1)
+if !WAIT_ELAPSED! GEQ 300 (echo. & echo ! SSH did not come back within 300s. Run Advanced -^> V ^(Validate^) when back. & exit /b 1)
 <nul set /p "=." >nul
 timeout /t 5 /nobreak >nul
 goto wait_for_ssh_loop
@@ -481,36 +480,43 @@ echo.
 if "!CHKRC!"=="0" (
   echo * all 4 shims loaded -- start a CarPlay or Android Auto route and watch the HUD
 ) else if "!CHKRC!"=="3" (
-  echo WARNING: the HUD patch is not installed -- use option U
+  echo WARNING: the HUD patch is not installed -- use option 4
 ) else (
-  echo WARNING: some parts are not active -- wait a minute and re-run option 5. If it stays, run option D.
+  echo WARNING: some parts are not active -- wait a minute and re-run Advanced -^> V. If it stays, run Advanced -^> D.
 )
 goto menu
 
 :: ===============================================================
-:: R) Remove CarPlay + Android Auto patch  (back to stock)
+:: 3) Rollback -- remove EVERY HUD patch (CarPlay + Android Auto, ilshyma v16 +
+:: speed daemon, KidMixer, oem-aa-mod) and return to stock. Uses the unified
+:: uninstall.sh: strips every libpatch LD_PRELOAD, NaviSupported=FALSE,
+:: restores the AA XMLs. Then removes the old v16 files and reboots.
 :: ===============================================================
-:uninstall_unified
+:rollback_all
 call :check_conn
 if errorlevel 1 goto menu
-echo. & echo === Remove CarPlay + Android Auto patch ^(back to stock^) ===
+echo. & echo === Rollback ^-^- remove every HUD patch, back to stock ===
 set "OK="
-set /p "OK=This removes every HUD patch from the CMU and reboots. Continue? [y/N] > "
+set /p "OK=This removes all HUD patches from the CMU and reboots. Continue? [y/N] > "
 if /I not "!OK!"=="y" (echo cancelled & goto menu)
 if not exist "%FILES%\unified\uninstall.sh" (echo files\unified\uninstall.sh is missing -- re-download the toolkit & goto menu)
+echo 1/3 . stopping the old speed daemon ^(v16^), if any
+call :wipe_speed_mod
+echo 2/3 . removing the patches
 call :md5_local "%FILES%\unified\uninstall.sh"
 set "PV_SRC=%FILES%\unified\uninstall.sh"
 set "PV_DST=/tmp/hud-mod-uninstall.sh"
 set "PV_WANT=!LMD5!"
 call :push_verify
 if errorlevel 1 (echo aborted -- uninstall.sh did not land correctly & goto menu)
-ssh %SSHOPTS% -p %PORT% %CMU% "sh /tmp/hud-mod-uninstall.sh"
+ssh %SSHOPTS% -p %PORT% %CMU% "sh /tmp/hud-mod-uninstall.sh; rm -rf /data_persist/cp-hud-mod /data_persist/splim_udpd_start.sh; sync"
 echo * removed -- rebooting the CMU
 ssh %SSHOPTS% -p %PORT% %CMU% "sync && reboot" >nul 2>&1
+echo 3/3 . confirming after the reboot
 call :wait_for_ssh
 if errorlevel 1 goto menu
-echo confirming stock state ^(expect 0^):
-ssh %SSHOPTS% -p %PORT% %CMU% "cat /jci/sm/sm.conf /jci/sm/sm_WCP.conf 2>/dev/null | grep -c libpatch-"
+echo expect: 0 ^(patch preloads^) and FALSE ^(NaviSupported^)
+ssh %SSHOPTS% -p %PORT% %CMU% "cat /jci/sm/sm.conf /jci/sm/sm_WCP.conf 2>/dev/null | grep -c libpatch-; grep -oE '<name>NaviSupported</name><value>[A-Z]+' /etc/devmgr_config_master.xml | grep -oE '[A-Z]+$'"
 goto menu
 
 :: ===============================================================
@@ -685,7 +691,7 @@ if /I "!V_VARIANT!"=="pure" (
         ) else (
           echo   x auto-fix FAILED -- daemon still not running
           echo   full log: !LOGFILE!
-          echo   try option D ^(diagnose^) or option F ^(force-start^)
+          echo   try Advanced -^> D ^(diagnose^) or Advanced -^> F ^(force-start^)
           set /a PROBLEMS+=1
         )
       ) else (echo x launcher missing -- re-run option 4 & set /a PROBLEMS+=1)
@@ -701,7 +707,7 @@ if !PROBLEMS!==0 (
 ) else (
   echo x ============ VALIDATION FOUND !PROBLEMS! PROBLEM^(S^) ============
   echo   full diagnostic saved: !LOGFILE!
-  echo   option D = verbose dump    option F = retry starting daemon
+  echo   Advanced -^> D = verbose dump    Advanced -^> F = retry starting daemon
 )
 goto menu
 
