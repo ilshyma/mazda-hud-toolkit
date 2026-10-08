@@ -15,8 +15,13 @@
 #
 #  The user sees one native dialog per run on the centre display, written to
 #  be photographed and sent for support: what happened in plain words, an
-#  error code (E1..E9), firmware + region, and what to do next. The same text
-#  goes to hud-mod/logs/RESULT.txt on the stick, next to the full log.
+#  error code (E1..E9), firmware + region, and what to do next.
+#  Every run gets its own folder on the stick, numbered because the CMU clock
+#  reads 1970 right after boot:
+#     hud-mod/logs/NNN_<action>_<date>/RESULT.txt   the text on the screen
+#                                      run.log      the full log
+#                                      system.txt   snapshot for remote analysis
+#     hud-mod/logs/LAST_RESULT.txt                  copy of the latest RESULT
 #  install/uninstall reboot on success only; status never reboots.
 # ============================================================================
 ACTION=${1:-}
@@ -57,7 +62,11 @@ mkdir "$LOCK" 2>/dev/null || exit 0          # another copy is already running
 mount -o rw,remount "$D" 2>/dev/null         # FAT stick may be mounted ro
 mkdir -p "$D/logs"
 STAMP=$(date +%Y%m%d-%H%M%S)
-LOG="$D/logs/$ACTION-$STAMP.log"
+n=$(ls -d "$D"/logs/[0-9][0-9][0-9]_* 2>/dev/null | sed 's#.*/\([0-9]*\)_.*#\1#' | sort -n | tail -1)
+n=$(echo "${n:-0}" | sed 's/^0*//'); n=$(( ${n:-0} + 1 )); n=$(printf '%03d' "$n" 2>/dev/null || echo "$n")
+RUN="$D/logs/${n}_${ACTION}_$STAMP"
+mkdir -p "$RUN"
+LOG="$RUN/run.log"
 exec > "$LOG" 2>&1
 
 VER=$(grep '^JCI_SW_VER=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/MAZ_CMU-150_//')
@@ -85,10 +94,36 @@ result() {
   [ -n "$advice" ] && text="$text\n$advice"
   text="$text\n$FACTS"
   case "$code" in OK|S0) ;; *) text="$text\n$PHOTO" ;; esac
-  printf '%b\n' "$text" > "$D/logs/RESULT.txt"
-  echo "full log: logs/$(basename "$LOG")" >> "$D/logs/RESULT.txt"
-  dialog "$text"
+  printf '%b\n' "$text" > "$RUN/RESULT.txt"
+  echo "folder on the USB: hud-mod/logs/$(basename "$RUN")/  (RESULT.txt, run.log, system.txt)" >> "$RUN/RESULT.txt"
+  cp "$RUN/RESULT.txt" "$D/logs/LAST_RESULT.txt"
+  snapshot
+  dialog "$text\nFolder: logs/$(basename "$RUN")"
 }
+# What I would otherwise look at over SSH, saved next to the log.
+snapshot() {
+  {
+    echo "=== $ACTION | $FACTS | uptime $(cut -d' ' -f1 /proc/uptime)"
+    echo "--- version.ini"; grep -E '^JCI_(SW_VER|SW_FLAVOR|SW_VER_PATCH|OEM_PART_NUMBER)=' /jci/version.ini
+    echo "--- sm configs (preloads + target services)"
+    for c in /jci/sm/sm.conf /jci/sm/sm_WCP.conf; do
+      echo "[$c]"; grep -nE 'LD_PRELOAD|LD_LIBRARY_PATH|name="(jciCARPLAY|jciAAPA|jcinavi|aap_service)"' "$c" 2>/dev/null
+    done
+    echo "--- board type"; /jci/scripts/get_board_type.sh >/dev/null 2>&1; echo "get_board_type.sh=$?"
+    echo "--- mod files"; ls -l /data_persist/oem-aa-mod/ /data_persist/cp-hud-mod/ /data_persist/hud-mod-backup/ 2>&1
+    echo "--- shims md5"; md5sum /data_persist/oem-aa-mod/*.so 2>&1
+    echo "--- libpatch.conf"; grep -v '^[[:space:]]*#' /data_persist/oem-aa-mod/libpatch.conf 2>/dev/null | grep .
+    echo "--- shim state"; for spec in $SHIMS; do echo "${spec##*:}: $(shim_state "$spec")"; done
+    echo "--- NaviSupported"; grep -o '<name>NaviSupported</name><value>[A-Z]*' /etc/devmgr_config_master.xml
+    echo "--- stock nav"; ls -l /jci/navi/svcjcinavi.so 2>&1; md5sum /jci/navi/svcjcinavi.so 2>&1
+    echo "--- hand-off state"; echo "hud_oem_speed=[$(cat /tmp/hud_oem_speed 2>/dev/null)] hud_carplay_active=[$(cat /tmp/hud_carplay_active 2>/dev/null)]"
+    echo "--- storage"; df -k /data_persist /tmp / 2>&1
+    echo "--- memory"; head -n 4 /proc/meminfo
+    echo "--- processes"; ps | grep -E 'jciCARPLAY|jciAAPA|jcinavi|aap_service|NNG|jci-linux' | grep -v grep
+    echo "--- dmesg (last 40)"; dmesg 2>/dev/null | tail -n 40
+  } > "$RUN/system.txt" 2>&1
+}
+
 finish() {  # 0 = reboot, 1 = keep the message up and stop, 2 = done (no reboot)
   sync
   case "$1" in
@@ -118,7 +153,7 @@ explain_install_failure() {
     *"sanity check"*|*"strip failed"*|*"expected 4 target"*)
       result E6 "The system config could not be patched safely." "${err}" "It was left untouched." ;;
     *)
-      result E9 "The installer stopped unexpectedly." "${err:-no error text, see the full log}" "Send the photo and logs/$(basename "$LOG") from the USB." ;;
+      result E9 "The installer stopped unexpectedly." "${err:-no error text, see the full log}" "Send the photo and this folder from the USB." ;;
   esac
 }
 
@@ -160,7 +195,7 @@ uninstall)
     result OK "HUD patch removed, back to stock. Rebooting in 10 s." "" ""
     finish 0
   fi
-  result U1 "Removal did not finish." "$(grep -m1 -iE 'fail|error' "$LOG" | cut -c1-90)" "Send the photo and logs/$(basename "$LOG") from the USB."
+  result U1 "Removal did not finish." "$(grep -m1 -iE 'fail|error' "$LOG" | cut -c1-90)" "Send the photo and this folder from the USB."
   finish 1 ;;
 
 status)

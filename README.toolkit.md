@@ -66,7 +66,7 @@ The stick from option 1 also carries the CarPlay + Android Auto HUD patch (`hud-
 - **HUD-** removes it, back to stock. Confirmed the same way.
 - **HUD?** checks that every part is active: CarPlay, Android Auto, Navi/speed.
 
-Every button ends with a message on the screen. If it starts with **ERROR** or **CHECK S1**, take a photo of it and send it. It carries an error code, the firmware version, the region and what to do next. The same text (`RESULT.txt`) and the full log are on the stick in `hud-mod/logs/`.
+Every button ends with a message on the screen. If it starts with **ERROR** or **CHECK S1**, take a photo of it and send it. It carries an error code, the firmware version, the region and what to do next. Every attempt gets its own numbered folder on the stick, `hud-mod/logs/001_install_<date>/`, with the same text (`RESULT.txt`), the full log (`run.log`) and a system snapshot (`system.txt`). Send that folder together with the photo.
 
 ## First-time procedure
 
