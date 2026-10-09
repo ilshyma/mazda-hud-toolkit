@@ -144,18 +144,76 @@
     }
 
     // CarPlay + Android Auto HUD patch from the stick's hud-mod/ folder.
-    function hudCmd(act) {
-        return 'for m in sda1 sdb1 sdc1 sdd1; do f=/tmp/mnt/$m/hud-mod/usb_run.sh; ' +
-               'if [ -f $f ]; then (sh $f ' + act + ' >/dev/null 2>&1 &); break; fi; done'
+    // The stick is /tmp/mnt/sdX1 or /mnt/sdX1 depending on the firmware (this
+    // menu itself loads from /mnt/sda1). Every copy leaves a line in
+    // /tmp/hud-usb-cgi.txt, so we can tell "the CGI never ran" from "the
+    // script failed"; if the stick is not found the panel is told so.
+    function hudCmd(act, token) {
+        return 'echo "' + act + ' ' + token + ' $(cut -d" " -f1 /proc/uptime) $(id -u)" >> /tmp/hud-usb-cgi.txt; F=; ' +
+               'for f in /tmp/mnt/sd*/hud-mod/usb_run.sh /mnt/sd*/hud-mod/usb_run.sh; do ' +
+               'if [ -f "$f" ]; then F=$f; break; fi; done; ' +
+               'if [ -n "$F" ]; then (sh "$F" ' + act + ' ' + token + ' </dev/null >/dev/null 2>&1 &); ' +
+               'else echo \'window.hudUsbStatus={id:"' + token + '",done:true,lines:["ERROR E0: hud-mod/usb_run.sh was not found on the USB stick.","Recreate the stick with the toolkit (menu 1)."]};\' > /tmp/hud-usb-status.js; fi'
+    }
+
+    // The runner writes its progress to /tmp/hud-usb-status.js (tagged with
+    // our token); load it every 1.5 s and print the lines here.
+    var hudPollTimer = null
+    function hudEsc(t) {
+        return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    }
+    function hudPoll(view, token, box) {
+        var started = new Date().getTime(), shown = 0, tick = 0, gotAny = false
+        var paths = ['../../../tmp/hud-usb-status.js', 'file:///tmp/hud-usb-status.js']
+        if (hudPollTimer) clearInterval(hudPollTimer)
+        hudPollTimer = setInterval(function () {
+            tick++
+            var st = window.hudUsbStatus
+            if (st && st.id === token) {
+                gotAny = true
+                for (; shown < st.lines.length; shown++) {
+                    var l = st.lines[shown]
+                    var bad = /ERROR|CHECK S|NOT loaded|not running/.test(l)
+                    xssLog(box, (bad ? '<b style="color:#ff5252">' : '') + hudEsc(l) + (bad ? '</b>' : ''))
+                }
+                if (st.done) {
+                    clearInterval(hudPollTimer); hudPollTimer = null
+                    xssLog(box, '<b>--- finished ---</b>')
+                    return
+                }
+            }
+            var secs = Math.round((new Date().getTime() - started) / 1000)
+            if (!gotAny && secs >= 15) {
+                clearInterval(hudPollTimer); hudPollTimer = null
+                xssLog(box, '<b style="color:#ff5252">NO ANSWER from the unit after 15 s: the command did not start.</b>')
+                xssLog(box, 'If you just used another HUD button, wait 1 minute and try again.')
+                xssLog(box, 'Otherwise take a photo of this screen and send it to the author.')
+                return
+            }
+            if (gotAny && secs >= 180) {
+                clearInterval(hudPollTimer); hudPollTimer = null
+                xssLog(box, 'No more progress for a long time. Photo this screen and send it.')
+                return
+            }
+            var sc = document.createElement('script')
+            sc.src = paths[tick % paths.length]
+            sc.onload = sc.onerror = function () { if (sc.parentNode) sc.parentNode.removeChild(sc) }
+            document.getElementsByTagName('head')[0].appendChild(sc)
+        }, 1500)
     }
 
     function hudRun(view, act, title, note) {
+        var token = act + new Date().getTime() + Math.floor(Math.random() * 1000)
         xssLog(view, '<b>=== ' + title + ' ===</b>')
-        xssLog(view, 'Started. A message window will appear on the screen in a few seconds.')
+        xssLog(view, 'Sent to the unit. Progress appears below, and a message window on the screen.')
         if (note) xssLog(view, note)
         xssLog(view, 'If it says ERROR: take a photo of it and send it to the author.')
-        xssLog(view, 'The same text and the full log are on the USB in hud-mod/logs/.')
-        fireCmd(hudCmd(act))
+        xssLog(view, 'Logs: hud-mod/logs/ on the USB stick.')
+        var box = document.createElement('div')
+        view.appendChild(box)
+        window.hudUsbStatus = null
+        fireCmd(hudCmd(act, token))
+        hudPoll(view, token, box)
     }
 
     // Install / remove change the system and reboot, so they need a second tap.

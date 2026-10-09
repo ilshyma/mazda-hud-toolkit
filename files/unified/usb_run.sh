@@ -6,7 +6,10 @@
 #  uninstall.sh, the shims, ...). The toolkit's USB unlock stick starts it
 #  from its on-screen XSS menu (buttons HUD+ / HUD- / HUD?) through the same
 #  CGI its SSH button uses:
-#     sh /tmp/mnt/sdX1/hud-mod/usb_run.sh install|uninstall|status
+#     sh <stick>/hud-mod/usb_run.sh install|uninstall|status [TOKEN]
+#  (the stick is /tmp/mnt/sdX1 or /mnt/sdX1 depending on the firmware).
+#  TOKEN tags /tmp/hud-usb-status.js, which the panel polls to print the
+#  progress itself, so the user sees something even with no native dialog.
 #  "check" is the console variant of status for the toolkits over SSH: prints
 #  one OK/FAIL/MISS line per shim, no dialog, no lock, no log; exit 0 = all
 #  loaded, 1 = problem, 3 = not installed.
@@ -25,6 +28,7 @@
 #  install/uninstall reboot on success only; status never reboots.
 # ============================================================================
 ACTION=${1:-}
+TOKEN=$(printf '%s' "${2:-}" | tr -cd 'A-Za-z0-9' | cut -c1-40)  # the panel's run id
 D=$(cd "$(dirname "$0")" && pwd)
 LOCK=/tmp/hud-usb.lock
 TITLE="HUD patch: CarPlay + Android Auto"
@@ -57,29 +61,80 @@ case "$ACTION" in
     exit $rc ;;
   *) echo "usage: $0 install|uninstall|status|check"; exit 2 ;;
 esac
-mkdir "$LOCK" 2>/dev/null || exit 0          # another copy is already running
+# --- one copy only ----------------------------------------------------------
+# The lock holds the owner's pid, so a run that died (the unit kept /tmp) does
+# not block every later tap until the next reboot.
+take_lock() {
+  if mkdir "$LOCK" 2>/dev/null; then echo $$ > "$LOCK/pid"; return 0; fi
+  old=$(cat "$LOCK/pid" 2>/dev/null)
+  if [ -z "$old" ]; then                       # a twin started this instant
+    sleep 2; old=$(cat "$LOCK/pid" 2>/dev/null)
+  fi
+  if [ -n "$old" ] && kill -0 "$old" 2>/dev/null; then return 1; fi
+  rm -rf "$LOCK"
+  mkdir "$LOCK" 2>/dev/null || return 1
+  echo $$ > "$LOCK/pid"
+}
+take_lock || exit 0
+trap 'rm -rf "$LOCK"' EXIT
 
-mount -o rw,remount "$D" 2>/dev/null         # FAT stick may be mounted ro
-mkdir -p "$D/logs"
-STAMP=$(date +%Y%m%d-%H%M%S)
-n=$(ls -d "$D"/logs/[0-9][0-9][0-9]_* 2>/dev/null | sed 's#.*/\([0-9]*\)_.*#\1#' | sort -n | tail -1)
-n=$(echo "${n:-0}" | sed 's/^0*//'); n=$(( ${n:-0} + 1 )); n=$(printf '%03d' "$n" 2>/dev/null || echo "$n")
-RUN="$D/logs/${n}_${ACTION}_$STAMP"
-mkdir -p "$RUN"
-LOG="$RUN/run.log"
-exec > "$LOG" 2>&1
+# --- live progress for the XSS panel ---------------------------------------
+# /tmp is always writable; the panel polls this file and prints the lines,
+# so even if the native dialog cannot be shown the user sees what happens.
+STATUS_TXT=/tmp/hud-usb-status.txt
+STATUS_JS=/tmp/hud-usb-status.js
+RUNID=${TOKEN:-$ACTION}
+PANEL_DONE=false
+: > "$STATUS_TXT"
+panel() {  # line — append to the panel; panel "" just republishes
+  [ -n "$1" ] && printf '%s\n' "$1" >> "$STATUS_TXT"
+  {
+    printf 'window.hudUsbStatus={id:"%s",action:"%s",done:%s,lines:[' "$RUNID" "$ACTION" "$PANEL_DONE"
+    sed 's/\\/\\\\/g; s/"/\\"/g; s/.*/"&",/' "$STATUS_TXT" | tr -d '\n' | sed 's/,$//'
+    printf ']};\n'
+  } > "$STATUS_JS.tmp" && mv "$STATUS_JS.tmp" "$STATUS_JS"
+}
+panel "The unit received the command: $ACTION (from $D, user $(id -un 2>/dev/null || id -u))"
 
-VER=$(grep '^JCI_SW_VER=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/MAZ_CMU-150_//')
-FLAVOR=$(grep '^JCI_SW_FLAVOR=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/cmu150_//')
-FREE=$(df -k /data_persist 2>/dev/null | awk 'NR==2 {print int($4/1024)}')
-FACTS="FW ${VER:-?} ${FLAVOR:-?} | free ${FREE:-?} MB | $STAMP"
-echo "=== hud-mod USB $ACTION | $FACTS | uptime $(cut -d' ' -f1 /proc/uptime) | from $D"
-
-dialog() {  # text — replaces whatever dialog is showing
+dialog() {  # text — replaces whatever dialog is showing; mirrored to the panel
+  printf '%b\n' "$1" | while IFS= read -r l; do panel "$l"; done
   killall -q jci-dialog 2>/dev/null
   [ -x "$DLG" ] && "$DLG" --info --title="$TITLE" --text="$1" --no-cancel &
   echo "[screen] $1"
 }
+case "$ACTION" in
+  install)   dialog "Installing the HUD patch...\nDo not remove the USB drive." ;;
+  uninstall) dialog "Removing the HUD patch...\nDo not remove the USB drive." ;;
+  status)    dialog "Checking the HUD patch..." ;;
+esac
+
+VER=$(grep '^JCI_SW_VER=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/MAZ_CMU-150_//')
+FLAVOR=$(grep '^JCI_SW_FLAVOR=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/cmu150_//')
+FREE=$(df -k /data_persist 2>/dev/null | awk 'NR==2 {print int($4/1024)}')
+STAMP=$(date +%Y%m%d-%H%M%S)
+FACTS="FW ${VER:-?} ${FLAVOR:-?} | free ${FREE:-?} MB | $STAMP"
+
+# --- logs on the stick ------------------------------------------------------
+# The media player mounts the stick read-only: remount its MOUNT POINT (not a
+# folder inside it) read-write. If that is impossible, keep the logs in /tmp
+# and say so on screen.
+MNT=$(awk -v d="$D/" 'index(d, $2 "/") == 1 && length($2) > length(m) { m = $2 } END { print m }' /proc/mounts 2>/dev/null)
+[ -n "$MNT" ] && [ "$MNT" != / ] && mount -o remount,rw "$MNT" 2>/dev/null
+LOGBASE="$D/logs"; LOGNOTE=""
+if ! { mkdir -p "$LOGBASE" && touch "$LOGBASE/.w" && rm -f "$LOGBASE/.w"; } 2>/dev/null; then
+  LOGBASE=/tmp/hud-mod-logs; LOGNOTE="USB is read-only: logs kept on the unit in $LOGBASE"
+  mkdir -p "$LOGBASE"
+  panel "$LOGNOTE"
+fi
+n=$(ls -d "$LOGBASE"/[0-9][0-9][0-9]_* 2>/dev/null | sed 's#.*/\([0-9]*\)_.*#\1#' | sort -n | tail -1)
+n=$(echo "${n:-0}" | sed 's/^0*//'); n=$(( ${n:-0} + 1 )); n=$(printf '%03d' "$n" 2>/dev/null || echo "$n")
+RUN="$LOGBASE/${n}_${ACTION}_$STAMP"
+mkdir -p "$RUN"
+LOG="$RUN/run.log"
+exec > "$LOG" 2>&1
+echo "=== hud-mod USB $ACTION | $FACTS | uptime $(cut -d' ' -f1 /proc/uptime) | from $D | mount $MNT"
+[ -n "$LOGNOTE" ] && echo "NOTE: $LOGNOTE"
+panel "Log: $RUN"
 # result CODE  HEADLINE  DETAIL  ADVICE  — the screen meant to be photographed.
 # CODE: OK, E*/U* (errors), S0 (check: not installed), S1 (check: problem).
 result() {
@@ -94,11 +149,13 @@ result() {
   [ -n "$advice" ] && text="$text\n$advice"
   text="$text\n$FACTS"
   case "$code" in OK|S0) ;; *) text="$text\n$PHOTO" ;; esac
+  [ -n "$LOGNOTE" ] && text="$text\n$LOGNOTE"
   printf '%b\n' "$text" > "$RUN/RESULT.txt"
-  echo "folder on the USB: hud-mod/logs/$(basename "$RUN")/  (RESULT.txt, run.log, system.txt)" >> "$RUN/RESULT.txt"
-  cp "$RUN/RESULT.txt" "$D/logs/LAST_RESULT.txt"
+  echo "log folder: $RUN/  (RESULT.txt, run.log, system.txt)" >> "$RUN/RESULT.txt"
+  cp "$RUN/RESULT.txt" "$LOGBASE/LAST_RESULT.txt" 2>/dev/null
   snapshot
-  dialog "$text\nFolder: logs/$(basename "$RUN")"
+  dialog "$text\nFolder: $(basename "$LOGBASE")/$(basename "$RUN")"
+  PANEL_DONE=true; panel ""
 }
 # What I would otherwise look at over SSH, saved next to the log.
 snapshot() {
@@ -131,8 +188,7 @@ finish() {  # 0 = reboot, 1 = keep the message up and stop, 2 = done (no reboot)
     1) sleep 45; killall -q jci-dialog 2>/dev/null ;;
     2) sleep 30; killall -q jci-dialog 2>/dev/null ;;
   esac
-  rmdir "$LOCK" 2>/dev/null
-  exit "$1"
+  exit "$1"   # the EXIT trap drops the lock
 }
 
 # Turn install.sh's last ERROR line into a code + plain explanation + advice.
@@ -162,7 +218,6 @@ echo 1 > "/sys/class/gpio/Watchdog Disable/value" 2>/dev/null
 
 case "$ACTION" in
 install)
-  dialog "Installing the HUD patch...\nDo not remove the USB drive."
   # the shims must be exactly the released ones (a half-copied stick is common)
   bad=""
   [ -f "$D/MD5SUMS" ] || bad=" MD5SUMS"
@@ -189,7 +244,6 @@ install)
   finish 1 ;;
 
 uninstall)
-  dialog "Removing the HUD patch...\nDo not remove the USB drive."
   sh "$D/uninstall.sh"
   if grep -q 'DONE\. Reboot' "$LOG"; then
     result OK "HUD patch removed, back to stock. Rebooting in 10 s." "" ""
