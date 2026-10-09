@@ -202,9 +202,17 @@ make_usb() {
 
   # The CarPlay + Android Auto HUD patch rides on the same stick: the XSS
   # menu's HUD+ / HUD- / HUD? buttons run hud-mod/usb_run.sh from it.
+  # The 'h' dispatcher lives at the stick root — each HUD button fires a
+  # short "sh /mnt/sda1/h <action> <token>" through the CGI (the CGI has a
+  # URL-length limit, so the command must be SSH-sized).
   if [ -f "$UNIFIED/usb_run.sh" ]; then
     ( export COPYFILE_DISABLE=1 && mkdir -p /Volumes/MZD/hud-mod && cp "$UNIFIED/"* /Volumes/MZD/hud-mod/ ) || {
       err "copy of hud-mod failed"; return 1;
+    }
+  fi
+  if [ -f "$FILES/usb_unlock/h" ]; then
+    ( export COPYFILE_DISABLE=1 && cp "$FILES/usb_unlock/h" /Volumes/MZD/h ) || {
+      err "copy of h dispatcher failed"; return 1;
     }
   fi
 

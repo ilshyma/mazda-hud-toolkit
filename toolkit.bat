@@ -229,6 +229,12 @@ if exist "%FILES%\unified\usb_run.sh" (
   if errorlevel 1 (echo hud-mod on the stick does not match the toolkit -- format the stick again and re-run option 1 & goto menu)
   echo * hud-mod verified
 )
+:: The 'h' dispatcher lives at the stick root; the HUD buttons fire a short
+:: "sh /mnt/sda1/h <action> <token>" via the CGI (URL-length limit).
+if exist "%FILES%\usb_unlock\h" (
+  copy /Y "%FILES%\usb_unlock\h" "!TARGET!\h" >nul
+  if errorlevel 1 (echo copy of h dispatcher failed ^& goto menu)
+)
 
 echo done. Safely eject and take to the car.
 echo In CMU: Media -^> USB -^> tap any mp3 ^(or let it autoplay^) -^> the XSS menu appears.

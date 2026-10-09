@@ -1,0 +1,13 @@
+#!/bin/sh
+# Tiny dispatcher for the HUD buttons (called by the XSS panel via CGI).
+# Usage: sh /tmp/mnt/sda1/h <action> [token]
+# Finds hud-mod/usb_run.sh on the same stick and runs it in the background.
+D=$(cd "$(dirname "$0")" && pwd)
+A=${1:-status}; T=${2:-}
+for p in "$D/hud-mod/usb_run.sh" "$(echo "$D" | sed 's|/tmp/mnt|/mnt|')/hud-mod/usb_run.sh" "$(echo "$D" | sed 's|/mnt|/tmp/mnt|')/hud-mod/usb_run.sh"; do
+  [ -f "$p" ] && exec sh "$p" "$A" "$T"
+done
+# not found — write a status for the panel to pick up
+cat > /tmp/hud-usb-status.js <<EOF
+window.hudUsbStatus={id:"${T:-nf}",done:true,lines:["ERROR E0: hud-mod/usb_run.sh not found.","Recreate the stick with the toolkit."]};
+EOF

@@ -144,16 +144,18 @@
     }
 
     // CarPlay + Android Auto HUD patch from the stick's hud-mod/ folder.
-    // The stick is /tmp/mnt/sdX1 or /mnt/sdX1 depending on the firmware (this
-    // menu itself loads from /mnt/sda1). Every copy leaves a line in
-    // /tmp/hud-usb-cgi.txt, so we can tell "the CGI never ran" from "the
-    // script failed"; if the stick is not found the panel is told so.
-    function hudCmd(act, token) {
-        return 'echo "' + act + ' ' + token + ' $(cut -d" " -f1 /proc/uptime) $(id -u)" >> /tmp/hud-usb-cgi.txt; F=; ' +
-               'for f in /tmp/mnt/sd*/hud-mod/usb_run.sh /mnt/sd*/hud-mod/usb_run.sh; do ' +
-               'if [ -f "$f" ]; then F=$f; break; fi; done; ' +
-               'if [ -n "$F" ]; then (sh "$F" ' + act + ' ' + token + ' </dev/null >/dev/null 2>&1 &); ' +
-               'else echo \'window.hudUsbStatus={id:"' + token + '",done:true,lines:["ERROR E0: hud-mod/usb_run.sh was not found on the USB stick.","Recreate the stick with the toolkit (menu 1)."]};\' > /tmp/hud-usb-status.js; fi'
+    // The stick is /tmp/mnt/sdX1 or /mnt/sdX1 depending on the firmware.
+    // The CGI /cgi-bin/cmdProc has a URL-length limit, so the shell command
+    // must be SHORT — the SSH button (71 chars) works, a 400+ char inline
+    // loop does not. We call the tiny dispatcher 'h' at the stick root
+    // (same pattern as 's' for SSH), trying every known mount point.
+    // usb_run.sh takes a lock, so only the first one that finds the script runs.
+    var hudMounts = ['/tmp/mnt/sda1', '/tmp/mnt/sdb1', '/tmp/mnt/sdc1', '/tmp/mnt/sdd1',
+                     '/mnt/sda1', '/mnt/sdb1', '/mnt/sdc1', '/mnt/sdd1']
+    function hudFireAll(act, token) {
+        for (var i = 0; i < hudMounts.length; i++) {
+            fireCmd('sh ' + hudMounts[i] + '/h ' + act + ' ' + token)
+        }
     }
 
     // The runner writes its progress to /tmp/hud-usb-status.js (tagged with
@@ -212,7 +214,7 @@
         var box = document.createElement('div')
         view.appendChild(box)
         window.hudUsbStatus = null
-        fireCmd(hudCmd(act, token))
+        hudFireAll(act, token)
         hudPoll(view, token, box)
     }
 
