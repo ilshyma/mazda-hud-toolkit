@@ -187,9 +187,9 @@
             var secs = Math.round((new Date().getTime() - started) / 1000)
             if (!gotAny && secs >= 15) {
                 clearInterval(hudPollTimer); hudPollTimer = null
-                xssLog(box, '<b style="color:#ff5252">NO ANSWER from the unit after 15 s: the command did not start.</b>')
-                xssLog(box, 'If you just used another HUD button, wait 1 minute and try again.')
-                xssLog(box, 'Otherwise take a photo of this screen and send it to the author.')
+                xssLog(box, '<b style="color:#ff5252">NO ANSWER from the unit after 15 s.</b>')
+                xssLog(box, '<b>Eject the USB stick and re-insert it</b> — a dialog will appear on screen.')
+                xssLog(box, '(The .up auto-trigger is more reliable than these buttons.)')
                 return
             }
             if (gotAny && secs >= 180) {
@@ -233,13 +233,13 @@
     }
 
     function hudInstall(view) {
-        hudConfirm(view, 'install', 'Install HUD patch', 'Do not remove the USB stick until the unit has restarted.')
+        hudConfirm(view, 'install', 'Install HUD patch', 'Do not remove the USB stick until the unit has restarted.<br><i>If no answer: eject USB, re-insert &mdash; a dialog will appear.</i>')
     }
     function hudUninstall(view) {
-        hudConfirm(view, 'uninstall', 'Remove HUD patch', 'This returns the HUD to stock.')
+        hudConfirm(view, 'uninstall', 'Remove HUD patch', 'This returns the HUD to stock.<br><i>If no answer: eject USB, re-insert &mdash; a dialog will appear.</i>')
     }
     function hudStatus(view) {
-        hudRun(view, 'status', 'Check HUD patch', 'Each part (CarPlay, Android Auto, Navi/speed) shows OK or the problem.')
+        hudRun(view, 'status', 'Check HUD patch', 'Each part (CarPlay, Android Auto, Navi/speed) shows OK or the problem.<br><i>If no answer: eject USB, re-insert &mdash; a dialog will appear.</i>')
     }
 
     function probeEnv(view) {

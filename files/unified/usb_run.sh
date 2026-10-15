@@ -3,9 +3,12 @@
 #  USB install / uninstall / check of the unified HUD patch — no laptop needed.
 #
 #  Lives on the USB stick in hud-mod/ next to the package (install.sh,
-#  uninstall.sh, the shims, ...). The toolkit's USB unlock stick starts it
-#  from its on-screen XSS menu (buttons HUD+ / HUD- / HUD?) through the same
-#  CGI its SSH button uses:
+#  uninstall.sh, the shims, ...). Two execution paths:
+#  1. .up injection (CVE-2024-8359): jci-autoupdate triggers the reflash
+#     scanner; crafted .up filenames inject "sh .../t" via awk sprintf →
+#     the 't' trampoline calls tweaks.sh → jci-dialog → this script.
+#  2. XSS panel fallback: buttons HUD+ / HUD- / HUD? fire CGI commands that
+#     call the 'h' dispatcher → this script.
 #     sh <stick>/hud-mod/usb_run.sh install|uninstall|status [TOKEN]
 #  (the stick is /tmp/mnt/sdX1 or /mnt/sdX1 depending on the firmware).
 #  TOKEN tags /tmp/hud-usb-status.js, which the panel polls to print the
@@ -184,7 +187,14 @@ snapshot() {
 finish() {  # 0 = reboot, 1 = keep the message up and stop, 2 = done (no reboot)
   sync
   case "$1" in
-    0) sleep 10; killall -q jci-dialog 2>/dev/null; sync; reboot ;;
+    0) sleep 5
+       for i in 5 4 3 2 1; do
+         killall -q jci-dialog 2>/dev/null
+         [ -x "$DLG" ] && "$DLG" --info --title="$TITLE" \
+           --text="Rebooting in ${i}s...\nDo not turn off the ignition." --no-cancel &
+         sleep 1
+       done
+       killall -q jci-dialog 2>/dev/null; sync; reboot ;;
     1) sleep 45; killall -q jci-dialog 2>/dev/null ;;
     2) sleep 30; killall -q jci-dialog 2>/dev/null ;;
   esac
@@ -218,7 +228,7 @@ echo 1 > "/sys/class/gpio/Watchdog Disable/value" 2>/dev/null
 
 case "$ACTION" in
 install)
-  # the shims must be exactly the released ones (a half-copied stick is common)
+  dialog "[1/3]  Verifying USB files...\n[2/3]  Install patch\n[3/3]  Reboot"
   bad=""
   [ -f "$D/MD5SUMS" ] || bad=" MD5SUMS"
   while read -r sum name; do
@@ -230,6 +240,7 @@ install)
     result E1 "Damaged file(s) on the USB stick:" "$bad" "Copy the stick again with the toolkit. Nothing was changed."
     finish 1
   fi
+  dialog "[1/3]  USB files OK\n[2/3]  Installing patch...\n[3/3]  Reboot"
   sh "$D/install.sh"
   if grep -q 'DONE\. Reboot' "$LOG"; then
     # one of the two AA XMLs being skipped is normal (they target different
@@ -237,29 +248,55 @@ install)
     warn=$(grep 'WARNING' "$LOG" | grep -v 'fine if the other XML installed' | head -1 | sed 's/.*WARNING: //' | cut -c1-90)
     grep -q 'installed /etc/aap_system_attributes' "$LOG" || \
       warn="Android Auto XML not installed: AA HUD guidance may not work"
-    result OK "HUD patch installed. Rebooting in 10 s." "${warn:+Note: $warn}" ""
+    dialog "[1/3]  USB files OK\n[2/3]  Patch installed\n[3/3]  Rebooting..."
+    result OK "HUD patch installed." "${warn:+Note: $warn}" "Screen will go dark for ~2 min — this is normal."
     finish 0
   fi
   explain_install_failure
   finish 1 ;;
 
 uninstall)
+  dialog "[1/2]  Removing patch...\n[2/2]  Reboot"
   sh "$D/uninstall.sh"
   if grep -q 'DONE\. Reboot' "$LOG"; then
-    result OK "HUD patch removed, back to stock. Rebooting in 10 s." "" ""
+    dialog "[1/2]  Patch removed\n[2/2]  Rebooting..."
+    result OK "HUD patch removed, back to stock." "" "Screen will go dark for ~2 min — this is normal."
     finish 0
   fi
   result U1 "Removal did not finish." "$(grep -m1 -iE 'fail|error' "$LOG" | cut -c1-90)" "Send the photo and this folder from the USB."
   finish 1 ;;
 
 status)
-  # What a user can photograph when "it does not work": is each shim loaded?
+  # At uptime <90s shims may not appear in /proc/PID/maps yet (confirmed on
+  # v74: uptime 42s → "3 parts not active", next morning all OK).  Wait with
+  # a countdown stepper so the user knows what is happening and how long.
+  MIN_UPTIME=90
+  up=$(cut -d' ' -f1 /proc/uptime | cut -d. -f1)
+  wait_secs=0
+  case "$up" in ''|*[!0-9]*) ;; *) wait_secs=$((MIN_UPTIME - up)); esac
+  [ "$wait_secs" -lt 0 ] 2>/dev/null && wait_secs=0
+
+  if [ "$wait_secs" -gt 0 ]; then
+    panel "Uptime ${up}s < ${MIN_UPTIME}s — waiting ${wait_secs}s for services"
+    while [ "$wait_secs" -gt 0 ]; do
+      dialog "[1/3]  Waiting for services... ${wait_secs}s\n[2/3]  Check patch\n[3/3]  Results"
+      step=5; [ "$wait_secs" -lt 5 ] && step=$wait_secs
+      sleep "$step"
+      wait_secs=$((wait_secs - step))
+    done
+  fi
+
+  dialog "[1/3]  Services ready\n[2/3]  Checking patch...\n[3/3]  Results"
+
   lines=""; bad=0
   for spec in $SHIMS; do
     st=$(shim_state "$spec")
     [ "$st" = OK ] || bad=$((bad + 1))
     lines="${lines:+$lines\n}${spec##*:}: $st"
   done
+
+  dialog "[1/3]  Services ready\n[2/3]  Patch checked\n[3/3]  Showing results..."
+
   installed=$([ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ] && echo yes || echo no)
   speed=$(cat /tmp/hud_oem_speed 2>/dev/null || echo none)
   if [ "$installed" = no ]; then

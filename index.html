@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mazda CarPlay HUD Toolkit</title>
-<meta name="description" content="Apple CarPlay turn-by-turn navigation on the instrument-cluster HUD for Mazda CMU150 - with correct km/h speed limit for the European market.">
+<title>Mazda CarPlay + AA HUD Toolkit</title>
+<meta name="description" content="Apple CarPlay and Android Auto turn-by-turn navigation on the instrument-cluster HUD for Mazda CMU150 — USB-only install, no SSH needed.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Mono:wght@400;500&display=swap">
@@ -264,6 +264,11 @@ li { margin-bottom: 6px; }
   border-radius: 999px;
   white-space: nowrap;
 }
+.pill.pill-dim {
+  color: var(--text-mute);
+  background: color-mix(in srgb, var(--text-mute) 10%, transparent);
+  border-color: color-mix(in srgb, var(--text-mute) 30%, transparent);
+}
 
 /* Steps */
 .steps { counter-reset: step; display: flex; flex-direction: column; gap: 14px; }
@@ -408,49 +413,37 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · FW 74.00.324 · EU</div>
-  <h1>Apple CarPlay <span class="accent">turn-by-turn</span> on the Mazda HUD.</h1>
-  <p class="lede">A polished, tested build of KidMixer's community shim with a one-line source patch that fixes the km/h indicator for European vehicles - and a small daemon that keeps the speed slot alive between OEM updates.</p>
-  <p class="sublede"><strong>Fits:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - EU market with CMU150 firmware 74.00.324.</p>
+  <h1>CarPlay + Android Auto <span class="accent">turn-by-turn</span> on the Mazda HUD.</h1>
+  <p class="lede">One USB stick — insert it, tap Install on the screen, done. No laptop connection, no SSH, no Wi-Fi. A tested build with the km/h fix for European vehicles and a daemon that keeps the speed-limit slot alive.</p>
+  <p class="sublede"><strong>Fits:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) — EU market with CMU150 firmware 74.00.324.</p>
   <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Download toolkit <span class="arrow">→</span></a>
-  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+  <span class="cta-note">macOS · Linux · Windows 10+</span>
   <div class="hero-donate"><a class="cta cta-secondary cta-sm" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Send a donation <span class="arrow">→</span></a></div>
 </div></div>
 
 <section><div class="wrap">
-  <h2><span class="num">01</span>Fast install manual</h2>
-  <p class="sublede">The shortest path from a stock CMU to a validated install.</p>
+  <h2><span class="num">01</span>USB install — 3 steps</h2>
+  <p class="sublede">Everything happens on the car screen. No Wi-Fi, no SSH, no laptop connected to the head unit.</p>
   <div class="steps">
-    <div class="step"><div class="body">Prepare the USB stick - <strong>menu option 1</strong>.</div></div>
-    <div class="step"><div class="body">Enable SSH on the head unit - insert the stick, tap any MP3, then tap <strong>SSH</strong> in the XSS overlay.</div></div>
-    <div class="step"><div class="body">Verify SSH access - <strong>menu option 9</strong>.</div></div>
-    <div class="step"><div class="body">Run <strong>menu option 4</strong>. It waits for the reboot and runs validation automatically.</div></div>
+    <div class="step"><div class="body">On your computer, run the toolkit and pick <strong>option 1</strong> — it creates a USB stick with the patch and an auto-trigger payload.</div></div>
+    <div class="step"><div class="body">Insert the stick in the car. Wait ~30 seconds — a <strong>dialog appears on the screen</strong> with Install / Uninstall / Check Status.</div></div>
+    <div class="step"><div class="body">Tap <strong>Install</strong>. Progress steps show on screen, then the unit reboots. Screen goes dark for ~2 min — this is normal.</div></div>
+  </div>
+  <div class="callout">
+    <p><strong>No dialog after 30s?</strong> Go to Media → USB → tap any track. The XSS fallback menu appears with HUD+ / HUD- / HUD? buttons.</p>
   </div>
   <div class="term">
-    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh</span></div>
-    <pre><span class="t-b"> Mazda CMU CarPlay-HUD toolkit </span>
+    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh — option 1 is all you need</span></div>
+    <pre><span class="t-b"> Mazda CMU HUD toolkit — CarPlay + Android Auto </span>
 
-<span class="t-g">══════════════════════════════════════════════════════════
-  MAIN FLOW  — do these once, in order
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">1</span>   Create USB unlock stick
-  <span class="t-b">2</span>   Backup CMU (factory state)
-  <span class="t-b">3</span>   Full rollback  (start clean — optional but recommended)
-  <span class="t-b">4</span>   Install ilshyma HUD Patch  <span class="t-m">★ recommended</span>
-        auto-retries → waits for reboot → auto-validates
-  <span class="t-b">5</span>   Validate installation  (re-run any time)
-
-<span class="t-y">══════════════════════════════════════════════════════════
-  ADVANCED / TROUBLESHOOTING  — not needed for normal use
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">P</span>   Install PURE KidMixer Patch  (no speed-limit fix — known issue)
-  <span class="t-b">X</span>   Install legacy pre-v16 mod .so  (speed-limit fallback, not an arrow fix)
-  <span class="t-b">D</span>   Full diagnostic dump  (verbose)
-  <span class="t-b">F</span>   Force-start speed daemon  (manual kick)
-  <span class="t-b">T</span>   Live-tail daemon log
-  <span class="t-b">C</span>   CarPlay HUD arrow debug log  (why doesn't the arrow update?)
-
-<span class="t-dim">══════════════════════════════════════════════════════════</span>
-  <span class="t-b">9</span>   Check SSH connection
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">1</span>   Create USB stick <span class="t-m">← start here</span>
+      <span class="t-dim">(SSH unlock + HUD patch + auto-trigger on one stick)</span>
+  <span class="t-b">2</span>   Backup CMU
+  <span class="t-b">3</span>   Rollback  <span class="t-dim">(remove every HUD patch, back to stock)</span>
+  <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
 <span class="t-dim">></span> </pre>
@@ -459,20 +452,20 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">02</span>Video guide</h2>
-  <p class="sublede">Full walkthrough - from creating the USB stick to a validated install.</p>
+  <p class="sublede">Full walkthrough — from creating the USB stick to a working HUD.</p>
   <div class="video-embed">
-    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">03</span>What it does</h2>
-  <p class="sublede">Adds the CarPlay maneuver + distance overlay to your instrument-cluster HUD, exactly like the built-in native navigation. Two additions on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> build:</p>
+  <p class="sublede">Adds CarPlay and Android Auto maneuver arrows, distance, and speed to your instrument-cluster HUD — exactly like the built-in native navigation. Built on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> and <a href="https://github.com/nicka-bern/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a> projects, with three additions:</p>
   <ul>
-    <li><strong>km/h fix.</strong> The shim was written with <code>displaySpeedUnit = 1</code> which the VBS enum reads as <em>mph</em>. On an EU HUD that renders a <code>50 km/h</code> sign as <code>≈80</code> after mile→km conversion. My fix flips it to <code>2</code> (km/h).</li>
-    <li><strong>Speed-limit mirror daemon.</strong> A small shell script that passively watches the OEM <code>svcjcinavi.so</code> HUD stream and copies the current value into the shim's keep-alive frames. Without it the shim overwrites the speed slot with <code>0</code> every 500 ms and the value dies to <code>---</code> between OEM updates.</li>
+    <li><strong>Unified patch.</strong> A single install that enables both CarPlay and Android Auto turn-by-turn on the HUD. No need to choose one or the other.</li>
+    <li><strong>km/h fix.</strong> The original shim used <code>displaySpeedUnit = 1</code> (mph). On an EU HUD this renders a <code>50 km/h</code> sign as <code>≈80</code>. Fixed to <code>2</code> (km/h).</li>
+    <li><strong>Speed-limit mirror daemon.</strong> A shell script that passively watches the OEM <code>svcjcinavi.so</code> HUD stream and copies the current value into the shim's keep-alive frames. Without it the shim overwrites the speed slot with <code>0</code> every 500 ms and the value dies to <code>---</code>.</li>
   </ul>
-  <p>Everything else is bit-for-bit the KidMixer original.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -480,33 +473,25 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>Mazda CMU150, firmware <code>74.00.324</code>, EU flavor (verify: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash drive (≥ 1 GB, FAT32-formatted)</li>
-    <li>A computer with Wi-Fi (macOS, Linux, or Windows 10+)</li>
+    <li>A computer to prepare the stick (macOS, Linux, or Windows 10+)</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Menu options</h2>
-  <p class="sublede">Both <code>toolkit.sh</code> (macOS / Linux) and <code>toolkit.bat</code> (Windows 10+) show the same numbered menu.</p>
+  <h2><span class="num">05</span>What happens on screen</h2>
+  <p class="sublede">After you insert the USB stick, the car shows a dialog with three options. Each one shows step-by-step progress on the center display.</p>
   <div class="opts">
-    <div class="opt"><div class="num2">1</div><div>
-      <h3>Create USB unlock stick</h3>
-      <p>Wipes and formats a USB stick as FAT32 with the label MZD, then copies the MP3-XSS payload that opens root+SSH on the CMU. Insert the stick in the head unit, tap any MP3, then tap SSH in the XSS overlay - <code>sshd</code> starts on port 36000.</p>
+    <div class="opt"><div class="num2">+</div><div>
+      <h3>Install</h3>
+      <p>Verifies USB files → installs the patch → reboots. A 3-step progress bar shows on screen, followed by a countdown before reboot. Screen goes dark for ~2 min while the unit restarts — this is normal.</p>
     </div></div>
-    <div class="opt"><div class="num2">2</div><div>
-      <h3>Backup CMU state</h3>
-      <p>Downloads every file the installer touches (<code>sm.conf</code>, <code>sm_WCP.conf</code>, <code>devmgr_config_master.xml</code>, <code>blmjcicarplay.so</code>, <code>/data_persist/cp-hud-mod/</code>, <code>version.ini</code>) as a tar.gz into <code>backups/YYYYMMDD_HHMMSS/</code>. Run this before installing anything.</p>
+    <div class="opt"><div class="num2">−</div><div>
+      <h3>Uninstall</h3>
+      <p>Removes the patch, restores stock configuration → reboots. 2-step progress on screen, then countdown. Everything goes back to factory state.</p>
     </div></div>
-    <div class="opt"><div class="num2">3</div><div>
-      <h3>Install PURE KidMixer Patch</h3>
-      <p>Plain upstream build. Fast and safe, but on EU vehicles it has a known issue: the HUD speed-limit slot shows ~80 km/h from a mile→km conversion the shim does on its own, and dies to <code>---</code> between OEM updates. Use this if you want the plain upstream behaviour or as a baseline before switching to option 4.</p>
-    </div></div>
-    <div class="opt"><div class="num2">4</div><div>
-      <h3>Install ilshyma HUD Patch <span class="pill">★ recommended</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">speed limit fixed</small></h3>
-      <p>KidMixer base + my km/h source patch (<code>displaySpeedUnit</code> from mph=1 to km/h=2) + a small daemon that mirrors the current OEM speed-limit into the shim's frames so the value stays alive between updates. Three-step deploy: (a) vanilla <code>install.sh</code> writes <code>LD_PRELOAD</code> and sets <code>NaviSupported=TRUE</code>, (b) my patched <code>.so</code> is overlaid, (c) the mirror daemon + auto-launcher are copied, each verified by md5. Ends with a reboot - the toolkit waits for SSH to come back on its own and runs validation automatically.</p>
-    </div></div>
-    <div class="opt"><div class="num2">5</div><div>
-      <h3>Full rollback</h3>
-      <p>Kills my daemon, removes my extras, runs the vanilla <code>uninstall.sh</code> which restores <code>sm.conf</code> and <code>NaviSupported=FALSE</code> from the <code>.bak_precphud</code> backups made by <code>install.sh</code>. Ends with a reboot, then waits for SSH and confirms the CMU is back to factory state.</p>
+    <div class="opt"><div class="num2">?</div><div>
+      <h3>Check Status</h3>
+      <p>Waits for services to load (shows a countdown if the unit just booted), then checks that all 4 shims are active. Shows a summary: which parts are OK and which are missing.</p>
     </div></div>
   </div>
 </div></section>
@@ -514,24 +499,33 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">06</span>Notes and limitations</h2>
   <div class="callout mint">
-    <p><strong>Cannot brick the head unit.</strong> The shim uses only <code>LD_PRELOAD</code> - the OEM <code>blmjcicarplay.so</code> is never modified on disk. The read-only rootfs guarantees a reboot always returns the unit to a working state.</p>
+    <p><strong>Cannot brick the head unit.</strong> The shim uses only <code>LD_PRELOAD</code> — the OEM libraries are never modified on disk. The read-only rootfs guarantees a reboot always returns the unit to a working state.</p>
   </div>
   <ul>
-    <li>The daemon does <strong>not</strong> trigger any NNG requests. It only listens to what the OEM navigation service already broadcasts on D-Bus, so the HUD stays as close to stock behaviour as possible.</li>
-    <li>Lane guidance arrows (<code>SetRecommLaneReq</code>) are <strong>not</strong> implemented - Apple does not transmit lane data over iAP2, only in the CarPlay video stream.</li>
-    <li>Only <strong>Apple Maps</strong> and <strong>Google Maps</strong> stream turn arrows to the HUD. <strong>Waze does not work</strong> - it never publishes maneuver data on the iAP2 sidechannel that the shim reads; the HUD stays blank while Waze is the active app. Waze CarPlay limitation, not a CMU issue.</li>
+    <li>The daemon does <strong>not</strong> trigger any NNG requests. It only listens to what the OEM navigation service already broadcasts on D-Bus.</li>
+    <li>Lane guidance arrows (<code>SetRecommLaneReq</code>) are <strong>not</strong> implemented — Apple and Google do not transmit lane data over iAP2/AA, only in the video stream.</li>
+    <li><strong>Apple Maps</strong> and <strong>Google Maps</strong> work on both CarPlay and Android Auto. <strong>Waze does not work on CarPlay</strong> — it never publishes maneuver data on the iAP2 sidechannel. Waze on Android Auto may work depending on the AA mod version.</li>
   </ul>
 </div></section>
 
-<section><div class="wrap">
-  <h2><span class="num">07</span>Support</h2>
-  <p>If SSH refuses to connect on port 36000, the <code>sshd</code> on the head unit was killed by the read-only rootfs at boot. Re-run the USB → XSS → SSH step and it comes back up.</p>
-  <p>If the HUD stays blank after install, verify with option 9 first, then SSH in and check <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - the <code>L_jciCARPLAY</code> process must be running with <code>LD_PRELOAD</code> in its <code>/proc/PID/environ</code>.</p>
+<section id="legacy-en"><div class="wrap">
+  <h2><span class="num">07</span>Previous version <span class="pill pill-dim">v1.0</span></h2>
+  <p class="sublede">The original console-based install method via SSH. Use it if you need fine-grained control or are following an existing video tutorial.</p>
+  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Download v1.0 <span class="arrow">→</span></a>
+  <span class="cta-note">console method · CarPlay only</span>
+  <div class="video-embed" style="margin-top:24px">
+    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+  <div class="steps" style="margin-top:24px">
+    <div class="step"><div class="body">Prepare the USB stick — <strong>option 1</strong>. Insert it, tap any MP3, then tap <strong>SSH</strong> in the XSS overlay.</div></div>
+    <div class="step"><div class="body">Connect your computer to the car's Wi-Fi. Verify SSH — <strong>option 9</strong>.</div></div>
+    <div class="step"><div class="body">Run <strong>option 4</strong>. The toolkit installs via SSH, waits for the reboot, and validates automatically.</div></div>
+  </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">08</span>Support this project</h2>
-  <p>Getting the speed-limit display right took a lot of digging - there's no documentation for how the head unit's speed-limit indicator actually works, so I reverse-engineered it from scratch and built a small background helper that quietly feeds it the real limit from your car's own built-in maps, on top of the turn-by-turn directions you already get from Google Maps or Apple Maps. It took many hours and a lot of trial and error on my own car to get right. If this saved you time, or just made your drive a little nicer, a donation is very welcome.</p>
+  <p>Getting the speed-limit display right took a lot of digging — there's no documentation for how the head unit's speed-limit indicator actually works, so I reverse-engineered it from scratch and built a small background helper that quietly feeds it the real limit from your car's own built-in maps, on top of the turn-by-turn directions you already get from Google Maps or Apple Maps. If this saved you time, or just made your drive a little nicer, a donation is very welcome.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Send a donation <span class="arrow">→</span></a>
 </div></section>
 
@@ -539,51 +533,40 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <!-- ================== УКРАЇНСЬКА ================== -->
 <div data-lang="uk">
+
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Прошивка 74.00.324 · EU</div>
-  <h1>Apple CarPlay <span class="accent">поворот-за-поворотом</span> на Mazda HUD.</h1>
-  <p class="lede">Опрацьована збірка комунітарного шима KidMixer з однорядковим патчем, який виправляє індикатор км/год для авто ЄС - та маленьким демоном, який тримає значення ліміту швидкості між оновленнями штатної навігації.</p>
-  <p class="sublede"><strong>Підходить для:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - EU-ринок з CMU150 прошивкою 74.00.324.</p>
+  <h1>CarPlay + Android Auto <span class="accent">поворот-за-поворотом</span> на Mazda HUD.</h1>
+  <p class="lede">Одна флешка — вставив, натиснув Install на екрані, готово. Без підключення ноутбука, без SSH, без Wi-Fi. Перевірена збірка з виправленням км/год для авто ЄС та демоном, що тримає ліміт швидкості.</p>
+  <p class="sublede"><strong>Підходить для:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) — EU-ринок з CMU150 прошивкою 74.00.324.</p>
   <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Завантажити toolkit <span class="arrow">→</span></a>
-  <span class="cta-note">340 КБ · macOS · Linux · Windows 10+</span>
+  <span class="cta-note">macOS · Linux · Windows 10+</span>
   <div class="hero-donate"><a class="cta cta-secondary cta-sm" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Задонатити <span class="arrow">→</span></a></div>
 </div></div>
 
 <section><div class="wrap">
-  <h2><span class="num">01</span>Швидкий мануал встановлення</h2>
-  <p class="sublede">Найкоротший шлях від чистої CMU до перевіреного встановлення.</p>
+  <h2><span class="num">01</span>USB встановлення — 3 кроки</h2>
+  <p class="sublede">Все відбувається на екрані магнітоли. Без Wi-Fi, без SSH, без підключення ноутбука.</p>
   <div class="steps">
-    <div class="step"><div class="body">Підготуйте USB-флешку - <strong>опція 1</strong>.</div></div>
-    <div class="step"><div class="body">Увімкніть SSH-доступ у магнітолі - вставте флешку, тапніть будь-який MP3, потім тапніть <strong>SSH</strong> в XSS-меню.</div></div>
-    <div class="step"><div class="body">Перевірте SSH-доступ - <strong>опція 9</strong>.</div></div>
-    <div class="step"><div class="body">Запустіть <strong>опцію 4</strong>. Тулкіт сам дочекається ребуту і виконає валідацію.</div></div>
+    <div class="step"><div class="body">На комп'ютері запустіть тулкіт і виберіть <strong>опцію 1</strong> — створюється USB-флешка з патчем і авто-тригером.</div></div>
+    <div class="step"><div class="body">Вставте флешку в магнітолу. Зачекайте ~30 секунд — на екрані <strong>з'явиться діалог</strong> з опціями Install / Uninstall / Check Status.</div></div>
+    <div class="step"><div class="body">Натисніть <strong>Install</strong>. На екрані показується прогрес, потім магнітола перезавантажується. Екран гасне на ~2 хв — це нормально.</div></div>
+  </div>
+  <div class="callout">
+    <p><strong>Діалог не з'явився через 30 с?</strong> Перейдіть у Media → USB → тапніть будь-який трек. З'явиться XSS-меню з кнопками HUD+ / HUD- / HUD?.</p>
   </div>
   <div class="term">
-    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh</span></div>
-    <pre><span class="t-b"> Mazda CMU CarPlay-HUD toolkit </span>
+    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh — достатньо опції 1</span></div>
+    <pre><span class="t-b"> Mazda CMU HUD toolkit — CarPlay + Android Auto </span>
 
-<span class="t-g">══════════════════════════════════════════════════════════
-  MAIN FLOW  — do these once, in order
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">1</span>   Create USB unlock stick
-  <span class="t-b">2</span>   Backup CMU (factory state)
-  <span class="t-b">3</span>   Full rollback  (start clean — optional but recommended)
-  <span class="t-b">4</span>   Install ilshyma HUD Patch  <span class="t-m">★ recommended</span>
-        auto-retries → waits for reboot → auto-validates
-  <span class="t-b">5</span>   Validate installation  (re-run any time)
-
-<span class="t-y">══════════════════════════════════════════════════════════
-  ADVANCED / TROUBLESHOOTING  — not needed for normal use
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">P</span>   Install PURE KidMixer Patch  (no speed-limit fix — known issue)
-  <span class="t-b">X</span>   Install legacy pre-v16 mod .so  (speed-limit fallback, not an arrow fix)
-  <span class="t-b">D</span>   Full diagnostic dump  (verbose)
-  <span class="t-b">F</span>   Force-start speed daemon  (manual kick)
-  <span class="t-b">T</span>   Live-tail daemon log
-  <span class="t-b">C</span>   CarPlay HUD arrow debug log  (why doesn't the arrow update?)
-
-<span class="t-dim">══════════════════════════════════════════════════════════</span>
-  <span class="t-b">9</span>   Check SSH connection
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">1</span>   Create USB stick <span class="t-m">← починайте тут</span>
+      <span class="t-dim">(SSH unlock + HUD patch + auto-trigger на одній флешці)</span>
+  <span class="t-b">2</span>   Backup CMU
+  <span class="t-b">3</span>   Rollback  <span class="t-dim">(видалити всі HUD-патчі, повернути у сток)</span>
+  <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
 <span class="t-dim">></span> </pre>
@@ -592,20 +575,20 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">02</span>Відеоінструкція</h2>
-  <p class="sublede">Повний покроковий розбір - від підготовки USB-флешки до перевіреного встановлення.</p>
+  <p class="sublede">Повний покроковий розбір — від підготовки USB-флешки до робочого HUD.</p>
   <div class="video-embed">
-    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">03</span>Що робить</h2>
-  <p class="sublede">Додає накладку CarPlay (маневр + дистанція) на HUD у кластері приладів, як штатна вбудована навігація. Дві надбудови над збіркою <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <p class="sublede">Додає стрілки маневрів CarPlay та Android Auto, дистанцію та швидкість на HUD приладової панелі — як штатна навігація. Побудовано на базі <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> та <a href="https://github.com/nicka-bern/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, з трьома доповненнями:</p>
   <ul>
-    <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code>, що у VBS enum означає <em>mph</em>. На EU HUD знак <code>50 км/год</code> малюється як <code>≈80</code> після конвертації mile→km. Мій фікс - значення <code>2</code> (km/h).</li>
-    <li><strong>Демон-дзеркало ліміту швидкості.</strong> Маленький shell-скрипт, що пасивно слухає штатний потік <code>svcjcinavi.so</code> і копіює поточне значення у keep-alive-кадри шима. Без нього шим кожні 500 мс перезаписує slot нулем і значення падає в <code>---</code>.</li>
+    <li><strong>Уніфікований патч.</strong> Одне встановлення вмикає і CarPlay, і Android Auto turn-by-turn на HUD. Не потрібно обирати.</li>
+    <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code> (mph). На EU HUD знак <code>50 км/год</code> малювався як <code>≈80</code>. Виправлено на <code>2</code> (km/h).</li>
+    <li><strong>Демон-дзеркало ліміту швидкості.</strong> Shell-скрипт, що пасивно слухає штатний потік <code>svcjcinavi.so</code> і копіює поточне значення у keep-alive-кадри шима. Без нього шим кожні 500 мс перезаписує slot нулем і значення падає в <code>---</code>.</li>
   </ul>
-  <p>Все інше - біт-у-біт оригінал KidMixer.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -613,33 +596,25 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>Mazda CMU150, прошивка <code>74.00.324</code>, EU (перевірка: <code>cat /jci/version.ini</code>)</li>
     <li>USB-флешка (від 1 ГБ, формат FAT32)</li>
-    <li>Комп'ютер з Wi-Fi (macOS, Linux або Windows 10+)</li>
+    <li>Комп'ютер для підготовки флешки (macOS, Linux або Windows 10+)</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Опції меню</h2>
-  <p class="sublede">І <code>toolkit.sh</code> (macOS/Linux), і <code>toolkit.bat</code> (Windows 10+) показують те саме нумероване меню.</p>
+  <h2><span class="num">05</span>Що відбувається на екрані</h2>
+  <p class="sublede">Після вставляння флешки магнітола показує діалог з трьома опціями. Кожна показує покроковий прогрес.</p>
   <div class="opts">
-    <div class="opt"><div class="num2">1</div><div>
-      <h3>Створити USB для root-доступу</h3>
-      <p>Форматує флешку у FAT32 з міткою MZD, копіює MP3-XSS payload який відкриває root+SSH на CMU. Вставте флешку в голову, тапніть будь-який MP3, потім тапніть SSH в XSS-меню - <code>sshd</code> стартує на порту 36000.</p>
+    <div class="opt"><div class="num2">+</div><div>
+      <h3>Install</h3>
+      <p>Перевіряє файли на флешці → встановлює патч → перезавантажує. На екрані 3-крокова індикація прогресу, потім зворотний відлік до ребуту. Екран гасне на ~2 хв поки магнітола перезавантажується — це нормально.</p>
     </div></div>
-    <div class="opt"><div class="num2">2</div><div>
-      <h3>Резервне копіювання CMU</h3>
-      <p>Завантажує всі файли, які змінює інсталятор (<code>sm.conf</code>, <code>sm_WCP.conf</code>, <code>devmgr_config_master.xml</code>, <code>blmjcicarplay.so</code>, <code>/data_persist/cp-hud-mod/</code>, <code>version.ini</code>) як tar.gz в <code>backups/YYYYMMDD_HHMMSS/</code>. Робити ПЕРЕД встановленням.</p>
+    <div class="opt"><div class="num2">−</div><div>
+      <h3>Uninstall</h3>
+      <p>Видаляє патч, повертає стокову конфігурацію → перезавантажує. 2-кроковий прогрес, потім зворотний відлік. Все повертається до заводського стану.</p>
     </div></div>
-    <div class="opt"><div class="num2">3</div><div>
-      <h3>Встановити PURE KidMixer Patch</h3>
-      <p>Оригінальний upstream. Швидко і безпечно, але на авто ЄС має відому проблему: slot ліміту швидкості на HUD показує ~80 км/год через mile→km-конвертацію, яку робить сам шим, і згасає до <code>---</code> між OEM-оновленнями. Обирайте цей варіант якщо хочете чистий upstream або як базу перед переходом на опцію 4.</p>
-    </div></div>
-    <div class="opt"><div class="num2">4</div><div>
-      <h3>Встановити ilshyma HUD Patch <span class="pill">★ рекомендовано</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">ліміт швидкості виправлено</small></h3>
-      <p>База KidMixer + мій патч (<code>displaySpeedUnit</code> з mph=1 на km/h=2) + маленький демон, який дзеркалить поточний OEM-ліміт швидкості в фрейми шима, тож значення живе між оновленнями. 3 етапи: (а) оригінальний <code>install.sh</code> додає <code>LD_PRELOAD</code> у <code>sm.conf</code> і ставить <code>NaviSupported=TRUE</code>, (б) підмінюється мій пропатчений <code>.so</code>, (в) копіюється демон-дзеркало та auto-launcher, кожен файл перевіряється по md5. Наприкінці ребут - тулкіт сам дочекається SSH і виконає валідацію.</p>
-    </div></div>
-    <div class="opt"><div class="num2">5</div><div>
-      <h3>Повний відкат</h3>
-      <p>Вбиває мій демон, видаляє надбудови, запускає оригінальний <code>uninstall.sh</code> що відновлює <code>sm.conf</code> і <code>NaviSupported=FALSE</code> з бекапів <code>.bak_precphud</code>. Наприкінці ребут, потім тулкіт дочекається SSH і підтвердить, що CMU повернувся у заводський стан.</p>
+    <div class="opt"><div class="num2">?</div><div>
+      <h3>Check Status</h3>
+      <p>Чекає завантаження сервісів (показує таймер якщо магнітола щойно завелася), потім перевіряє чи всі 4 шими активні. Показує підсумок: що працює, а що ні.</p>
     </div></div>
   </div>
 </div></section>
@@ -647,24 +622,33 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">06</span>Примітки й обмеження</h2>
   <div class="callout mint">
-    <p><strong>Неможливо «окирпичити» голову.</strong> Шим працює лише через <code>LD_PRELOAD</code> - оригінальний <code>blmjcicarplay.so</code> не змінюється. Read-only rootfs гарантує повернення до робочого стану після ребуту.</p>
+    <p><strong>Неможливо «окирпичити» голову.</strong> Шим працює лише через <code>LD_PRELOAD</code> — оригінальні бібліотеки не змінюються. Read-only rootfs гарантує повернення до робочого стану після ребуту.</p>
   </div>
   <ul>
     <li>Демон <strong>не</strong> посилає жодних NNG-запитів. Слухає лише те, що штатний навігаційний сервіс уже транслює по D-Bus.</li>
-    <li>Стрілки рядності (<code>SetRecommLaneReq</code>) <strong>не</strong> реалізовані - Apple не передає дані рядності через iAP2, тільки через CarPlay video stream.</li>
-    <li>Стрілки на HUD показують тільки <strong>Apple Maps</strong> і <strong>Google Maps</strong>. <strong>Waze не працює</strong> - він не передає дані про маневри через iAP2 sidechannel, тому HUD залишається пустий. Це обмеження Waze CarPlay, а не CMU.</li>
+    <li>Стрілки рядності (<code>SetRecommLaneReq</code>) <strong>не</strong> реалізовані — Apple і Google не передають дані рядності через iAP2/AA.</li>
+    <li><strong>Apple Maps</strong> і <strong>Google Maps</strong> працюють і на CarPlay, і на Android Auto. <strong>Waze не працює на CarPlay</strong> — не передає дані про маневри через iAP2 sidechannel. Waze на Android Auto може працювати залежно від версії AA моду.</li>
   </ul>
 </div></section>
 
-<section><div class="wrap">
-  <h2><span class="num">07</span>Підтримка</h2>
-  <p>Якщо SSH не відповідає на порту 36000 - <code>sshd</code> у голові було вбито read-only rootfs при завантаженні. Повторіть USB → XSS → SSH.</p>
-  <p>Якщо HUD залишається пустий - перевірте опцією 9, потім SSH-командою <code>ps | grep sm_svclauncher | grep jciCARPLAY</code>: процес <code>L_jciCARPLAY</code> має бути живим із <code>LD_PRELOAD</code> у <code>/proc/PID/environ</code>.</p>
+<section id="legacy-uk"><div class="wrap">
+  <h2><span class="num">07</span>Попередня версія <span class="pill pill-dim">v1.0</span></h2>
+  <p class="sublede">Оригінальний метод встановлення через консоль і SSH. Використовуйте, якщо потрібен детальний контроль або якщо слідкуєте за існуючим відеогайдом.</p>
+  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Завантажити v1.0 <span class="arrow">→</span></a>
+  <span class="cta-note">консольний метод · тільки CarPlay</span>
+  <div class="video-embed" style="margin-top:24px">
+    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+  <div class="steps" style="margin-top:24px">
+    <div class="step"><div class="body">Підготуйте USB-флешку — <strong>опція 1</strong>. Вставте, тапніть будь-який MP3, потім тапніть <strong>SSH</strong> в XSS-меню.</div></div>
+    <div class="step"><div class="body">Під'єднайте комп'ютер до Wi-Fi магнітоли. Перевірте SSH — <strong>опція 9</strong>.</div></div>
+    <div class="step"><div class="body">Запустіть <strong>опцію 4</strong>. Тулкіт встановлює через SSH, чекає ребут і валідує автоматично.</div></div>
+  </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">08</span>Підтримати проєкт</h2>
-  <p>Змусити індикатор ліміту швидкості працювати правильно виявилось непросто - документації про те, як насправді працює цей індикатор у магнітолі, не існує, тож довелося реверсити логіку з нуля і написати маленький фоновий помічник, який непомітно передає туди реальний ліміт швидкості зі штатних карт авто - на додачу до підказок маршруту від Google Maps чи Apple Maps. Це зайняло багато годин і чимало спроб на власному авто. Якщо це заощадило вам час або просто зробило поїздки приємнішими - буду вдячний за донат.</p>
+  <p>Змусити індикатор ліміту швидкості працювати правильно виявилось непросто — документації про те, як насправді працює цей індикатор у магнітолі, не існує, тож довелося реверсити логіку з нуля і написати маленький фоновий помічник, який непомітно передає туди реальний ліміт швидкості зі штатних карт авто. Якщо це заощадило вам час або просто зробило поїздки приємнішими — буду вдячний за донат.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Задонатити <span class="arrow">→</span></a>
 </div></section>
 
@@ -672,51 +656,40 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <!-- ================== ESPAÑOL ================== -->
 <div data-lang="es">
+
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
-  <h1>Apple CarPlay <span class="accent">turno-a-turno</span> en el HUD de Mazda.</h1>
-  <p class="lede">Build depurada del shim comunitario de KidMixer con un parche de una línea que arregla el indicador km/h para vehículos EU - y un pequeño daemon que mantiene el slot de velocidad vivo entre actualizaciones OEM.</p>
-  <p class="sublede"><strong>Compatible con:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - mercado EU con CMU150 firmware 74.00.324.</p>
+  <h1>CarPlay + Android Auto <span class="accent">turno-a-turno</span> en el HUD de Mazda.</h1>
+  <p class="lede">Un solo USB — insértalo, pulsa Install en la pantalla, listo. Sin conexión de portátil, sin SSH, sin Wi-Fi. Build probada con la corrección km/h para vehículos europeos y un daemon que mantiene el slot de velocidad vivo.</p>
+  <p class="sublede"><strong>Compatible con:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) — mercado EU con CMU150 firmware 74.00.324.</p>
   <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Descargar toolkit <span class="arrow">→</span></a>
-  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+  <span class="cta-note">macOS · Linux · Windows 10+</span>
   <div class="hero-donate"><a class="cta cta-secondary cta-sm" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Hacer una donación <span class="arrow">→</span></a></div>
 </div></div>
 
 <section><div class="wrap">
-  <h2><span class="num">01</span>Manual de instalación rápida</h2>
-  <p class="sublede">El camino más corto desde un CMU de fábrica hasta una instalación validada.</p>
+  <h2><span class="num">01</span>Instalación USB — 3 pasos</h2>
+  <p class="sublede">Todo ocurre en la pantalla del coche. Sin Wi-Fi, sin SSH, sin portátil conectado al head unit.</p>
   <div class="steps">
-    <div class="step"><div class="body">Prepara la memoria USB - <strong>opción 1</strong>.</div></div>
-    <div class="step"><div class="body">Activa el acceso SSH en el head unit - inserta la USB, toca cualquier MP3, luego toca <strong>SSH</strong> en el overlay XSS.</div></div>
-    <div class="step"><div class="body">Verifica el acceso SSH - <strong>opción 9</strong>.</div></div>
-    <div class="step"><div class="body">Ejecuta la <strong>opción 4</strong>. Espera el reboot y ejecuta la validación automáticamente.</div></div>
+    <div class="step"><div class="body">En tu ordenador, ejecuta el toolkit y elige la <strong>opción 1</strong> — crea un USB con el parche y el payload de auto-disparo.</div></div>
+    <div class="step"><div class="body">Inserta el USB en el coche. Espera ~30 segundos — aparece un <strong>diálogo en pantalla</strong> con Install / Uninstall / Check Status.</div></div>
+    <div class="step"><div class="body">Pulsa <strong>Install</strong>. Los pasos de progreso se muestran en pantalla, luego la unidad se reinicia. La pantalla se apaga ~2 min — es normal.</div></div>
+  </div>
+  <div class="callout">
+    <p><strong>¿No aparece el diálogo después de 30s?</strong> Ve a Media → USB → toca cualquier pista. Aparece el menú XSS con los botones HUD+ / HUD- / HUD?.</p>
   </div>
   <div class="term">
-    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh</span></div>
-    <pre><span class="t-b"> Mazda CMU CarPlay-HUD toolkit </span>
+    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh — solo necesitas la opción 1</span></div>
+    <pre><span class="t-b"> Mazda CMU HUD toolkit — CarPlay + Android Auto </span>
 
-<span class="t-g">══════════════════════════════════════════════════════════
-  MAIN FLOW  — do these once, in order
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">1</span>   Create USB unlock stick
-  <span class="t-b">2</span>   Backup CMU (factory state)
-  <span class="t-b">3</span>   Full rollback  (start clean — optional but recommended)
-  <span class="t-b">4</span>   Install ilshyma HUD Patch  <span class="t-m">★ recommended</span>
-        auto-retries → waits for reboot → auto-validates
-  <span class="t-b">5</span>   Validate installation  (re-run any time)
-
-<span class="t-y">══════════════════════════════════════════════════════════
-  ADVANCED / TROUBLESHOOTING  — not needed for normal use
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">P</span>   Install PURE KidMixer Patch  (no speed-limit fix — known issue)
-  <span class="t-b">X</span>   Install legacy pre-v16 mod .so  (speed-limit fallback, not an arrow fix)
-  <span class="t-b">D</span>   Full diagnostic dump  (verbose)
-  <span class="t-b">F</span>   Force-start speed daemon  (manual kick)
-  <span class="t-b">T</span>   Live-tail daemon log
-  <span class="t-b">C</span>   CarPlay HUD arrow debug log  (why doesn't the arrow update?)
-
-<span class="t-dim">══════════════════════════════════════════════════════════</span>
-  <span class="t-b">9</span>   Check SSH connection
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">1</span>   Create USB stick <span class="t-m">← empieza aquí</span>
+      <span class="t-dim">(SSH unlock + HUD patch + auto-trigger en un solo USB)</span>
+  <span class="t-b">2</span>   Backup CMU
+  <span class="t-b">3</span>   Rollback  <span class="t-dim">(eliminar todos los parches HUD, volver a stock)</span>
+  <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
 <span class="t-dim">></span> </pre>
@@ -725,20 +698,20 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">02</span>Guía en vídeo</h2>
-  <p class="sublede">Recorrido completo - desde crear la USB hasta una instalación validada.</p>
+  <p class="sublede">Recorrido completo — desde crear el USB hasta un HUD funcionando.</p>
   <div class="video-embed">
-    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">03</span>Qué hace</h2>
-  <p class="sublede">Añade el overlay de CarPlay (maniobra + distancia) al HUD del cuadro de instrumentos, igual que la navegación nativa. Dos añadidos sobre la build de <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <p class="sublede">Añade flechas de maniobra, distancia y velocidad de CarPlay y Android Auto al HUD del cuadro de instrumentos — igual que la navegación nativa. Basado en <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> y <a href="https://github.com/nicka-bern/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, con tres añadidos:</p>
   <ul>
-    <li><strong>Corrección km/h.</strong> El shim usa <code>displaySpeedUnit = 1</code> que en el enum VBS es <em>mph</em>. En un HUD europeo un <code>50 km/h</code> se renderiza como <code>≈80</code> tras la conversión milla→km. Mi fix pone <code>2</code> (km/h).</li>
+    <li><strong>Parche unificado.</strong> Una sola instalación activa tanto CarPlay como Android Auto turn-by-turn en el HUD.</li>
+    <li><strong>Corrección km/h.</strong> El shim original usaba <code>displaySpeedUnit = 1</code> (mph). En un HUD europeo <code>50 km/h</code> se dibujaba como <code>≈80</code>. Corregido a <code>2</code> (km/h).</li>
     <li><strong>Daemon-espejo.</strong> Script shell que escucha pasivamente el flujo OEM de <code>svcjcinavi.so</code> y copia el valor actual en los frames keep-alive del shim. Sin él, el shim sobrescribe el slot con <code>0</code> cada 500 ms y el valor cae a <code>---</code>.</li>
   </ul>
-  <p>Todo lo demás es bit-a-bit el KidMixer original.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -746,33 +719,25 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>Mazda CMU150, firmware <code>74.00.324</code>, versión EU (verificar: <code>cat /jci/version.ini</code>)</li>
     <li>USB flash (≥ 1 GB, formato FAT32)</li>
-    <li>Ordenador con Wi-Fi (macOS, Linux o Windows 10+)</li>
+    <li>Ordenador para preparar el USB (macOS, Linux o Windows 10+)</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Opciones del menú</h2>
-  <p class="sublede">Tanto <code>toolkit.sh</code> (macOS/Linux) como <code>toolkit.bat</code> (Windows 10+) muestran el mismo menú numerado.</p>
+  <h2><span class="num">05</span>Qué aparece en pantalla</h2>
+  <p class="sublede">Tras insertar el USB, el coche muestra un diálogo con tres opciones. Cada una muestra el progreso paso a paso.</p>
   <div class="opts">
-    <div class="opt"><div class="num2">1</div><div>
-      <h3>Crear USB de desbloqueo</h3>
-      <p>Formatea la USB como FAT32/MZD, copia el payload MP3-XSS que abre root+SSH en el CMU. Insertar la USB, tocar cualquier MP3, luego tocar SSH en el overlay XSS - <code>sshd</code> arranca en el puerto 36000.</p>
+    <div class="opt"><div class="num2">+</div><div>
+      <h3>Install</h3>
+      <p>Verifica archivos USB → instala el parche → reinicia. Barra de progreso de 3 pasos en pantalla, seguida de cuenta atrás antes del reboot. La pantalla se apaga ~2 min — es normal.</p>
     </div></div>
-    <div class="opt"><div class="num2">2</div><div>
-      <h3>Backup del CMU</h3>
-      <p>Descarga todos los archivos que toca el instalador en <code>backups/YYYYMMDD_HHMMSS/</code>. Ejecutar ANTES de instalar.</p>
+    <div class="opt"><div class="num2">−</div><div>
+      <h3>Uninstall</h3>
+      <p>Elimina el parche, restaura la configuración de fábrica → reinicia. Progreso de 2 pasos, luego cuenta atrás. Todo vuelve al estado original.</p>
     </div></div>
-    <div class="opt"><div class="num2">3</div><div>
-      <h3>Instalar PURE KidMixer Patch</h3>
-      <p>Build upstream sin modificar. Rápido y seguro, pero en vehículos EU tiene un problema conocido: el slot del límite de velocidad muestra ~80 km/h por una conversión mile→km que hace el propio shim, y muere a <code>---</code> entre actualizaciones OEM. Úsalo si quieres el comportamiento upstream puro o como base antes de pasar a la opción 4.</p>
-    </div></div>
-    <div class="opt"><div class="num2">4</div><div>
-      <h3>Instalar ilshyma HUD Patch <span class="pill">★ recomendado</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">límite de velocidad arreglado</small></h3>
-      <p>Base KidMixer + mi parche km/h (<code>displaySpeedUnit</code> de mph=1 a km/h=2) + un pequeño daemon que refleja el límite OEM actual en los frames del shim, así el valor sigue vivo entre actualizaciones. Despliegue en 3 pasos: (a) <code>install.sh</code> original añade <code>LD_PRELOAD</code> y pone <code>NaviSupported=TRUE</code>, (b) superpone mi <code>.so</code> parcheado, (c) copia daemon-espejo y auto-launcher, cada archivo verificado por md5. Termina con reboot - el toolkit espera a que vuelva el SSH y ejecuta la validación automáticamente.</p>
-    </div></div>
-    <div class="opt"><div class="num2">5</div><div>
-      <h3>Rollback completo</h3>
-      <p>Mata mi daemon, elimina mis extras, ejecuta el <code>uninstall.sh</code> original que restaura <code>sm.conf</code> y <code>NaviSupported=FALSE</code>. Termina con reboot, luego espera al SSH y confirma que el CMU volvió al estado de fábrica.</p>
+    <div class="opt"><div class="num2">?</div><div>
+      <h3>Check Status</h3>
+      <p>Espera a que los servicios carguen (muestra cuenta atrás si la unidad acaba de arrancar), luego verifica que los 4 shims están activos. Muestra un resumen.</p>
     </div></div>
   </div>
 </div></section>
@@ -780,24 +745,33 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">06</span>Notas y limitaciones</h2>
   <div class="callout mint">
-    <p><strong>No puede brickear el head unit.</strong> El shim usa solo <code>LD_PRELOAD</code> - el <code>blmjcicarplay.so</code> original nunca se modifica. Rootfs de solo lectura garantiza retorno al estado stock tras reboot.</p>
+    <p><strong>No puede brickear el head unit.</strong> El shim usa solo <code>LD_PRELOAD</code> — las bibliotecas OEM nunca se modifican. Rootfs de solo lectura garantiza retorno al stock tras reboot.</p>
   </div>
   <ul>
     <li>El daemon <strong>no</strong> dispara requests NNG. Solo escucha lo que el servicio OEM ya emite en D-Bus.</li>
-    <li>Flechas de guía de carril (<code>SetRecommLaneReq</code>) <strong>no</strong> implementadas - Apple no transmite datos de carril por iAP2.</li>
-    <li>Solo <strong>Apple Maps</strong> y <strong>Google Maps</strong> muestran flechas en el HUD. <strong>Waze no funciona</strong> - no transmite datos de maniobra por el canal iAP2 que lee el shim; el HUD queda en blanco cuando Waze está activo. Limitación de Waze CarPlay, no del CMU.</li>
+    <li>Flechas de guía de carril (<code>SetRecommLaneReq</code>) <strong>no</strong> implementadas — Apple y Google no transmiten datos de carril por iAP2/AA.</li>
+    <li><strong>Apple Maps</strong> y <strong>Google Maps</strong> funcionan tanto en CarPlay como en Android Auto. <strong>Waze no funciona en CarPlay</strong> — no transmite datos de maniobra por el canal iAP2. Waze en Android Auto puede funcionar según la versión del mod AA.</li>
   </ul>
 </div></section>
 
-<section><div class="wrap">
-  <h2><span class="num">07</span>Soporte</h2>
-  <p>Si SSH no conecta en el puerto 36000, el <code>sshd</code> fue eliminado por el rootfs read-only al arrancar. Repetir USB → XSS → SSH.</p>
-  <p>Si el HUD sigue en blanco tras instalar, verificar opción 9; luego SSH y comprobar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> debe estar corriendo con <code>LD_PRELOAD</code> en <code>/proc/PID/environ</code>.</p>
+<section id="legacy-es"><div class="wrap">
+  <h2><span class="num">07</span>Versión anterior <span class="pill pill-dim">v1.0</span></h2>
+  <p class="sublede">El método original de instalación por consola vía SSH. Úsalo si necesitas control detallado o si sigues un tutorial en vídeo existente.</p>
+  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Descargar v1.0 <span class="arrow">→</span></a>
+  <span class="cta-note">método consola · solo CarPlay</span>
+  <div class="video-embed" style="margin-top:24px">
+    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+  <div class="steps" style="margin-top:24px">
+    <div class="step"><div class="body">Prepara el USB — <strong>opción 1</strong>. Insértalo, toca cualquier MP3, luego toca <strong>SSH</strong> en el overlay XSS.</div></div>
+    <div class="step"><div class="body">Conecta tu ordenador al Wi-Fi del coche. Verifica SSH — <strong>opción 9</strong>.</div></div>
+    <div class="step"><div class="body">Ejecuta la <strong>opción 4</strong>. El toolkit instala vía SSH, espera el reboot y valida automáticamente.</div></div>
+  </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">08</span>Apoya este proyecto</h2>
-  <p>Conseguir que el indicador de límite de velocidad funcionara bien no fue nada fácil - no existe documentación sobre cómo funciona realmente ese indicador en el head unit, así que tuve que hacer ingeniería inversa desde cero y crear un pequeño ayudante en segundo plano que le pasa discretamente el límite real desde los mapas propios del coche, además de las indicaciones de Google Maps o Apple Maps. Me llevó muchas horas y bastante prueba y error en mi propio coche. Si esto te ahorró tiempo o hizo tu viaje un poco mejor, una donación es muy bienvenida.</p>
+  <p>Conseguir que el indicador de límite de velocidad funcionara bien no fue fácil — no existe documentación sobre cómo funciona realmente ese indicador en el head unit, así que tuve que hacer ingeniería inversa desde cero y crear un pequeño ayudante en segundo plano que le pasa el límite real desde los mapas propios del coche. Si esto te ahorró tiempo o hizo tu viaje un poco mejor, una donación es muy bienvenida.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Hacer una donación <span class="arrow">→</span></a>
 </div></section>
 
@@ -805,51 +779,40 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <!-- ================== DEUTSCH ================== -->
 <div data-lang="de">
+
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
-  <h1>Apple CarPlay <span class="accent">Turn-by-Turn</span> auf dem Mazda HUD.</h1>
-  <p class="lede">Verfeinerter Build des Community-Shim von KidMixer mit einem Einzeilen-Patch, der die km/h-Anzeige für EU-Fahrzeuge korrigiert - und einem kleinen Daemon, der den Speed-Slot zwischen OEM-Updates am Leben hält.</p>
-  <p class="sublede"><strong>Passend für:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ Facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - EU-Markt mit CMU150 Firmware 74.00.324.</p>
+  <h1>CarPlay + Android Auto <span class="accent">Turn-by-Turn</span> auf dem Mazda HUD.</h1>
+  <p class="lede">Ein USB-Stick — einstecken, Install auf dem Bildschirm antippen, fertig. Kein Laptop-Anschluss, kein SSH, kein WLAN. Getesteter Build mit km/h-Fix für EU-Fahrzeuge und einem Daemon, der den Speed-Slot am Leben hält.</p>
+  <p class="sublede"><strong>Passend für:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ Facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) — EU-Markt mit CMU150 Firmware 74.00.324.</p>
   <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Toolkit herunterladen <span class="arrow">→</span></a>
-  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+  <span class="cta-note">macOS · Linux · Windows 10+</span>
   <div class="hero-donate"><a class="cta cta-secondary cta-sm" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Spenden <span class="arrow">→</span></a></div>
 </div></div>
 
 <section><div class="wrap">
-  <h2><span class="num">01</span>Schnellanleitung zur Installation</h2>
-  <p class="sublede">Der kürzeste Weg von einer werksseitigen CMU zu einer validierten Installation.</p>
+  <h2><span class="num">01</span>USB-Installation — 3 Schritte</h2>
+  <p class="sublede">Alles passiert auf dem Bildschirm im Auto. Kein WLAN, kein SSH, kein Laptop am Head Unit.</p>
   <div class="steps">
-    <div class="step"><div class="body">USB-Stick vorbereiten - <strong>Option 1</strong>.</div></div>
-    <div class="step"><div class="body">SSH-Zugriff am Head Unit aktivieren - Stick einstecken, beliebige MP3 antippen, dann <strong>SSH</strong> im XSS-Overlay antippen.</div></div>
-    <div class="step"><div class="body">SSH-Zugriff prüfen - <strong>Option 9</strong>.</div></div>
-    <div class="step"><div class="body"><strong>Option 4</strong> ausführen. Wartet automatisch auf den Reboot und führt die Validierung durch.</div></div>
+    <div class="step"><div class="body">Am Computer das Toolkit starten und <strong>Option 1</strong> wählen — erstellt einen USB-Stick mit Patch und Auto-Trigger-Payload.</div></div>
+    <div class="step"><div class="body">Stick im Auto einstecken. ~30 Sekunden warten — ein <strong>Dialog erscheint auf dem Bildschirm</strong> mit Install / Uninstall / Check Status.</div></div>
+    <div class="step"><div class="body"><strong>Install</strong> antippen. Fortschrittsschritte werden angezeigt, dann startet die Einheit neu. Bildschirm bleibt ~2 Min. dunkel — das ist normal.</div></div>
+  </div>
+  <div class="callout">
+    <p><strong>Kein Dialog nach 30s?</strong> Gehe zu Media → USB → beliebigen Track antippen. Das XSS-Fallback-Menü erscheint mit den Buttons HUD+ / HUD- / HUD?.</p>
   </div>
   <div class="term">
-    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh</span></div>
-    <pre><span class="t-b"> Mazda CMU CarPlay-HUD toolkit </span>
+    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh — Option 1 reicht aus</span></div>
+    <pre><span class="t-b"> Mazda CMU HUD toolkit — CarPlay + Android Auto </span>
 
-<span class="t-g">══════════════════════════════════════════════════════════
-  MAIN FLOW  — do these once, in order
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">1</span>   Create USB unlock stick
-  <span class="t-b">2</span>   Backup CMU (factory state)
-  <span class="t-b">3</span>   Full rollback  (start clean — optional but recommended)
-  <span class="t-b">4</span>   Install ilshyma HUD Patch  <span class="t-m">★ recommended</span>
-        auto-retries → waits for reboot → auto-validates
-  <span class="t-b">5</span>   Validate installation  (re-run any time)
-
-<span class="t-y">══════════════════════════════════════════════════════════
-  ADVANCED / TROUBLESHOOTING  — not needed for normal use
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">P</span>   Install PURE KidMixer Patch  (no speed-limit fix — known issue)
-  <span class="t-b">X</span>   Install legacy pre-v16 mod .so  (speed-limit fallback, not an arrow fix)
-  <span class="t-b">D</span>   Full diagnostic dump  (verbose)
-  <span class="t-b">F</span>   Force-start speed daemon  (manual kick)
-  <span class="t-b">T</span>   Live-tail daemon log
-  <span class="t-b">C</span>   CarPlay HUD arrow debug log  (why doesn't the arrow update?)
-
-<span class="t-dim">══════════════════════════════════════════════════════════</span>
-  <span class="t-b">9</span>   Check SSH connection
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">1</span>   Create USB stick <span class="t-m">← hier starten</span>
+      <span class="t-dim">(SSH unlock + HUD patch + auto-trigger auf einem Stick)</span>
+  <span class="t-b">2</span>   Backup CMU
+  <span class="t-b">3</span>   Rollback  <span class="t-dim">(alle HUD-Patches entfernen, zurück auf Stock)</span>
+  <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
 <span class="t-dim">></span> </pre>
@@ -858,20 +821,20 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">02</span>Videoanleitung</h2>
-  <p class="sublede">Komplette Schritt-für-Schritt-Anleitung - vom USB-Stick bis zur validierten Installation.</p>
+  <p class="sublede">Komplette Schritt-für-Schritt-Anleitung — vom USB-Stick bis zum funktionierenden HUD.</p>
   <div class="video-embed">
-    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">03</span>Was es macht</h2>
-  <p class="sublede">Fügt das CarPlay-Overlay (Manöver + Entfernung) im HUD des Kombiinstruments hinzu, genau wie die eingebaute Werksnavigation. Zwei Ergänzungen zum <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>-Build:</p>
+  <p class="sublede">Fügt CarPlay- und Android-Auto-Manöverpfeile, Entfernung und Geschwindigkeit zum HUD im Kombiinstrument hinzu — genau wie die eingebaute Werksnavigation. Basiert auf <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> und <a href="https://github.com/nicka-bern/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, mit drei Ergänzungen:</p>
   <ul>
-    <li><strong>km/h-Fix.</strong> Der Shim nutzte <code>displaySpeedUnit = 1</code>, was das VBS-Enum als <em>mph</em> liest. Auf einem EU-HUD wird ein <code>50 km/h</code>-Schild nach Meilen→km-Umrechnung als <code>≈80</code> gezeichnet. Mein Fix setzt <code>2</code> (km/h).</li>
-    <li><strong>Speed-Limit-Spiegel-Daemon.</strong> Kleines Shell-Skript, das passiv den OEM-HUD-Stream von <code>svcjcinavi.so</code> beobachtet und den aktuellen Wert in die Keep-alive-Frames des Shim kopiert. Ohne ihn überschreibt der Shim den Slot alle 500 ms mit <code>0</code> und der Wert fällt auf <code>---</code>.</li>
+    <li><strong>Einheitlicher Patch.</strong> Eine Installation aktiviert sowohl CarPlay als auch Android Auto Turn-by-Turn auf dem HUD.</li>
+    <li><strong>km/h-Fix.</strong> Der Original-Shim nutzte <code>displaySpeedUnit = 1</code> (mph). Auf einem EU-HUD wurde <code>50 km/h</code> als <code>≈80</code> gezeichnet. Korrigiert auf <code>2</code> (km/h).</li>
+    <li><strong>Speed-Limit-Spiegel-Daemon.</strong> Shell-Skript, das passiv den OEM-Stream von <code>svcjcinavi.so</code> beobachtet und den aktuellen Wert in die Keep-alive-Frames des Shim kopiert. Ohne ihn überschreibt der Shim den Slot alle 500 ms mit <code>0</code> und der Wert fällt auf <code>---</code>.</li>
   </ul>
-  <p>Alles andere ist bitgenau das KidMixer-Original.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -879,33 +842,25 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <ul>
     <li>Mazda CMU150, Firmware <code>74.00.324</code>, EU-Version (prüfen: <code>cat /jci/version.ini</code>)</li>
     <li>USB-Stick (≥ 1 GB, FAT32-formatiert)</li>
-    <li>Computer mit WLAN (macOS, Linux oder Windows 10+)</li>
+    <li>Computer zur Vorbereitung des Sticks (macOS, Linux oder Windows 10+)</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Menüoptionen</h2>
-  <p class="sublede">Sowohl <code>toolkit.sh</code> (macOS/Linux) als auch <code>toolkit.bat</code> (Windows 10+) zeigen dasselbe nummerierte Menü.</p>
+  <h2><span class="num">05</span>Was auf dem Bildschirm passiert</h2>
+  <p class="sublede">Nach dem Einstecken des USB-Sticks zeigt das Auto einen Dialog mit drei Optionen. Jede zeigt den Fortschritt schrittweise an.</p>
   <div class="opts">
-    <div class="opt"><div class="num2">1</div><div>
-      <h3>USB-Unlock-Stick erstellen</h3>
-      <p>Formatiert USB als FAT32/MZD, kopiert die MP3-XSS-Payload für Root+SSH am CMU. USB einstecken, MP3 antippen, SSH im XSS-Overlay antippen - <code>sshd</code> startet auf Port 36000.</p>
+    <div class="opt"><div class="num2">+</div><div>
+      <h3>Install</h3>
+      <p>Überprüft USB-Dateien → installiert den Patch → startet neu. 3-Schritte-Fortschritt auf dem Bildschirm, dann Countdown vor dem Reboot. Bildschirm bleibt ~2 Min. dunkel — das ist normal.</p>
     </div></div>
-    <div class="opt"><div class="num2">2</div><div>
-      <h3>CMU-Backup</h3>
-      <p>Lädt alle vom Installer angefassten Dateien nach <code>backups/YYYYMMDD_HHMMSS/</code>. VOR der Installation ausführen.</p>
+    <div class="opt"><div class="num2">−</div><div>
+      <h3>Uninstall</h3>
+      <p>Entfernt den Patch, stellt Werkskonfiguration wieder her → startet neu. 2-Schritte-Fortschritt, dann Countdown. Alles kehrt zum Werkszustand zurück.</p>
     </div></div>
-    <div class="opt"><div class="num2">3</div><div>
-      <h3>PURE KidMixer Patch installieren</h3>
-      <p>Unveränderter Upstream-Build. Schnell und sicher, aber auf EU-Fahrzeugen hat er ein bekanntes Problem: der Speed-Limit-Slot am HUD zeigt ~80 km/h wegen einer mile→km-Umrechnung, die der Shim selbst macht, und fällt zwischen OEM-Updates auf <code>---</code>. Wähle diese Option für reines Upstream-Verhalten oder als Basis vor dem Wechsel zu Option 4.</p>
-    </div></div>
-    <div class="opt"><div class="num2">4</div><div>
-      <h3>ilshyma HUD Patch installieren <span class="pill">★ empfohlen</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">Speed-Limit korrigiert</small></h3>
-      <p>KidMixer-Basis + mein km/h-Quellcode-Patch (<code>displaySpeedUnit</code> von mph=1 auf km/h=2) + ein kleiner Daemon, der das aktuelle OEM-Speed-Limit in die Frames des Shims spiegelt, damit der Wert zwischen Updates am Leben bleibt. 3 Schritte: (a) originales <code>install.sh</code> fügt <code>LD_PRELOAD</code> zu <code>sm.conf</code> hinzu und setzt <code>NaviSupported=TRUE</code>, (b) mein gepatchtes <code>.so</code> wird überlagert, (c) Spiegel-Daemon und Auto-Launcher werden kopiert, jede Datei per md5 verifiziert. Endet mit Reboot - das Toolkit wartet von selbst auf SSH und führt die Validierung automatisch aus.</p>
-    </div></div>
-    <div class="opt"><div class="num2">5</div><div>
-      <h3>Kompletter Rollback</h3>
-      <p>Beendet meinen Daemon, entfernt meine Extras, führt das originale <code>uninstall.sh</code> aus, das <code>sm.conf</code> und <code>NaviSupported=FALSE</code> wiederherstellt. Endet mit Reboot, wartet dann auf SSH und bestätigt, dass die CMU wieder im Werkszustand ist.</p>
+    <div class="opt"><div class="num2">?</div><div>
+      <h3>Check Status</h3>
+      <p>Wartet auf Dienste-Start (zeigt Countdown wenn die Einheit gerade gebootet hat), prüft dann, ob alle 4 Shims aktiv sind. Zeigt eine Zusammenfassung.</p>
     </div></div>
   </div>
 </div></section>
@@ -913,24 +868,33 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">06</span>Hinweise und Einschränkungen</h2>
   <div class="callout mint">
-    <p><strong>Kann das Head Unit nicht bricken.</strong> Der Shim nutzt nur <code>LD_PRELOAD</code> - <code>blmjcicarplay.so</code> wird nie verändert. Read-only-Rootfs garantiert Rückkehr zum Werkszustand nach Reboot.</p>
+    <p><strong>Kann das Head Unit nicht bricken.</strong> Der Shim nutzt nur <code>LD_PRELOAD</code> — OEM-Bibliotheken werden nie verändert. Read-only-Rootfs garantiert Rückkehr zum Werkszustand nach Reboot.</p>
   </div>
   <ul>
     <li>Der Daemon löst <strong>keine</strong> NNG-Requests aus. Nur passives Zuhören des OEM-D-Bus-Streams.</li>
-    <li>Fahrspurführungs-Pfeile (<code>SetRecommLaneReq</code>) <strong>nicht</strong> implementiert - Apple sendet keine Spurdaten über iAP2.</li>
-    <li>Nur <strong>Apple Maps</strong> und <strong>Google Maps</strong> zeigen Pfeile auf dem HUD. <strong>Waze funktioniert nicht</strong> - es sendet keine Manöverdaten über den iAP2-Sidechannel, den der Shim liest; das HUD bleibt leer, wenn Waze aktiv ist. Waze-CarPlay-Einschränkung, nicht des CMU.</li>
+    <li>Fahrspurführungs-Pfeile (<code>SetRecommLaneReq</code>) <strong>nicht</strong> implementiert — Apple und Google senden keine Spurdaten über iAP2/AA.</li>
+    <li><strong>Apple Maps</strong> und <strong>Google Maps</strong> funktionieren sowohl auf CarPlay als auch auf Android Auto. <strong>Waze funktioniert nicht auf CarPlay</strong> — es sendet keine Manöverdaten über den iAP2-Sidechannel. Waze auf Android Auto kann je nach AA-Mod-Version funktionieren.</li>
   </ul>
 </div></section>
 
-<section><div class="wrap">
-  <h2><span class="num">07</span>Support</h2>
-  <p>Wenn SSH auf Port 36000 nicht verbindet, wurde <code>sshd</code> beim Boot vom Read-only-Rootfs beendet. USB → XSS → SSH wiederholen.</p>
-  <p>Wenn das HUD nach Installation leer bleibt, Option 9 zur Verifikation, dann per SSH <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> prüfen - <code>L_jciCARPLAY</code>-Prozess muss mit <code>LD_PRELOAD</code> in <code>/proc/PID/environ</code> laufen.</p>
+<section id="legacy-de"><div class="wrap">
+  <h2><span class="num">07</span>Vorherige Version <span class="pill pill-dim">v1.0</span></h2>
+  <p class="sublede">Die ursprüngliche konsolenbasierte Installationsmethode über SSH. Verwende sie, wenn du detaillierte Kontrolle brauchst oder einem bestehenden Video-Tutorial folgst.</p>
+  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">v1.0 herunterladen <span class="arrow">→</span></a>
+  <span class="cta-note">Konsolen-Methode · nur CarPlay</span>
+  <div class="video-embed" style="margin-top:24px">
+    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+  <div class="steps" style="margin-top:24px">
+    <div class="step"><div class="body">USB-Stick vorbereiten — <strong>Option 1</strong>. Einstecken, beliebige MP3 antippen, dann <strong>SSH</strong> im XSS-Overlay antippen.</div></div>
+    <div class="step"><div class="body">Computer mit dem WLAN des Autos verbinden. SSH prüfen — <strong>Option 9</strong>.</div></div>
+    <div class="step"><div class="body"><strong>Option 4</strong> ausführen. Toolkit installiert über SSH, wartet auf Reboot und validiert automatisch.</div></div>
+  </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">08</span>Dieses Projekt unterstützen</h2>
-  <p>Die Geschwindigkeitsbegrenzungsanzeige zum Laufen zu bringen war nicht einfach - es gibt keine Dokumentation darüber, wie diese Anzeige im Head Unit wirklich funktioniert, also musste ich sie von Grund auf per Reverse Engineering entschlüsseln und einen kleinen Hintergrund-Helfer bauen, der ihr unauffällig das echte Limit aus den werkseigenen Karten des Autos zuspielt - zusätzlich zu den Wegbeschreibungen von Google Maps oder Apple Maps. Das hat viele Stunden und einiges an Ausprobieren im eigenen Auto gekostet. Wenn dir das Zeit gespart oder die Fahrt etwas angenehmer gemacht hat, freue ich mich sehr über eine Spende.</p>
+  <p>Die Geschwindigkeitsbegrenzungsanzeige zum Laufen zu bringen war nicht einfach — es gibt keine Dokumentation darüber, wie diese Anzeige im Head Unit funktioniert, also musste ich sie von Grund auf per Reverse Engineering entschlüsseln und einen kleinen Hintergrund-Helfer bauen, der ihr das echte Limit aus den werkseigenen Karten des Autos zuspielt. Wenn dir das Zeit gespart oder die Fahrt angenehmer gemacht hat, freue ich mich über eine Spende.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Spenden <span class="arrow">→</span></a>
 </div></section>
 
@@ -938,51 +902,40 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <!-- ================== PORTUGUÊS ================== -->
 <div data-lang="pt">
+
 <div class="hero"><div class="wrap">
   <div class="eyebrow">CMU150 · Firmware 74.00.324 · EU</div>
-  <h1>Apple CarPlay <span class="accent">turn-by-turn</span> no HUD Mazda.</h1>
-  <p class="lede">Build refinada do shim comunitário KidMixer com um patch de uma linha que corrige o indicador km/h para veículos EU - e um pequeno daemon que mantém o slot de velocidade vivo entre atualizações OEM.</p>
-  <p class="sublede"><strong>Compatível com:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) - mercado EU com CMU150 firmware 74.00.324.</p>
+  <h1>CarPlay + Android Auto <span class="accent">turn-by-turn</span> no HUD Mazda.</h1>
+  <p class="lede">Um pendrive — insira, toque Install na tela, pronto. Sem conexão de notebook, sem SSH, sem Wi-Fi. Build testada com correção km/h para veículos europeus e um daemon que mantém o slot de velocidade vivo.</p>
+  <p class="sublede"><strong>Compatível com:</strong> Mazda CX-5 (KF, 2017-2021), CX-8, CX-9 (2016-2023), Mazda 6 (GJ facelift 2015-2017, GL 2018-2024), Mazda 3 (BM/BN 2014-2018), CX-3 (DK 2015-2022), MX-5 ND (2015-2023) — mercado EU com CMU150 firmware 74.00.324.</p>
   <a class="cta" href="https://github.com/ilshyma/mazda-hud-toolkit/releases/latest/download/mazda-hud-toolkit.zip" target="_blank" rel="noopener">Baixar toolkit <span class="arrow">→</span></a>
-  <span class="cta-note">340 KB · macOS · Linux · Windows 10+</span>
+  <span class="cta-note">macOS · Linux · Windows 10+</span>
   <div class="hero-donate"><a class="cta cta-secondary cta-sm" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Fazer uma doação <span class="arrow">→</span></a></div>
 </div></div>
 
 <section><div class="wrap">
-  <h2><span class="num">01</span>Manual de instalação rápida</h2>
-  <p class="sublede">O caminho mais curto de uma CMU de fábrica até uma instalação validada.</p>
+  <h2><span class="num">01</span>Instalação USB — 3 passos</h2>
+  <p class="sublede">Tudo acontece na tela do carro. Sem Wi-Fi, sem SSH, sem notebook conectado ao head unit.</p>
   <div class="steps">
-    <div class="step"><div class="body">Prepare o pendrive USB - <strong>opção 1</strong>.</div></div>
-    <div class="step"><div class="body">Ative o acesso SSH no head unit - insira o pendrive, toque em qualquer MP3, depois toque em <strong>SSH</strong> no overlay XSS.</div></div>
-    <div class="step"><div class="body">Verifique o acesso SSH - <strong>opção 9</strong>.</div></div>
-    <div class="step"><div class="body">Execute a <strong>opção 4</strong>. Aguarda o reboot e executa a validação automaticamente.</div></div>
+    <div class="step"><div class="body">No computador, execute o toolkit e escolha a <strong>opção 1</strong> — cria um pendrive com o patch e o payload de auto-disparo.</div></div>
+    <div class="step"><div class="body">Insira o pendrive no carro. Espere ~30 segundos — um <strong>diálogo aparece na tela</strong> com Install / Uninstall / Check Status.</div></div>
+    <div class="step"><div class="body">Toque em <strong>Install</strong>. Os passos de progresso aparecem na tela, depois a unidade reinicia. Tela fica escura por ~2 min — é normal.</div></div>
+  </div>
+  <div class="callout">
+    <p><strong>Nenhum diálogo após 30s?</strong> Vá para Media → USB → toque qualquer faixa. O menu XSS aparece com os botões HUD+ / HUD- / HUD?.</p>
   </div>
   <div class="term">
-    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh</span></div>
-    <pre><span class="t-b"> Mazda CMU CarPlay-HUD toolkit </span>
+    <div class="term-bar"><span></span><span></span><span></span><span class="label">toolkit.sh — só precisa da opção 1</span></div>
+    <pre><span class="t-b"> Mazda CMU HUD toolkit — CarPlay + Android Auto </span>
 
-<span class="t-g">══════════════════════════════════════════════════════════
-  MAIN FLOW  — do these once, in order
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">1</span>   Create USB unlock stick
-  <span class="t-b">2</span>   Backup CMU (factory state)
-  <span class="t-b">3</span>   Full rollback  (start clean — optional but recommended)
-  <span class="t-b">4</span>   Install ilshyma HUD Patch  <span class="t-m">★ recommended</span>
-        auto-retries → waits for reboot → auto-validates
-  <span class="t-b">5</span>   Validate installation  (re-run any time)
-
-<span class="t-y">══════════════════════════════════════════════════════════
-  ADVANCED / TROUBLESHOOTING  — not needed for normal use
-══════════════════════════════════════════════════════════</span>
-  <span class="t-b">P</span>   Install PURE KidMixer Patch  (no speed-limit fix — known issue)
-  <span class="t-b">X</span>   Install legacy pre-v16 mod .so  (speed-limit fallback, not an arrow fix)
-  <span class="t-b">D</span>   Full diagnostic dump  (verbose)
-  <span class="t-b">F</span>   Force-start speed daemon  (manual kick)
-  <span class="t-b">T</span>   Live-tail daemon log
-  <span class="t-b">C</span>   CarPlay HUD arrow debug log  (why doesn't the arrow update?)
-
-<span class="t-dim">══════════════════════════════════════════════════════════</span>
-  <span class="t-b">9</span>   Check SSH connection
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">1</span>   Create USB stick <span class="t-m">← comece aqui</span>
+      <span class="t-dim">(SSH unlock + HUD patch + auto-trigger num só pendrive)</span>
+  <span class="t-b">2</span>   Backup CMU
+  <span class="t-b">3</span>   Rollback  <span class="t-dim">(remover todos os patches HUD, voltar ao stock)</span>
+  <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
+<span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
 <span class="t-dim">></span> </pre>
@@ -991,54 +944,46 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">02</span>Guia em vídeo</h2>
-  <p class="sublede">Passo a passo completo - desde criar o pendrive até uma instalação validada.</p>
+  <p class="sublede">Passo a passo completo — desde criar o pendrive até um HUD funcionando.</p>
   <div class="video-embed">
-    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">03</span>O que faz</h2>
-  <p class="sublede">Adiciona a sobreposição CarPlay (manobra + distância) ao HUD do painel, igual à navegação nativa embutida. Dois acréscimos sobre a build <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a>:</p>
+  <p class="sublede">Adiciona setas de manobra, distância e velocidade do CarPlay e Android Auto ao HUD do painel — igual à navegação nativa. Baseado em <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> e <a href="https://github.com/nicka-bern/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, com três acréscimos:</p>
   <ul>
-    <li><strong>Correção km/h.</strong> O shim usava <code>displaySpeedUnit = 1</code>, que o enum VBS lê como <em>mph</em>. Num HUD europeu um <code>50 km/h</code> desenha como <code>≈80</code> após conversão milha→km. Nossa correção põe <code>2</code> (km/h).</li>
+    <li><strong>Patch unificado.</strong> Uma instalação que ativa tanto CarPlay quanto Android Auto turn-by-turn no HUD.</li>
+    <li><strong>Correção km/h.</strong> O shim original usava <code>displaySpeedUnit = 1</code> (mph). Num HUD europeu <code>50 km/h</code> desenhava como <code>≈80</code>. Corrigido para <code>2</code> (km/h).</li>
     <li><strong>Daemon-espelho.</strong> Script shell que escuta passivamente o fluxo OEM de <code>svcjcinavi.so</code> e copia o valor atual nos frames keep-alive do shim. Sem ele, o shim sobrescreve o slot com <code>0</code> a cada 500 ms e o valor cai para <code>---</code>.</li>
   </ul>
-  <p>Todo o resto é bit-a-bit o KidMixer original.</p>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">04</span>Requisitos</h2>
   <ul>
     <li>Mazda CMU150, firmware <code>74.00.324</code>, versão EU (verificar: <code>cat /jci/version.ini</code>)</li>
-    <li>USB flash (≥ 1 GB, formato FAT32)</li>
-    <li>Computador com Wi-Fi (macOS, Linux ou Windows 10+)</li>
+    <li>Pendrive USB (≥ 1 GB, formato FAT32)</li>
+    <li>Computador para preparar o pendrive (macOS, Linux ou Windows 10+)</li>
   </ul>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="num">05</span>Opções do menu</h2>
-  <p class="sublede">Tanto <code>toolkit.sh</code> (macOS/Linux) quanto <code>toolkit.bat</code> (Windows 10+) exibem o mesmo menu numerado.</p>
+  <h2><span class="num">05</span>O que aparece na tela</h2>
+  <p class="sublede">Após inserir o pendrive, o carro mostra um diálogo com três opções. Cada uma mostra o progresso passo a passo.</p>
   <div class="opts">
-    <div class="opt"><div class="num2">1</div><div>
-      <h3>Criar USB de desbloqueio</h3>
-      <p>Formata USB como FAT32/MZD, copia o payload MP3-XSS que abre root+SSH no CMU. Inserir USB, tocar qualquer MP3, tocar SSH no overlay XSS - <code>sshd</code> inicia na porta 36000.</p>
+    <div class="opt"><div class="num2">+</div><div>
+      <h3>Install</h3>
+      <p>Verifica arquivos USB → instala o patch → reinicia. Barra de progresso de 3 passos na tela, seguida de contagem regressiva. Tela fica escura por ~2 min — é normal.</p>
     </div></div>
-    <div class="opt"><div class="num2">2</div><div>
-      <h3>Backup do CMU</h3>
-      <p>Baixa todos os ficheiros que o instalador toca para <code>backups/YYYYMMDD_HHMMSS/</code>. Executar ANTES de instalar.</p>
+    <div class="opt"><div class="num2">−</div><div>
+      <h3>Uninstall</h3>
+      <p>Remove o patch, restaura configuração de fábrica → reinicia. Progresso de 2 passos, depois contagem regressiva. Tudo volta ao estado original.</p>
     </div></div>
-    <div class="opt"><div class="num2">3</div><div>
-      <h3>Instalar PURE KidMixer Patch</h3>
-      <p>Build upstream sem modificação. Rápido e seguro, mas em veículos EU tem um problema conhecido: o slot de limite de velocidade mostra ~80 km/h por uma conversão mile→km que o próprio shim faz, e morre para <code>---</code> entre atualizações OEM. Use isto se quiser o comportamento upstream puro ou como base antes de passar à opção 4.</p>
-    </div></div>
-    <div class="opt"><div class="num2">4</div><div>
-      <h3>Instalar ilshyma HUD Patch <span class="pill">★ recomendado</span><br><small style="font-weight:500;color:var(--text-dim);font-size:13.5px">limite de velocidade corrigido</small></h3>
-      <p>Base KidMixer + meu patch km/h (<code>displaySpeedUnit</code> de mph=1 para km/h=2) + um pequeno daemon que espelha o limite OEM atual nos frames do shim, para o valor sobreviver entre atualizações. Deploy em 3 passos: (a) <code>install.sh</code> original adiciona <code>LD_PRELOAD</code> e define <code>NaviSupported=TRUE</code>, (b) sobrepõe meu <code>.so</code> patched, (c) copia daemon-espelho e auto-launcher, cada ficheiro verificado por md5. Termina com reboot - o toolkit aguarda o SSH voltar e executa a validação automaticamente.</p>
-    </div></div>
-    <div class="opt"><div class="num2">5</div><div>
-      <h3>Rollback completo</h3>
-      <p>Mata meu daemon, remove meus extras, executa <code>uninstall.sh</code> original que restaura <code>sm.conf</code> e <code>NaviSupported=FALSE</code>. Termina com reboot, depois aguarda o SSH e confirma que o CMU voltou ao estado de fábrica.</p>
+    <div class="opt"><div class="num2">?</div><div>
+      <h3>Check Status</h3>
+      <p>Aguarda serviços carregarem (mostra contagem regressiva se a unidade acabou de ligar), depois verifica se os 4 shims estão ativos. Mostra um resumo.</p>
     </div></div>
   </div>
 </div></section>
@@ -1046,32 +991,41 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 <section><div class="wrap">
   <h2><span class="num">06</span>Notas e limitações</h2>
   <div class="callout mint">
-    <p><strong>Não pode brickar o head unit.</strong> O shim usa apenas <code>LD_PRELOAD</code> - <code>blmjcicarplay.so</code> nunca é modificado. Rootfs read-only garante retorno ao stock após reboot.</p>
+    <p><strong>Não pode brickar o head unit.</strong> O shim usa apenas <code>LD_PRELOAD</code> — bibliotecas OEM nunca são modificadas. Rootfs read-only garante retorno ao stock após reboot.</p>
   </div>
   <ul>
     <li>O daemon <strong>não</strong> dispara requests NNG. Apenas escuta o que o serviço OEM já emite no D-Bus.</li>
-    <li>Setas de guia de faixa (<code>SetRecommLaneReq</code>) <strong>não</strong> implementadas - Apple não transmite dados de faixa por iAP2.</li>
-    <li>Apenas <strong>Apple Maps</strong> e <strong>Google Maps</strong> mostram setas no HUD. <strong>Waze não funciona</strong> - não transmite dados de manobra pelo canal iAP2 que o shim lê; o HUD fica em branco enquanto o Waze está ativo. Limitação do Waze CarPlay, não do CMU.</li>
+    <li>Setas de guia de faixa (<code>SetRecommLaneReq</code>) <strong>não</strong> implementadas — Apple e Google não transmitem dados de faixa por iAP2/AA.</li>
+    <li><strong>Apple Maps</strong> e <strong>Google Maps</strong> funcionam tanto no CarPlay quanto no Android Auto. <strong>Waze não funciona no CarPlay</strong> — não transmite dados de manobra pelo canal iAP2. Waze no Android Auto pode funcionar dependendo da versão do mod AA.</li>
   </ul>
 </div></section>
 
-<section><div class="wrap">
-  <h2><span class="num">07</span>Suporte</h2>
-  <p>Se SSH não conectar na porta 36000, o <code>sshd</code> foi eliminado pelo rootfs read-only no boot. Repetir USB → XSS → SSH.</p>
-  <p>Se o HUD permanecer em branco após instalar, verificar opção 9; depois SSH e checar <code>ps | grep sm_svclauncher | grep jciCARPLAY</code> - <code>L_jciCARPLAY</code> deve estar rodando com <code>LD_PRELOAD</code> em <code>/proc/PID/environ</code>.</p>
+<section id="legacy-pt"><div class="wrap">
+  <h2><span class="num">07</span>Versão anterior <span class="pill pill-dim">v1.0</span></h2>
+  <p class="sublede">O método original de instalação por consola via SSH. Use se precisar de controlo detalhado ou se estiver seguindo um tutorial em vídeo existente.</p>
+  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Baixar v1.0 <span class="arrow">→</span></a>
+  <span class="cta-note">método consola · só CarPlay</span>
+  <div class="video-embed" style="margin-top:24px">
+    <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+  <div class="steps" style="margin-top:24px">
+    <div class="step"><div class="body">Prepare o pendrive — <strong>opção 1</strong>. Insira, toque qualquer MP3, depois toque <strong>SSH</strong> no overlay XSS.</div></div>
+    <div class="step"><div class="body">Conecte seu computador ao Wi-Fi do carro. Verifique SSH — <strong>opção 9</strong>.</div></div>
+    <div class="step"><div class="body">Execute a <strong>opção 4</strong>. Toolkit instala via SSH, aguarda reboot e valida automaticamente.</div></div>
+  </div>
 </div></section>
 
 <section><div class="wrap">
   <h2><span class="num">08</span>Apoie este projeto</h2>
-  <p>Fazer o indicador de limite de velocidade funcionar direito não foi nada fácil - não existe documentação sobre como esse indicador realmente funciona no head unit, então tive que fazer engenharia reversa do zero e criar um pequeno auxiliar em segundo plano que alimenta discretamente o limite real vindo dos mapas do próprio carro, além das indicações do Google Maps ou Apple Maps. Levou muitas horas e bastante tentativa e erro no meu próprio carro. Se isso poupou seu tempo, ou só tornou a viagem um pouco melhor, uma doação é muito bem-vinda.</p>
+  <p>Fazer o indicador de limite de velocidade funcionar direito não foi fácil — não existe documentação sobre como esse indicador funciona no head unit, então tive que fazer engenharia reversa do zero e criar um pequeno auxiliar em segundo plano que alimenta o limite real vindo dos mapas do próprio carro. Se isso poupou seu tempo ou tornou a viagem melhor, uma doação é muito bem-vinda.</p>
   <a class="cta cta-secondary" href="https://send.monobank.ua/jar/AHWV9wR8Kz" target="_blank" rel="noopener">Fazer uma doação <span class="arrow">→</span></a>
 </div></section>
 
 </div><!-- /pt -->
 
 <footer><div class="wrap">
-  <span>Mazda CarPlay HUD Toolkit</span>
-  <span>Based on KidMixer/mazda-carplay-hud · AGPL-3.0</span>
+  <span>Mazda CarPlay + AA HUD Toolkit</span>
+  <span>Based on KidMixer/mazda-carplay-hud + oem-aa-mod · AGPL-3.0</span>
 </div></footer>
 
 <script>
@@ -1080,12 +1034,10 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   var LS_KEY = 'mazda-toolkit-lang';
 
   function pickLang() {
-    // 1. saved preference
     try {
       var saved = localStorage.getItem(LS_KEY);
       if (saved && SUPPORTED.indexOf(saved) !== -1) return saved;
     } catch(e){}
-    // 2. browser language
     var navs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
     for (var i = 0; i < navs.length; i++) {
       var short = (navs[i] || '').toLowerCase().slice(0,2);

