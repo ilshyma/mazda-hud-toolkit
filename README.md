@@ -11,6 +11,7 @@ Apple CarPlay turn-by-turn navigation on the instrument-cluster HUD for Mazda CM
 ## Based on
 
 - [KidMixer/mazda-carplay-hud v2.0.0](https://github.com/KidMixer/mazda-carplay-hud) (AGPL-3.0)
+- [VitaliyKurokhtin/oem-aa-mod](https://github.com/VitaliyKurokhtin/oem-aa-mod) — Android Auto HUD support
 
 ## What's different
 
