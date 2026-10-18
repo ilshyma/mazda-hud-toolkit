@@ -1,8 +1,8 @@
 # Mazda CMU CarPlay-HUD Toolkit — Deutsch
 
-Turn-by-turn-Navigation von **Apple CarPlay** auf dem **Head-Up Display** des Kombiinstruments für Mazda CMU150 (Firmware 74.00.324) — mit korrekter **km/h**-Geschwindigkeitsbegrenzungsanzeige für den europäischen Markt.
+Turn-by-turn-Navigation von **Apple CarPlay** auf dem **Head-Up Display** des Instrumententrägers für Mazda CMU150 (Firmware 74.00.324) — mit korrekter **km/h**-Geschwindigkeitslimit-Anzeige für den europäischen Markt.
 
-**Passend für:** CX-5 KF, CX-8, CX-9 (2016-2023) und andere Fahrzeuge derselben Plattform mit EU-Firmware.
+**Passt für:** CX-5 KF, CX-8, CX-9 (2016-2023) und Fahrzeuge derselben Plattform mit EU-Firmware.
 
 **Übersetzungen:** [English](README.md) · [Українська](README.uk.md) · [Español](README.es.md) · [Português](README.pt.md)
 
@@ -10,21 +10,21 @@ Turn-by-turn-Navigation von **Apple CarPlay** auf dem **Head-Up Display** des Ko
 
 ## Was dieses Toolkit macht
 
-Basierend auf dem Community-Mod [KidMixer/mazda-carplay-hud](https://github.com/KidMixer/mazda-carplay-hud) mit zwei Ergänzungen für Fahrzeuge des EU-Marktes:
+Basiert auf dem Community-Build [KidMixer/mazda-carplay-hud](https://github.com/KidMixer/mazda-carplay-hud) `LD_PRELOAD`-Shim mit zwei Erweiterungen für europäische Fahrzeuge:
 
-1. **km/h-Fix** — Einzeilen-Patch im Quellcode (`displaySpeedUnit = 2` statt `1`, d.h. VBS-Enum `km/h` statt `mph`). Ohne diesen Fix zeichnet ein EU-HUD ein vom Shim kommendes `50 km/h`-Schild als `≈80 km/h` nach Meilen→km-Umrechnung.
-2. **Geschwindigkeitsbegrenzungs-Spiegel-Daemon** — ein kleines Shell-Skript, das passiv den OEM-HUD-Stream von `svcjcinavi.so` beobachtet und den *aktuellen* Wert in die keep-alive-Frames des Shim kopiert. Ohne ihn überschreibt der Shim den Speed-Slot alle 500 ms mit `0`, und der Wert fällt zwischen OEM-Updates auf `---`.
+1. **km/h-Fix** — einzeiliger Source-Patch (`displaySpeedUnit = 2` statt `1`, VBS-Enum `km/h` statt `mph`). Ohne diesen Fix rendert ein EU-HUD ein vom Shim kommendes `50 km/h`-Schild als `≈80 km/h` nach mile→km-Umrechnung.
+2. **Spiegel-Daemon fürs Speed-Limit** — kleines Shell-Skript, das den OEM-`svcjcinavi.so`-HUD-Stream passiv beobachtet und das *aktuelle* Speed-Limit in die eigenen Keep-Alive-Frames des Shim kopiert. Ohne diesen überschreibt der Shim den Speed-Slot alle 500 ms mit `0` und der Wert stirbt zwischen OEM-Updates zu `---`.
 
-Alles andere ist bitgenau das Original von KidMixer.
+Alles andere ist bit-identisch zum original KidMixer-Build.
 
 ---
 
 ## Voraussetzungen
 
-- Mazda CMU150, Firmware `74.00.324`, EU-Version (Verifikation: `cat /jci/version.ini`)
+- Mazda CMU150, Firmware `74.00.324`, EU-Variante (prüfen: `cat /jci/version.ini` am CMU)
 - USB-Stick (≥1 GB, FAT32-formatiert)
-- Ein Computer mit WLAN (macOS, Linux oder Windows 10+)
-- WLAN-Hotspot am CMU (bei wireless-CarPlay-Dongles) oder das unten beschriebene funktionierende Root+SSH-Setup
+- Computer mit WLAN (macOS, Linux oder Windows 10+)
+- WLAN-Hotspot am CMU (bei wireless-CarPlay-Dongles vorhanden) oder funktionierendes Root+SSH-Setup
 
 ## Inhalt
 
@@ -32,7 +32,7 @@ Alles andere ist bitgenau das Original von KidMixer.
 mazda-hud-toolkit/
 ├── toolkit.sh              # macOS/Linux-Menü
 ├── toolkit.bat             # Windows-Menü (benötigt integriertes OpenSSH)
-├── id_rsa_cmu              # SSH-Schlüssel für `cmu`-Konto am Head Unit
+├── id_rsa_cmu              # von Option B beim ersten Lauf erzeugt (NICHT im Paket)
 ├── files/
 │   ├── libpatch-blmjcicarplay.so         # PURE KidMixer .so (md5 0ce29da4…)
 │   ├── libpatch-blmjcicarplay-splim.so   # mein gepatchtes .so — km/h-Fix + read_splim-Guard (md5 faf82efb…)
@@ -41,29 +41,61 @@ mazda-hud-toolkit/
 │   ├── splim_bridge.sh                   # mein Spiegel-Daemon fürs Speed-Limit (v16)
 │   ├── splim_udpd_start.sh               # Auto-Launcher, den der Shim ruft
 │   └── usb_unlock/                       # MP3-XSS-Payload für Root-Zugriff
-└── backups/                          # von Menüpunkt 2 erstellt
+└── backups/                              # von Menüpunkt 2 erstellt
 ```
 
 ## Menü (sowohl `toolkit.sh` als auch `toolkit.bat`)
 
 | # | Aktion |
 |---|---|
-| **1** | **USB-Unlock-Stick erstellen** — formatiert einen USB-Stick als FAT32/MZD und kopiert die MP3-XSS-Payload, die Root+SSH am CMU freischaltet. Nutzt die [mzd-connect-1-root](https://github.com/mzd-evo/mzd-connect-1-root)-Technik. USB einstecken, beliebige MP3 antippen, dann **SSH** im erscheinenden XSS-Overlay — `sshd` startet auf Port 36000. |
-| **2** | **CMU-Backup** — lädt per SSH ein Archiv aller vom Installer angefassten Dateien herunter (`sm.conf`, `sm_WCP.conf`, `devmgr_config_master.xml`, `blmjcicarplay.so`, `/data_persist/cp-hud-mod/`, `version.ini`) nach `backups/YYYYMMDD_HHMMSS/`. VOR der Installation ausführen. |
-| **3** | **PURE KidMixer Patch installieren** — unveränderter Upstream-Build. Schnell und sicher, aber auf EU-Fahrzeugen hat er ein bekanntes Problem: der Speed-Limit-Slot am HUD zeigt ~80 km/h wegen einer mile→km-Umrechnung, die der Shim selbst macht, und fällt zwischen OEM-Updates auf `---`. Wähle diese Option für reines Upstream-Verhalten oder als Basis vor dem Wechsel zu Option 4. |
-| **4** | **ilshyma HUD Patch installieren** ★ empfohlen — dreistufige Bereitstellung: (a) originales `install.sh` fügt `LD_PRELOAD` zu `sm.conf` hinzu und setzt `NaviSupported=TRUE`, (b) mein gepatchtes `.so` (km/h-Fix + `read_splim`-Guard gegen future-ts) wird überlagert, (c) v16-Spiegel-Daemon und Auto-Launcher werden kopiert. Endet mit Reboot; ~2 min warten, dann SSH per USB wiederherstellen. |
-| **5** | **Kompletter Rollback** — beendet meinen Daemon, entfernt meine Extras, führt das originale `uninstall.sh` aus, das `sm.conf` und `NaviSupported=FALSE` aus den `.bak_precphud`-Backups wiederherstellt. Endet mit Reboot. |
-| **9** | SSH-Verbindungscheck |
+| **1** | **USB-Stick erstellen** — formatiert einen USB-Stick (FAT32, Label MZD) mit dem MP3-XSS-Unlock (SSH-Button) **und** dem HUD-Patch (`hud-mod/`). Im Auto bietet das On-Screen-Menü **SSH**, **HUD+** (installieren), **HUD-** (entfernen) und **HUD?** (prüfen), sodass der Patch ohne Laptop installiert werden kann. |
+| **2** | **CMU-Backup** — SSH-lädt ein Archiv aller vom Patch angefassten Dateien nach `backups/YYYYMMDD_HHMMSS/`. Vor der Installation ausführen. |
+| **3** | **Rollback** — entfernt **jeden** HUD-Patch: CarPlay + Android Auto, ilshyma v16 mit Speed-Daemon, KidMixer und oem-aa-mod. Zurück zum Werkszustand, Reboot und Bestätigung. |
+| **4** | **HUD-Patch installieren (CarPlay + Android Auto)** — ein Patch für beide Phones: Pfeile und Entfernung für CarPlay und Android Auto plus Speed-Limit-Zeichen aus der Werksnavigation (benötigt die Navi-SD-Karte). Jede Datei wird md5-verifiziert. Das Toolkit rebootet die Einheit, wartet auf SSH und prüft, dass alle 4 Teile geladen sind. Quelle: [mazda-carplay-hud `unified-carplay-aa`](https://github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa). Die Straßennamen-Zeile wird auf EU-HUDs nicht angezeigt. |
+| **B** | **SSH-Key Bootstrap** — einmalige Einrichtung für den SSH-Flow (Optionen 2 / 3 / 4). Generiert `id_rsa_cmu` falls fehlend und installiert die öffentliche Hälfte in `authorized_keys` am CMU mithilfe des Einmalpassworts `cmu:jci` vom USB XSS-Unlock. Nur auf einem neuen Rechner erforderlich. |
+| **A** | **Erweitert** — Installation validieren, SSH-Check, Diagnose-Dump sowie ältere CarPlay-only-Patches (v16, pure KidMixer, legacy) mit ihren Tools. |
 
-## Erste Installation
 
-1. USB-Stick formatieren, **Option 1** ausführen, um ihn vorzubereiten.
-2. USB ins Auto einstecken. Media → USB → beliebige MP3 antippen → auf XSS-Overlay unten am Bildschirm warten → **SSH** antippen. Grüne Logs erscheinen, fertig.
-3. Computer mit dem CMU-WLAN verbinden (`CMU-XX:XX:...` oder `MAZDA-xxx`).
-4. **Option 9** zur SSH-Prüfung ausführen, dann **Option 2** für Backup.
-5. **Option 4** (ilshyma HUD Patch) zur Installation ausführen. Auf Reboot warten.
-6. Am Head Unit Schritt 2 wiederholen (USB → SSH), um SSH nach dem Reboot wieder zu aktivieren.
-7. Testen — CarPlay-Navigation starten. Der Manöverpfeil sollte auf dem HUD erscheinen; der Speed-Limit-Slot sollte den aktuellen OEM-Wert (Karte + TSR-Kamera) zeigen.
+### HUD-Patch vom USB-Stick installieren (ohne Laptop)
+
+Der Stick aus Option 1 trägt auch den CarPlay + Android Auto HUD-Patch (`hud-mod/`). Im Auto wie gewohnt öffnen: Media → USB → MP3 antippen. Das Menü oben am Bildschirm hat drei zusätzliche Buttons:
+
+- **HUD+** installiert den Patch. Antippen, dann rote Bestätigung drücken. Die Einheit rebootet nach ca. 30 s von selbst.
+- **HUD-** entfernt ihn, zurück zum Stock. Bestätigung genauso.
+- **HUD?** prüft, dass alle Teile aktiv sind: CarPlay, Android Auto, Navi/Speed.
+
+Jeder Button endet mit einer Meldung am Bildschirm. Beginnt sie mit **ERROR** oder **CHECK S1**, bitte fotografieren und senden. Sie enthält einen Fehlercode, die Firmware-Version, die Region und was zu tun ist. Jeder Versuch bekommt einen nummerierten Ordner am Stick, `hud-mod/logs/001_install_<datum>/`, mit demselben Text (`RESULT.txt`), vollem Log (`run.log`) und einem Systemsnapshot (`system.txt`). Diesen Ordner zusammen mit dem Foto senden.
+
+## Zwei Installationswege
+
+| | **A. Nur USB** _(Standard — nichts zu tippen)_ | **B. SSH-Installation vom Computer** |
+|---|---|---|
+| Was Sie im Auto tun | Stick einlegen → **Install** im Dialog antippen. | Stick einlegen → **SSH** im XSS-Menü antippen. |
+| Was am CMU läuft | Patch wird automatisch vom USB installiert. | Kleiner `sshd` startet auf `192.168.53.1:36000`. |
+| Was Sie am Computer tun | Nichts. | **Optionen 2 / 4** des Toolkits über SSH ausführen. |
+| SSH-Key nötig? | Nein. | Ja — einmalig mit Option **B** unten generieren. |
+| USB-Stick nötig? | Ja, bei jeder Installation. | Ja, einmal pro CMU-Boot (um SSH wieder einzuschalten — CMU killt `sshd` beim Reboot). |
+
+Wählen Sie A, wenn Sie nur den HUD-Mod wollen. Wählen Sie B, wenn Sie auch Backups, Auto-Validierung, Diagnostik oder die älteren CarPlay-only-Varianten (Menü `L` / `P` / `X`) brauchen.
+
+### A. Nur USB (empfohlen für die meisten)
+
+1. **Option 1** am Computer ausführen — erstellt den USB-Stick.
+2. Stick ins Auto einlegen — ~30 s warten. Dialog mit **Install / Uninstall / Check Status** erscheint automatisch (CMU reflash scanner wird über `.up`-Payloads getriggert). Erscheint nichts: Media → USB → beliebige MP3 — das XSS-Fallback-Menü hat **HUD+ / HUD- / HUD?**-Buttons.
+3. **Install** antippen. Bildschirm wird für ~2 min dunkel während die Einheit rebootet — das ist normal, Zündung nicht ausschalten.
+4. Fertig. CarPlay- oder Android-Auto-Navigation starten; der Pfeil sollte am HUD erscheinen.
+
+### B. SSH-Installation vom Computer (Power-User)
+
+1. **USB-Stick erstellen** — **Option 1** ausführen.
+2. **SSH am CMU einschalten** — Stick ins Auto einlegen, Media → USB → MP3 antippen → **SSH** im XSS-Overlay antippen. Log-Meldungen erscheinen. (sshd lauscht jetzt auf `192.168.53.1:36000`. Er wird bei jedem Boot gekillt — diesen Schritt nach jedem Neustart wiederholen.)
+3. **CMU-WLAN beitreten** am Computer (`CMU-XX:XX:...` oder `MAZDA-xxx`).
+4. **SSH-Key bootstrappen — einmal pro Computer:** **Option B** ausführen. Das Toolkit generiert `id_rsa_cmu`, pusht die öffentliche Hälfte am CMU über das Einmalpasswort `jci` und verifiziert den Key-basierten Login. Das Passwort geben Sie genau einmal ein.
+5. **Prüfen + Backup** — Erweitert → **S** (SSH-Check), dann **Option 2** (Backup).
+6. **Installieren** — **Option 4** ausführen. Jede Datei wird md5-verifiziert, der CMU rebootet, das Toolkit wartet bis SSH wiederkommt und auto-validiert alle 4 Shims. (Nach dem Reboot Schritt 2 wiederholen, wenn das Toolkit danach fragt — damit SSH für den Validate-Schritt wieder läuft.)
+7. **Testen** — CarPlay- oder Android-Auto-Navigation starten. Der Manöverpfeil sollte am HUD erscheinen; der Speed-Limit-Slot sollte den aktuellen OEM-Wert zeigen (Karte + TSR-Kamera).
+
+> **Der SSH-Key wird NICHT mitgeliefert** — der Public Release enthält kein `id_rsa_cmu`. Option **B** erzeugt ihn lokal und installiert ihn am CMU. Der Private Key verlässt niemals Ihren Computer; die CMU-Seite hält die öffentliche Hälfte in `/data_persist/.../authorized_keys`, damit sie Reboots überlebt.
 
 ## Hinweise und Einschränkungen
 
@@ -77,11 +109,13 @@ mazda-hud-toolkit/
 
 - Basis-Shim: **KidMixer/mazda-carplay-hud v2.0.0** — [Quellcode](https://github.com/KidMixer/mazda-carplay-hud), AGPL-3.0.
 - Eine einzige Quellcode-Änderung: `hud/hud_send.cpp` Zeile 561, `displaySpeedUnit`-Wert `1 → 2` (VBS-Enum: `1 = mph`, `2 = km/h`).
-- Spiegel-Daemon: unser ~60-zeiliges Shell-Skript; beobachtet passiv `com.jci.vbs.navi.SetHUDDisplayMsgReq`-Aufrufe, deren Sender NICHT unser Shim ist, und schreibt `<km/h> <unix_ts>` nach `/data_persist/splim`. Alle 3 s aktualisiert, um den Stale-Check des Shim zufriedenzustellen; TTL 3600 s.
+- Spiegel-Daemon: unser ~60-zeiliges Shell-Skript; beobachtet passiv `com.jci.vbs.navi.SetHUDDisplayMsgReq`-Aufrufe, deren Sender NICHT unser Shim ist, und schreibt `<km/h> <unix_ts>` nach `/data_persist/splim`. Alle 3 s aktualisiert; TTL 3600 s.
 - Der Shim liest `/data_persist/splim` bei jedem keep-alive-Frame; ist die Datei frisch, wird der Wert eingefügt; ist sie leer/stale, wird `0` gesendet.
 
 ## Support
 
 Wenn SSH auf Port 36000 nicht verbindet, wurde `sshd` am Head Unit vom Read-only-Rootfs beim Boot beendet. USB → XSS → SSH-Schritt wiederholen.
 
-Wenn das HUD nach der Installation leer bleibt, zuerst mit Option 9 verifizieren; dann per SSH einloggen und `ps | grep sm_svclauncher | grep jciCARPLAY` prüfen — der `L_jciCARPLAY`-Prozess muss mit `LD_PRELOAD` in seinem `/proc/PID/environ` laufen.
+Wenn der Passwort-Bootstrap (**Option B**) *"Permission denied"* sagt, ist das Passwort falsch. Das USB XSS-Unlock setzt `cmu:jci` — am Prompt `jci` eingeben (Kleinbuchstaben, drei Zeichen). Klappt es immer noch nicht, hat der USB nicht ausgelöst — Schritt 2 (USB → XSS → SSH) wiederholen und B erneut probieren.
+
+Wenn das HUD nach der Installation leer bleibt, zuerst mit Erweitert → **V** verifizieren; dann per SSH einloggen und `ps | grep sm_svclauncher | grep jciCARPLAY` prüfen — der `L_jciCARPLAY`-Prozess muss mit `LD_PRELOAD` in seinem `/proc/PID/environ` laufen.

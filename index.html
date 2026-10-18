@@ -443,6 +443,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <span class="t-b">3</span>   Rollback  <span class="t-dim">(remove every HUD patch, back to stock)</span>
   <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
 <span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">B</span>   Bootstrap SSH key  <span class="t-dim">(first time only — install the id_rsa_cmu key)</span>
   <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
@@ -456,6 +457,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="video-embed">
     <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
+  <p class="sublede" style="margin-top:16px">Questions, comments or suggestions? Leave them in the comments under the video — I read every one.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -509,17 +511,17 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section id="legacy-en"><div class="wrap">
-  <h2><span class="num">07</span>Previous version <span class="pill pill-dim">v1.0</span></h2>
-  <p class="sublede">The original console-based install method via SSH. Use it if you need fine-grained control or are following an existing video tutorial.</p>
-  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Download v1.0 <span class="arrow">→</span></a>
-  <span class="cta-note">console method · CarPlay only</span>
+  <h2><span class="num">07</span>SSH install from your computer <span class="pill pill-dim">power users</span></h2>
+  <p class="sublede">An alternative to the on-screen Install button — the toolkit talks to the CMU over SSH, md5-verifies every file, and auto-validates the 4 shims after reboot. Pick this if you also want backups, diagnostics, or the older CarPlay-only variants.</p>
   <div class="video-embed" style="margin-top:24px">
     <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
   <div class="steps" style="margin-top:24px">
-    <div class="step"><div class="body">Prepare the USB stick — <strong>option 1</strong>. Insert it, tap any MP3, then tap <strong>SSH</strong> in the XSS overlay.</div></div>
-    <div class="step"><div class="body">Connect your computer to the car's Wi-Fi. Verify SSH — <strong>option 9</strong>.</div></div>
-    <div class="step"><div class="body">Run <strong>option 4</strong>. The toolkit installs via SSH, waits for the reboot, and validates automatically.</div></div>
+    <div class="step"><div class="body"><strong>Create the USB stick</strong> — on your computer, run <strong>option 1</strong>. (Still needed once: the CMU's SSH service is enabled only by this stick, and only until the next reboot.)</div></div>
+    <div class="step"><div class="body"><strong>Enable SSH on the CMU</strong> — insert the stick in the car, Media → USB → tap any mp3 → tap <strong>SSH</strong> in the XSS overlay. sshd starts listening on <code>192.168.53.1:36000</code>.</div></div>
+    <div class="step"><div class="body"><strong>Join the CMU Wi-Fi</strong> on your computer (<code>CMU-…</code> or <code>MAZDA-…</code>).</div></div>
+    <div class="step"><div class="body"><strong>Bootstrap the SSH key — once per computer:</strong> run <strong>option B</strong>. It generates <code>id_rsa_cmu</code>, installs the public half on the CMU using the one-time password <code>jci</code>, and verifies key-based login. The key is not shipped — this step creates it. You'll type the password exactly once.</div></div>
+    <div class="step"><div class="body"><strong>Install the HUD patch</strong> — run <strong>option 4</strong>. The toolkit copies every file, md5-verifies it on the CMU, reboots the unit, waits for SSH to come back (you redo the USB → XSS → SSH step when prompted), and auto-validates that all 4 shims loaded. Use <strong>option 2</strong> beforehand if you want a backup.</div></div>
   </div>
 </div></section>
 
@@ -566,6 +568,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <span class="t-b">3</span>   Rollback  <span class="t-dim">(видалити всі HUD-патчі, повернути у сток)</span>
   <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
 <span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">B</span>   Bootstrap SSH key  <span class="t-dim">(тільки перший раз — встановити ключ id_rsa_cmu)</span>
   <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
@@ -579,6 +582,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="video-embed">
     <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
+  <p class="sublede" style="margin-top:16px">Запитання, коментарі чи пропозиції? Залишайте їх у коментарях під відео — я читаю кожен.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -632,17 +636,17 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section id="legacy-uk"><div class="wrap">
-  <h2><span class="num">07</span>Попередня версія <span class="pill pill-dim">v1.0</span></h2>
-  <p class="sublede">Оригінальний метод встановлення через консоль і SSH. Використовуйте, якщо потрібен детальний контроль або якщо слідкуєте за існуючим відеогайдом.</p>
-  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Завантажити v1.0 <span class="arrow">→</span></a>
-  <span class="cta-note">консольний метод · тільки CarPlay</span>
+  <h2><span class="num">07</span>Встановлення через SSH з комп'ютера <span class="pill pill-dim">досвідченим користувачам</span></h2>
+  <p class="sublede">Альтернатива до кнопки Install на екрані — тулкіт говорить з магнітолою через SSH, md5-перевіряє кожен файл і автоматично валідує 4 шими після ребуту. Обирайте цей шлях, якщо хочете також бекапи, діагностику або старіші варіанти тільки для CarPlay.</p>
   <div class="video-embed" style="margin-top:24px">
     <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
   <div class="steps" style="margin-top:24px">
-    <div class="step"><div class="body">Підготуйте USB-флешку — <strong>опція 1</strong>. Вставте, тапніть будь-який MP3, потім тапніть <strong>SSH</strong> в XSS-меню.</div></div>
-    <div class="step"><div class="body">Під'єднайте комп'ютер до Wi-Fi магнітоли. Перевірте SSH — <strong>опція 9</strong>.</div></div>
-    <div class="step"><div class="body">Запустіть <strong>опцію 4</strong>. Тулкіт встановлює через SSH, чекає ребут і валідує автоматично.</div></div>
+    <div class="step"><div class="body"><strong>Створіть USB-флешку</strong> — на комп'ютері запустіть <strong>опцію 1</strong>. (Все одно потрібна один раз: SSH на магнітолі вмикається саме цією флешкою і лише до наступного ребуту.)</div></div>
+    <div class="step"><div class="body"><strong>Увімкніть SSH на магнітолі</strong> — вставте флешку в авто, Media → USB → тапніть будь-який mp3 → тапніть <strong>SSH</strong> в XSS-меню. sshd починає слухати на <code>192.168.53.1:36000</code>.</div></div>
+    <div class="step"><div class="body"><strong>Підключіться до Wi-Fi магнітоли</strong> на комп'ютері (<code>CMU-…</code> або <code>MAZDA-…</code>).</div></div>
+    <div class="step"><div class="body"><strong>Згенеруйте SSH-ключ — одноразово на кожному комп'ютері:</strong> запустіть <strong>опцію B</strong>. Вона згенерує <code>id_rsa_cmu</code>, встановить публічну частину на магнітолу через одноразовий пароль <code>jci</code> і перевірить що логін по ключу працює. Ключ не йде в комплекті — цей крок його створює. Пароль введете рівно один раз.</div></div>
+    <div class="step"><div class="body"><strong>Встановіть HUD-патч</strong> — запустіть <strong>опцію 4</strong>. Тулкіт копіює кожен файл, md5-перевіряє на магнітолі, ребутає магнітолу, чекає поки SSH підніметься назад (повторите крок USB → XSS → SSH коли попросить) і автоматично валідує що всі 4 шими завантажились. Опцію 2 запустіть перед цим якщо потрібен бекап.</div></div>
   </div>
 </div></section>
 
@@ -689,6 +693,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <span class="t-b">3</span>   Rollback  <span class="t-dim">(eliminar todos los parches HUD, volver a stock)</span>
   <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
 <span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">B</span>   Bootstrap SSH key  <span class="t-dim">(solo la primera vez — instala la clave id_rsa_cmu)</span>
   <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
@@ -702,6 +707,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="video-embed">
     <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
+  <p class="sublede" style="margin-top:16px">¿Preguntas, comentarios o sugerencias? Déjalos en los comentarios bajo el vídeo — leo cada uno.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -755,17 +761,17 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section id="legacy-es"><div class="wrap">
-  <h2><span class="num">07</span>Versión anterior <span class="pill pill-dim">v1.0</span></h2>
-  <p class="sublede">El método original de instalación por consola vía SSH. Úsalo si necesitas control detallado o si sigues un tutorial en vídeo existente.</p>
-  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Descargar v1.0 <span class="arrow">→</span></a>
-  <span class="cta-note">método consola · solo CarPlay</span>
+  <h2><span class="num">07</span>Instalación SSH desde tu ordenador <span class="pill pill-dim">usuarios avanzados</span></h2>
+  <p class="sublede">Una alternativa al botón Install en pantalla — el toolkit habla con el CMU por SSH, verifica cada archivo con md5 y auto-valida los 4 shims tras el reboot. Elígelo si también quieres backups, diagnóstico o las variantes antiguas solo-CarPlay.</p>
   <div class="video-embed" style="margin-top:24px">
     <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
   <div class="steps" style="margin-top:24px">
-    <div class="step"><div class="body">Prepara el USB — <strong>opción 1</strong>. Insértalo, toca cualquier MP3, luego toca <strong>SSH</strong> en el overlay XSS.</div></div>
-    <div class="step"><div class="body">Conecta tu ordenador al Wi-Fi del coche. Verifica SSH — <strong>opción 9</strong>.</div></div>
-    <div class="step"><div class="body">Ejecuta la <strong>opción 4</strong>. El toolkit instala vía SSH, espera el reboot y valida automáticamente.</div></div>
+    <div class="step"><div class="body"><strong>Crea la USB</strong> — en tu ordenador, ejecuta <strong>opción 1</strong>. (Aún necesaria una vez: el servicio SSH del CMU solo se activa con esta USB, y solo hasta el próximo reinicio.)</div></div>
+    <div class="step"><div class="body"><strong>Activa SSH en el CMU</strong> — inserta la USB en el coche, Media → USB → toca cualquier mp3 → toca <strong>SSH</strong> en el overlay XSS. sshd empieza a escuchar en <code>192.168.53.1:36000</code>.</div></div>
+    <div class="step"><div class="body"><strong>Conéctate al Wi-Fi del CMU</strong> en tu ordenador (<code>CMU-…</code> o <code>MAZDA-…</code>).</div></div>
+    <div class="step"><div class="body"><strong>Configura la clave SSH — una vez por ordenador:</strong> ejecuta <strong>opción B</strong>. Genera <code>id_rsa_cmu</code>, instala la mitad pública en el CMU usando la contraseña de un solo uso <code>jci</code>, y verifica el login por clave. La clave no viene incluida — este paso la crea. Introducirás la contraseña exactamente una vez.</div></div>
+    <div class="step"><div class="body"><strong>Instala el parche HUD</strong> — ejecuta <strong>opción 4</strong>. El toolkit copia cada archivo, lo verifica por md5 en el CMU, reinicia la unidad, espera a que SSH vuelva (repites el paso USB → XSS → SSH cuando te lo pida) y auto-valida que los 4 shims cargaron. Usa <strong>opción 2</strong> antes si quieres un backup.</div></div>
   </div>
 </div></section>
 
@@ -812,6 +818,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <span class="t-b">3</span>   Rollback  <span class="t-dim">(alle HUD-Patches entfernen, zurück auf Stock)</span>
   <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
 <span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">B</span>   Bootstrap SSH key  <span class="t-dim">(nur beim ersten Mal — installiert den id_rsa_cmu-Key)</span>
   <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
@@ -825,6 +832,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="video-embed">
     <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
+  <p class="sublede" style="margin-top:16px">Fragen, Kommentare oder Vorschläge? Hinterlasse sie in den Kommentaren unter dem Video — ich lese jeden.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -878,17 +886,17 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section id="legacy-de"><div class="wrap">
-  <h2><span class="num">07</span>Vorherige Version <span class="pill pill-dim">v1.0</span></h2>
-  <p class="sublede">Die ursprüngliche konsolenbasierte Installationsmethode über SSH. Verwende sie, wenn du detaillierte Kontrolle brauchst oder einem bestehenden Video-Tutorial folgst.</p>
-  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">v1.0 herunterladen <span class="arrow">→</span></a>
-  <span class="cta-note">Konsolen-Methode · nur CarPlay</span>
+  <h2><span class="num">07</span>SSH-Installation vom Computer <span class="pill pill-dim">Power-User</span></h2>
+  <p class="sublede">Eine Alternative zum Install-Button am Bildschirm — das Toolkit spricht mit dem CMU über SSH, md5-verifiziert jede Datei und auto-validiert die 4 Shims nach dem Reboot. Wähle dies, wenn du auch Backups, Diagnostik oder die älteren CarPlay-only-Varianten brauchst.</p>
   <div class="video-embed" style="margin-top:24px">
     <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
   <div class="steps" style="margin-top:24px">
-    <div class="step"><div class="body">USB-Stick vorbereiten — <strong>Option 1</strong>. Einstecken, beliebige MP3 antippen, dann <strong>SSH</strong> im XSS-Overlay antippen.</div></div>
-    <div class="step"><div class="body">Computer mit dem WLAN des Autos verbinden. SSH prüfen — <strong>Option 9</strong>.</div></div>
-    <div class="step"><div class="body"><strong>Option 4</strong> ausführen. Toolkit installiert über SSH, wartet auf Reboot und validiert automatisch.</div></div>
+    <div class="step"><div class="body"><strong>USB-Stick erstellen</strong> — am Computer <strong>Option 1</strong> ausführen. (Einmal nötig: der SSH-Dienst des CMU wird nur von diesem Stick aktiviert, und nur bis zum nächsten Reboot.)</div></div>
+    <div class="step"><div class="body"><strong>SSH am CMU einschalten</strong> — Stick ins Auto einlegen, Media → USB → beliebige MP3 antippen → <strong>SSH</strong> im XSS-Overlay antippen. sshd lauscht nun auf <code>192.168.53.1:36000</code>.</div></div>
+    <div class="step"><div class="body"><strong>CMU-WLAN beitreten</strong> am Computer (<code>CMU-…</code> oder <code>MAZDA-…</code>).</div></div>
+    <div class="step"><div class="body"><strong>SSH-Key bootstrappen — einmal pro Computer:</strong> <strong>Option B</strong> ausführen. Generiert <code>id_rsa_cmu</code>, installiert die öffentliche Hälfte am CMU über das Einmalpasswort <code>jci</code> und verifiziert den Key-basierten Login. Der Key wird nicht mitgeliefert — dieser Schritt erzeugt ihn. Das Passwort gibst du genau einmal ein.</div></div>
+    <div class="step"><div class="body"><strong>HUD-Patch installieren</strong> — <strong>Option 4</strong> ausführen. Das Toolkit kopiert jede Datei, md5-verifiziert sie am CMU, rebootet die Einheit, wartet bis SSH wiederkommt (du wiederholst den USB → XSS → SSH-Schritt, wenn gefragt) und auto-validiert, dass alle 4 Shims geladen sind. Zuvor <strong>Option 2</strong> ausführen, wenn du ein Backup willst.</div></div>
   </div>
 </div></section>
 
@@ -935,6 +943,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <span class="t-b">3</span>   Rollback  <span class="t-dim">(remover todos os patches HUD, voltar ao stock)</span>
   <span class="t-b">4</span>   Install HUD patch  <span class="t-dim">(CarPlay + Android Auto)</span>
 <span class="t-g">══════════════════════════════════════════════════════════</span>
+  <span class="t-b">B</span>   Bootstrap SSH key  <span class="t-dim">(só a primeira vez — instala a chave id_rsa_cmu)</span>
   <span class="t-b">A</span>   Advanced options
   <span class="t-b">0</span>   Exit
 
@@ -948,6 +957,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   <div class="video-embed">
     <iframe src="https://www.youtube-nocookie.com/embed/A5IJ6FCXDVI" title="Mazda HUD Toolkit — USB Install Guide (CarPlay + Android Auto)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
+  <p class="sublede" style="margin-top:16px">Perguntas, comentários ou sugestões? Deixe-os nos comentários sob o vídeo — leio cada um.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -1001,17 +1011,17 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 </div></section>
 
 <section id="legacy-pt"><div class="wrap">
-  <h2><span class="num">07</span>Versão anterior <span class="pill pill-dim">v1.0</span></h2>
-  <p class="sublede">O método original de instalação por consola via SSH. Use se precisar de controlo detalhado ou se estiver seguindo um tutorial em vídeo existente.</p>
-  <a class="cta cta-sm" href="https://github.com/ilshyma/mazda-hud-toolkit/archive/refs/tags/v1.0.zip" target="_blank" rel="noopener">Baixar v1.0 <span class="arrow">→</span></a>
-  <span class="cta-note">método consola · só CarPlay</span>
+  <h2><span class="num">07</span>Instalação SSH a partir do seu computador <span class="pill pill-dim">utilizadores avançados</span></h2>
+  <p class="sublede">Uma alternativa ao botão Install no ecrã — o toolkit fala com o CMU por SSH, verifica cada ficheiro por md5 e auto-valida os 4 shims após o reboot. Escolha isto se também quiser backups, diagnóstico ou as variantes antigas só-CarPlay.</p>
   <div class="video-embed" style="margin-top:24px">
     <iframe src="https://www.youtube-nocookie.com/embed/ygnm5qJyUcE" title="Get Apple CarPlay Turn-by-Turn on Your Mazda HUD (Full Guide)" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
   <div class="steps" style="margin-top:24px">
-    <div class="step"><div class="body">Prepare o pendrive — <strong>opção 1</strong>. Insira, toque qualquer MP3, depois toque <strong>SSH</strong> no overlay XSS.</div></div>
-    <div class="step"><div class="body">Conecte seu computador ao Wi-Fi do carro. Verifique SSH — <strong>opção 9</strong>.</div></div>
-    <div class="step"><div class="body">Execute a <strong>opção 4</strong>. Toolkit instala via SSH, aguarda reboot e valida automaticamente.</div></div>
+    <div class="step"><div class="body"><strong>Crie a pen USB</strong> — no seu computador, execute <strong>opção 1</strong>. (Ainda necessária uma vez: o serviço SSH do CMU só é ativado por esta pen, e só até ao próximo reinício.)</div></div>
+    <div class="step"><div class="body"><strong>Ative SSH no CMU</strong> — insira a pen no carro, Media → USB → toque qualquer mp3 → toque <strong>SSH</strong> no overlay XSS. sshd começa a escutar em <code>192.168.53.1:36000</code>.</div></div>
+    <div class="step"><div class="body"><strong>Ligue-se ao Wi-Fi do CMU</strong> no seu computador (<code>CMU-…</code> ou <code>MAZDA-…</code>).</div></div>
+    <div class="step"><div class="body"><strong>Configure a chave SSH — uma vez por computador:</strong> execute <strong>opção B</strong>. Gera <code>id_rsa_cmu</code>, instala a metade pública no CMU usando a palavra-passe de uso único <code>jci</code>, e verifica o login por chave. A chave não vem incluída — este passo cria-a. Introduz a palavra-passe exatamente uma vez.</div></div>
+    <div class="step"><div class="body"><strong>Instale o patch HUD</strong> — execute <strong>opção 4</strong>. O toolkit copia cada ficheiro, verifica-o por md5 no CMU, reinicia a unidade, aguarda que o SSH volte (repete o passo USB → XSS → SSH quando pedir) e auto-valida que os 4 shims carregaram. Use <strong>opção 2</strong> antes se quiser um backup.</div></div>
   </div>
 </div></section>
 

@@ -63,8 +63,10 @@ MD5_SO_MOD_LEGACY=c8800f0e743612543ecae705738c987e
 MD5_SPLIM_BRIDGE=0aa7119da7bbbdb25a3ab271e238ae44
 MD5_SPLIM_LAUNCHER=26cdb9e1a2333425e57923b334c5cc50
 
-[ -f "$KEY" ] || { echo "SSH key not found: $KEY"; exit 1; }
-chmod 600 "$KEY" 2>/dev/null
+# Key check is LAZY: USB creation does not touch SSH, so the toolkit must
+# work without id_rsa_cmu present. check() verifies the key before every
+# SSH-requiring action. Still fix perms here if the key happens to exist.
+[ -f "$KEY" ] && chmod 600 "$KEY" 2>/dev/null
 
 # ServerAliveInterval/CountMax + TCPKeepAlive: general insurance so the SSH
 # client notices a genuinely dead link and returns promptly instead of
@@ -1272,9 +1274,103 @@ carplay_log() {
 # ============================================================================
 #  UTILITY — menu 9
 # ============================================================================
-# Preflight: SSH check
+# ============================================================================
+#  MAIN FLOW — menu B  (Bootstrap SSH key — "first time, no key")
+# ============================================================================
+# The toolkit talks to the CMU as `cmu@192.168.53.1` using the id_rsa_cmu
+# private key. That key is NOT shipped with the public release — it has to be
+# generated locally AND its public half installed in the CMU's authorized_keys.
+# The USB stick (menu 1) only enables sshd + sets the password `cmu:jci`.
+# This bootstrap bridges the gap: it generates id_rsa_cmu if missing, then
+# ssh-copy-id's the pub key using the one-time password `jci`, after which
+# every other menu action works. Required once per computer; the key stays on
+# disk and the CMU side survives reboots (authorized_keys lives in /data_persist).
+bootstrap_ssh() {
+  hdr "Bootstrap SSH key — first-time setup"
+  info "This installs the id_rsa_cmu SSH key on the CMU so every other menu"
+  info "action works without typing a password. One-time, per computer."
+  echo
+
+  # 1) Generate key if missing. 2048-bit RSA because the CMU's old OpenSSH
+  #    doesn't understand ed25519. `-N ""` = no passphrase (unattended ssh).
+  if [ ! -f "$KEY" ]; then
+    info "generating a fresh id_rsa_cmu (2048-bit RSA, no passphrase)..."
+    if ! ssh-keygen -t rsa -b 2048 -N "" -f "$KEY" -C "mazda-hud-toolkit" >/dev/null; then
+      err "ssh-keygen failed"
+      return 1
+    fi
+    chmod 600 "$KEY" 2>/dev/null
+    ok "key created: $KEY"
+  else
+    ok "key already present: $KEY (reusing it)"
+  fi
+  if [ ! -f "$KEY.pub" ]; then
+    err "public half missing: $KEY.pub — delete $KEY and run bootstrap again"
+    return 1
+  fi
+
+  # 2) CMU reachable? If not, nudge the user to enable SSH via USB first.
+  info "checking the CMU is reachable at 192.168.53.1..."
+  if ! ping -c 2 -t 2 192.168.53.1 >/dev/null 2>&1; then
+    err "CMU not reachable. Enable SSH first:"
+    err "  1. Run menu option 1 to prepare a USB stick"
+    err "  2. In the car, insert it → Media → USB → tap any mp3 → tap SSH in the XSS menu"
+    err "  3. Connect your computer to the CMU Wi-Fi, then re-run B"
+    return 1
+  fi
+  ok "CMU is reachable"
+
+  # 3) Push the pub key with password auth. Prefer ssh-copy-id (it dedupes +
+  #    sets perms correctly), fall back to a hand-rolled pipe when it is
+  #    missing. The one-time password is `cmu:jci` baked by the USB XSS unlock.
+  echo
+  warn "You will be asked for the CMU password now. Type: jci"
+  warn "(this is set by the USB XSS unlock; it is not your Mac/Linux password)"
+  echo
+  local push_rc=1
+  if command -v ssh-copy-id >/dev/null 2>&1; then
+    ssh-copy-id -i "$KEY.pub" \
+      -o PubkeyAuthentication=no -o PasswordAuthentication=yes \
+      -o StrictHostKeyChecking=no -p "$PORT" "$CMU"
+    push_rc=$?
+  else
+    warn "ssh-copy-id not found — using manual pipe"
+    ssh -o PubkeyAuthentication=no -o PasswordAuthentication=yes \
+        -o StrictHostKeyChecking=no -p "$PORT" "$CMU" \
+        "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys" \
+        < "$KEY.pub"
+    push_rc=$?
+  fi
+  if [ "$push_rc" -ne 0 ]; then
+    err "could not install the public key (rc=$push_rc)"
+    err "  common causes: wrong password (correct is 'jci'), SSH disabled again"
+    err "  (sshd dies on reboot — repeat USB → XSS → SSH, then re-run B)"
+    return 1
+  fi
+  ok "public key installed on CMU"
+
+  # 4) Verify key auth works end-to-end
+  info "verifying key-based login..."
+  if $SSH -o PasswordAuthentication=no 'uname -a && uptime' 2>/dev/null | sed 's/^/  /'; then
+    echo
+    ok "═══ BOOTSTRAP DONE — every menu option is unlocked now ═══"
+    info "Next: option 2 (backup), then option 4 (install HUD patch)."
+    return 0
+  fi
+  err "key auth still refused. Try B again, or run Advanced → S to debug."
+  return 1
+}
+
+# Preflight: SSH check. Also the lazy gate for the id_rsa_cmu key -- the
+# toolkit's main-menu dispatch calls `check && op` for every SSH-requiring
+# action, so a missing key fails loudly here (not globally at startup).
 check() {
   hdr "SSH check"
+  if [ ! -f "$KEY" ]; then
+    err "SSH key missing: $KEY"
+    err "  re-download the toolkit release -- id_rsa_cmu is required for CMU operations."
+    return 1
+  fi
   if ping -c 2 -t 2 192.168.53.1 >/dev/null 2>&1 && \
      $SSH 'uname -a && uptime' 2>/dev/null; then
     ok "SSH ok"
@@ -1334,6 +1430,7 @@ while :; do
   printf "  %s3%s   Rollback  (remove every HUD patch, back to stock)\n"        "$C_BOLD" "$C_0"
   printf "  %s4%s   Install HUD patch  (CarPlay + Android Auto)\n"              "$C_BOLD" "$C_0"
   printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
+  printf "  %sB%s   Bootstrap SSH key  (first time only — install the id_rsa_cmu key)\n" "$C_BOLD" "$C_0"
   printf "  %sA%s   Advanced options\n" "$C_BOLD" "$C_0"
   printf "  %s0%s   Exit\n"             "$C_BOLD" "$C_0"
   echo
@@ -1344,6 +1441,7 @@ while :; do
     2) check && backup ;;
     3) check && rollback_all ;;
     4) check && install_unified ;;
+    B|b) bootstrap_ssh ;;
     A|a) advanced_menu ;;
     0|q|Q|"") exit 0 ;;
     *) warn "invalid" ;;
