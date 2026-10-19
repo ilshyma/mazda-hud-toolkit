@@ -7,10 +7,14 @@
 # ============================================================================
 set -u
 TAG="[cp-hud uninstall]"
+SELF_DIR=$(dirname "$0")
+MOD_VERSION=$(cat "$SELF_DIR/VERSION" 2>/dev/null | tr -d '[:space:]')
+: "${MOD_VERSION:=unknown}"
 MOD_DIR="/data_persist/cp-hud-mod"
 MASTER="/etc/devmgr_config_master.xml"
 log() { echo "$TAG $*"; }
 
+log "toolkit version: v$MOD_VERSION"
 [ -f /jci/sm/sm.conf ] || [ -f /jci/sm/sm_WCP.conf ] || { log "not a CMU — aborting"; exit 1; }
 mount -o remount,rw / 2>/dev/null || { log "remount rw failed"; exit 1; }
 

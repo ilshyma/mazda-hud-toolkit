@@ -55,6 +55,11 @@ FILES="$DIR/files"
 KEY="$DIR/id_rsa_cmu"
 CMU=cmu@192.168.53.1
 PORT=36000
+# One source of truth for the shipping toolkit version -- stamped into the
+# main-menu header and used by install/uninstall/usb_run on the CMU side.
+# Bump files/VERSION + files/unified/VERSION together with every release.
+MOD_VERSION=$(cat "$FILES/VERSION" 2>/dev/null | tr -d '[:space:]')
+: "${MOD_VERSION:=unknown}"
 
 # Expected md5 of shipped payloads (used to verify what's on the CMU after copy)
 MD5_SO_PURE=0ce29da4f16f72b0b8f931bee88ff332
@@ -452,6 +457,7 @@ kidmixer_base_install() {
     if $SSH 'mkdir -p /tmp/cp-hud-install' \
       && $SCP "$FILES/install.sh"                $CMU:/tmp/cp-hud-install/ \
       && $SCP "$FILES/libpatch-blmjcicarplay.so" $CMU:/tmp/cp-hud-install/ \
+      && { [ ! -f "$FILES/VERSION" ] || $SCP "$FILES/VERSION" $CMU:/tmp/cp-hud-install/; } \
       && $SSH 'cd /tmp/cp-hud-install && sh install.sh'; then
       return 0
     fi
@@ -1423,7 +1429,7 @@ advanced_menu() {
 
 while :; do
   echo
-  printf "%s Mazda CMU HUD toolkit — CarPlay + Android Auto %s\n" "$C_BOLD" "$C_0"
+  printf "%s Mazda CMU HUD toolkit — CarPlay + Android Auto  %sv%s%s\n" "$C_BOLD" "$C_DIM" "$MOD_VERSION" "$C_0"
   printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
   printf "  %s1%s   Create USB stick  (SSH unlock + HUD patch on one stick)\n" "$C_BOLD" "$C_0"
   printf "  %s2%s   Backup CMU\n"                                               "$C_BOLD" "$C_0"

@@ -8,6 +8,8 @@
 set -u
 TAG="[cp-hud install]"
 SELF_DIR=$(dirname "$0")
+MOD_VERSION=$(cat "$SELF_DIR/VERSION" 2>/dev/null | tr -d '[:space:]')
+: "${MOD_VERSION:=unknown}"
 SO_SRC="$SELF_DIR/libpatch-blmjcicarplay.so"
 MOD_DIR="/data_persist/cp-hud-mod"
 SO_DST="$MOD_DIR/libpatch-blmjcicarplay.so"
@@ -19,6 +21,7 @@ MASTER="/etc/devmgr_config_master.xml"
 log() { echo "$TAG $*"; }
 die() { echo "$TAG ERROR: $*"; mount -o remount,ro / 2>/dev/null; exit 1; }
 
+log "toolkit version: v$MOD_VERSION"
 # --- preflight ---------------------------------------------------------------
 [ -f "$SO_SRC" ] || die "libpatch-blmjcicarplay.so not found next to install.sh ($SO_SRC). Build it first (see ../mazda)."
 [ -f /jci/sm/sm.conf ] || [ -f /jci/sm/sm_WCP.conf ] || die "not a CMU (no /jci/sm/sm.conf or sm_WCP.conf) — aborting"

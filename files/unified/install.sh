@@ -24,6 +24,13 @@
 set -u
 TAG="[hud-mod install]"
 SRC=$(cd "$(dirname "$0")" && pwd)
+# Toolkit version -- stamped into run.log so every log tells us exactly which
+# shim bundle produced it. Bump files/VERSION + files/unified/VERSION
+# whenever a new release goes out and the number flows through here, the
+# uninstaller, usb_run.sh (on-screen FACTS line + system.txt header), and
+# the toolkit menus. Unknown-fallback keeps us safe if the file is missing.
+MOD_VERSION=$(cat "$SRC/VERSION" 2>/dev/null | tr -d '[:space:]')
+: "${MOD_VERSION:=unknown}"
 MOD_DIR=/data_persist/oem-aa-mod
 BAK_DIR=/data_persist/hud-mod-backup
 MASTER=/etc/devmgr_config_master.xml
@@ -34,6 +41,8 @@ SVCNAVI_MD5=100adcd8b110d4d79afe2dc5e3e769b1
 
 log() { echo "$TAG $*"; }
 die() { echo "$TAG ERROR: $*"; mount -o remount,ro / 2>/dev/null; exit 1; }
+
+log "toolkit version: v$MOD_VERSION"
 
 # --- preflight ---------------------------------------------------------------
 # WCP-only CMUs (board_type=2) ship only /jci/sm/sm_WCP.conf -- there is no

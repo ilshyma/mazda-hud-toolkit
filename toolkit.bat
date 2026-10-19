@@ -64,6 +64,15 @@ set "UNIFIED_DIR=/data_persist/oem-aa-mod"
 :: so the inner quotes on the KEY path survive to ssh.exe.
 set SSHOPTS=-i "%KEY%" -o PubkeyAcceptedAlgorithms=+ssh-rsa -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 -o TCPKeepAlive=yes
 
+:: --- toolkit version (read from files\VERSION, one source of truth) --------
+:: Shown in the main-menu header; the CMU-side scripts read their own copy
+:: of VERSION (which travels on the USB stick and in the SSH install folder)
+:: and stamp it into every run.log + the on-screen FACTS line.
+set "MOD_VERSION=unknown"
+if exist "%FILES%\VERSION" (
+  for /f "usebackq delims=" %%v in ("%FILES%\VERSION") do set "MOD_VERSION=%%v"
+)
+
 :: --- expected md5s of shipped payloads -------------------------------------
 set "MD5_SO_PURE=0ce29da4f16f72b0b8f931bee88ff332"
 set "MD5_SO_MOD=faf82efb028c6af9898122a5ff5833be"
@@ -101,7 +110,7 @@ goto menu
 :menu
 echo.
 echo ==========================================================
-echo  Mazda CMU HUD toolkit -- CarPlay + Android Auto
+echo  Mazda CMU HUD toolkit -- CarPlay + Android Auto    v!MOD_VERSION!
 echo ==========================================================
 echo   1  Create USB stick  ^(SSH unlock + HUD patch on one stick^)
 echo   2  Backup CMU
@@ -285,7 +294,8 @@ set /a KB_TRY+=1
 if !KB_TRY! GTR 1 echo     retry !KB_TRY!/3...
 ssh %SSHOPTS% -p %PORT% %CMU% "mkdir -p /tmp/cp-hud-install" && ^
 scp %SSHOPTS% -P %PORT% "%FILES%\install.sh"                %CMU%:/tmp/cp-hud-install/ && ^
-scp %SSHOPTS% -P %PORT% "%FILES%\libpatch-blmjcicarplay.so" %CMU%:/tmp/cp-hud-install/ && ^
+scp %SSHOPTS% -P %PORT% "%FILES%\libpatch-blmjcicarplay.so" %CMU%:/tmp/cp-hud-install/
+if exist "%FILES%\VERSION" scp %SSHOPTS% -P %PORT% "%FILES%\VERSION" %CMU%:/tmp/cp-hud-install/ >nul 2>&1
 ssh %SSHOPTS% -p %PORT% %CMU% "cd /tmp/cp-hud-install && sh install.sh"
 if not errorlevel 1 exit /b 0
 if !KB_TRY! LSS 3 (timeout /t 2 /nobreak >nul & goto kidmixer_base_loop)

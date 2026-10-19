@@ -8,11 +8,15 @@
 # ============================================================================
 set -u
 TAG="[hud-mod uninstall]"
+SRC=$(cd "$(dirname "$0")" && pwd)
+MOD_VERSION=$(cat "$SRC/VERSION" 2>/dev/null | tr -d '[:space:]')
+: "${MOD_VERSION:=unknown}"
 MOD_DIR=/data_persist/oem-aa-mod
 BAK_DIR=/data_persist/hud-mod-backup
 MASTER=/etc/devmgr_config_master.xml
 log() { echo "$TAG $*"; }
 
+log "toolkit version: v$MOD_VERSION"
 [ -f /jci/sm/sm.conf ] || [ -f /jci/sm/sm_WCP.conf ] || { log "not a CMU — aborting"; exit 1; }
 mount -o remount,rw / 2>/dev/null || { log "remount rw failed"; exit 1; }
 
