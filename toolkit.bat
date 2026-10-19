@@ -482,20 +482,41 @@ goto usb_wait_mount
 :usb_mounted
 
 :: --- Copy payload ----------------------------------------------------------
+:: We use PowerShell Copy-Item here instead of xcopy -- xcopy is known to
+:: silently return 0 on chcp 65001 (UTF-8) Windows builds and to misbehave
+:: when Windows Defender quarantines .sh/.mp3 files during the copy.
+:: PowerShell throws + we capture the exact message.
 echo %M_INFO%step 2/4 . copying payload
-xcopy /E /I /Y "%FILES%\usb_unlock\*" "!TARGET_BS!" >nul
-if errorlevel 1 (echo %M_ERR%copy failed & exit /b 1)
+set "COPYLOG=%TEMP%\mzd_copy.txt"
+del /q "%COPYLOG%" 2>nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { Copy-Item -LiteralPath '%FILES%\usb_unlock\*' -Destination '!TARGET_BS!' -Recurse -Force; 'OK' } catch { 'FAIL: ' + $_.Exception.Message }" > "%COPYLOG%" 2>&1
+type "%COPYLOG%"
+findstr /B /L "OK" "%COPYLOG%" >nul
+if errorlevel 1 (
+  echo %M_ERR%copy of usb_unlock failed. Common causes:
+  echo %M_ERR%   * Windows Defender / antivirus is quarantining .sh scripts on the stick
+  echo %M_ERR%     ^(exclude the toolkit folder and the USB drive, then re-run option 1^)
+  echo %M_ERR%   * the toolkit folder is inside a OneDrive / Dropbox that cannot be read
+  echo %M_ERR%   * the ZIP was extracted without preserving the files/usb_unlock/ tree
+  echo %M_ERR%     ^(verify: dir "%FILES%\usb_unlock"  -- it should list s, h, tweaks.sh, etc.^)
+  del /q "%COPYLOG%" 2>nul
+  exit /b 1
+)
+del /q "%COPYLOG%" 2>nul
 
 :: Mp3s at the drive ROOT too -- some CMUs autoplay the first root-level
 :: audio track on insert, which pops the XSS menu with zero manual action.
-xcopy /Y "%FILES%\usb_unlock\mp3\*.mp3" "!TARGET_BS!" >nul 2>nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Copy-Item -LiteralPath '%FILES%\usb_unlock\mp3\*.mp3' -Destination '!TARGET_BS!' -Force } catch {}" >nul 2>&1
 
 :: hud-mod/ rides on the same stick: XSS menu buttons HUD+ / HUD- / HUD?
 :: run hud-mod\usb_run.sh. Every file is md5-compared with the toolkit copy.
 if exist "%UNIFIED%\usb_run.sh" (
   echo %M_INFO%  copying CarPlay + Android Auto HUD patch to !TARGET!\hud-mod\
-  xcopy /E /I /Y "%UNIFIED%\*" "!TARGET_BS!hud-mod\" >nul
-  if errorlevel 1 (echo %M_ERR%copy of hud-mod failed & exit /b 1)
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { if (-not (Test-Path -LiteralPath '!TARGET_BS!hud-mod')) { New-Item -ItemType Directory -LiteralPath '!TARGET_BS!hud-mod' -Force | Out-Null }; Copy-Item -LiteralPath '%UNIFIED%\*' -Destination '!TARGET_BS!hud-mod' -Recurse -Force; 'OK' } catch { 'FAIL: ' + $_.Exception.Message }" > "%TEMP%\mzd_hudmod.txt" 2>&1
+  type "%TEMP%\mzd_hudmod.txt"
+  findstr /B /L "OK" "%TEMP%\mzd_hudmod.txt" >nul
+  if errorlevel 1 (echo %M_ERR%copy of hud-mod failed & del /q "%TEMP%\mzd_hudmod.txt" 2>nul & exit /b 1)
+  del /q "%TEMP%\mzd_hudmod.txt" 2>nul
   powershell -NoProfile -ExecutionPolicy Bypass -Command "$bad=0; Get-ChildItem -LiteralPath '%UNIFIED%' -File | ForEach-Object { $d = Join-Path '!TARGET_BS!hud-mod' $_.Name; if (-not (Test-Path -LiteralPath $d) -or (Get-FileHash -Algorithm MD5 -LiteralPath $_.FullName).Hash -ne (Get-FileHash -Algorithm MD5 -LiteralPath $d).Hash) { Write-Output ('  CORRUPT/MISSING: hud-mod\' + $_.Name); $bad++ } }; exit $bad"
   if errorlevel 1 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
   echo %M_OK%  hud-mod verified
@@ -559,7 +580,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "!VSCRIPT!" "%FILES%\usb_unl
 set "VRC=!errorlevel!"
 del /q "!VSCRIPT!" 2>nul
 if !VRC! GTR 0 (
-  echo %M_ERR%!VRC! problem^(s^) above -- stick may not work. Re-run option 1.
+  echo %M_ERR%!VRC! problem^(s^) above -- stick may not work.
+  echo %M_INFO%--- diagnostic dump ^(for the author^) ---
+  echo %M_INFO%source files/usb_unlock (first 20 entries):
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%FILES%\usb_unlock' -Force -Recurse | Select-Object -First 20 | ForEach-Object { '{0,8}  {1}' -f $_.Length, $_.FullName.Substring('%FILES%\usb_unlock\'.Length) }" 2>&1
+  echo.
+  echo %M_INFO%target !TARGET! (first 20 entries):
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '!TARGET_BS!' -Force -Recurse -ErrorAction SilentlyContinue | Select-Object -First 20 | ForEach-Object { '{0,8}  {1}' -f $_.Length, $_.FullName.Substring('!TARGET_BS!'.Length) }" 2>&1
+  echo.
+  echo %M_INFO%Windows Defender real-time protection:
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "try { (Get-MpPreference).DisableRealtimeMonitoring } catch { 'cannot query (not admin or no Defender module)' }" 2>&1
+  echo.
+  echo %M_ERR%Likely causes:
+  echo %M_ERR%   1. Antivirus deleted the .sh scripts after copy ^(target list is short / shells missing^).
+  echo %M_ERR%      Fix: add the toolkit folder AND the USB drive to AV exclusions, then re-run option 1.
+  echo %M_ERR%   2. The toolkit folder was not fully extracted ^(source list above is short / empty^).
+  echo %M_ERR%      Fix: re-extract the ZIP from GitHub releases ^(right-click -^> Extract All^).
+  echo %M_ERR%   3. The folder lives in OneDrive / Dropbox / a network share with placeholder files.
+  echo %M_ERR%      Fix: move the toolkit folder to a plain local path, e.g. C:\Users\%USERNAME%\mazda-hud-toolkit.
   exit /b 1
 )
 echo %M_OK%all critical files present + byte-identical to source
