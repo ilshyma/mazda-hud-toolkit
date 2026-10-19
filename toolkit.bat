@@ -46,6 +46,9 @@ setlocal EnableDelayedExpansion EnableExtensions
 set "ORIG_CP="
 for /f "tokens=2 delims=:" %%p in ('chcp 2^>nul') do set "ORIG_CP=%%p"
 if defined ORIG_CP set "ORIG_CP=!ORIG_CP: =!"
+:: Some locales (DE) end the chcp number with a trailing period; strip it or
+:: `chcp 850.` at exit becomes a (silent) error.
+if defined ORIG_CP if "!ORIG_CP:~-1!"=="." set "ORIG_CP=!ORIG_CP:~0,-1!"
 chcp 65001 >nul 2>&1
 
 :: --- paths / endpoint ------------------------------------------------------
@@ -72,6 +75,9 @@ set "MOD_VERSION=unknown"
 if exist "%FILES%\VERSION" (
   for /f "usebackq delims=" %%v in ("%FILES%\VERSION") do set "MOD_VERSION=%%v"
 )
+:: Strip a leading UTF-8 BOM (EF BB BF, 3 bytes) if the file was re-saved by
+:: Notepad on Windows -- otherwise the menu header shows "?2.5" / mojibake.
+if defined MOD_VERSION if "!MOD_VERSION:~0,1!"=="﻿" set "MOD_VERSION=!MOD_VERSION:~1!"
 
 :: --- expected md5s of shipped payloads -------------------------------------
 set "MD5_SO_PURE=0ce29da4f16f72b0b8f931bee88ff332"
@@ -249,12 +255,25 @@ goto wait_for_ssh_loop
 
 :: ===========================================================================
 :: Helper: md5_local  FILE  ->  LMD5 (lowercase hex)
-:: Uses Get-FileHash (PowerShell 4+ / Win 8.1+). certutil output format
-:: differs between Windows versions, so we do not use it.
+:: Uses certutil (Windows XP+). We deliberately do NOT use Get-FileHash because
+:: it was introduced in PowerShell 4.0 (Win 8.1); Win 8 / earlier would crash
+:: the whole CMU-install chain.
+:: certutil output is 3 lines:
+::   MD5 hash of FILE:
+::   d41d8cd98f00b204e9800998ecf8427e        <-- (sometimes spaces between pairs)
+::   CertUtil: -hashfile command completed successfully.
+:: We skip the first line, take whatever follows that is NOT the "CertUtil:" tail,
+:: strip spaces (pair separators on some Win 7 builds), lowercase it.
 :: ===========================================================================
 :md5_local
 set "LMD5="
-for /f "usebackq delims=" %%h in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-FileHash -Algorithm MD5 -LiteralPath '%~1').Hash.ToLower()"`) do set "LMD5=%%h"
+for /f "usebackq skip=1 tokens=*" %%h in (`certutil -hashfile "%~1" MD5 2^>nul`) do (
+  if not defined LMD5 (
+    set "RAW=%%h"
+    if not "!RAW:~0,8!"=="CertUtil" set "LMD5=!RAW: =!"
+  )
+)
+if defined LMD5 for /f "usebackq delims=" %%l in (`powershell -NoProfile -Command "'!LMD5!'.ToLower()"`) do set "LMD5=%%l"
 exit /b 0
 
 :: ===========================================================================
@@ -403,7 +422,7 @@ echo.
 :: Enumerate removable drives (DriveType=2 in Win32_LogicalDisk).
 set "PSOUT=%TEMP%\mzd_disks.txt"
 del /q "%PSOUT%" 2>nul
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; $rows = Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=2' | ForEach-Object { $lbl = if ($_.VolumeName) { $_.VolumeName } else { '(no label)' }; '{0}|{1}|{2:N1} GB' -f $_.DeviceID, $lbl, ($_.Size/1GB) }; if (-not $rows) { $rows = Get-Disk | Where-Object { $_.BusType -eq 'USB' } | Get-Partition | Get-Volume | Where-Object { $_.DriveLetter } | ForEach-Object { $lbl = if ($_.FileSystemLabel) { $_.FileSystemLabel } else { '(no label)' }; '{0}:|{1}|{2:N1} GB' -f $_.DriveLetter, $lbl, ($_.Size/1GB) } }; $rows | Out-File -Encoding ASCII '%PSOUT%'" 2>nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; $rows = Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=2' | ForEach-Object { $lbl = if ($_.VolumeName) { $_.VolumeName } else { '(no label)' }; '{0}|{1}|{2:N1} GB' -f $_.DeviceID, $lbl, ($_.Size/1GB) }; if (-not $rows) { $rows = Get-Disk | Where-Object { $_.BusType -eq 'USB' } | Get-Partition | Get-Volume | Where-Object { $_.DriveLetter } | ForEach-Object { $lbl = if ($_.FileSystemLabel) { $_.FileSystemLabel } else { '(no label)' }; '{0}:|{1}|{2:N1} GB' -f $_.DriveLetter, $lbl, ($_.Size/1GB) } }; $rows | Out-File -Encoding UTF8 '%PSOUT%'" 2>nul
 if not exist "%PSOUT%" (
   echo %M_ERR%PowerShell failed to enumerate drives.
   echo       Try: powershell -Command "Get-CimInstance Win32_LogicalDisk"
@@ -413,10 +432,13 @@ if not exist "%PSOUT%" (
 set /a N=0
 for /f "usebackq tokens=1,2,3 delims=|" %%a in ("%PSOUT%") do (
   set /a N+=1
-  set "DRIVE_!N!=%%a"
+  set "RAW=%%a"
+  :: Strip a leading UTF-8 BOM if PowerShell wrote one to the first row.
+  if "!RAW:~0,1!"=="﻿" set "RAW=!RAW:~1!"
+  set "DRIVE_!N!=!RAW!"
   set "LABEL_!N!=%%b"
   set "SIZE_!N!=%%c"
-  echo   !N!  %%a  ^(%%b, %%c^)
+  echo   !N!  !RAW!  ^(%%b, %%c^)
 )
 del /q "%PSOUT%" 2>nul
 if !N!==0 (
@@ -456,6 +478,11 @@ if "!IS_ADMIN!"=="1" (
   type "%TEMP%\mzd_fmt.txt"
   findstr /B /L "OK" "%TEMP%\mzd_fmt.txt" >nul
   if not errorlevel 1 set "FMT_MODE=done"
+  :: Format-Volume + the Windows Format dialog both refuse FAT32 on volumes
+  :: larger than 32 GB. Detect the "too big" case so we can tell the user to
+  :: use a third-party formatter instead of blindly asking for Explorer.
+  findstr /I /C:"too big" /C:"too large" /C:"size of the volume" "%TEMP%\mzd_fmt.txt" >nul
+  if not errorlevel 1 set "FMT_TOO_BIG=1"
   del /q "%TEMP%\mzd_fmt.txt" 2>nul
 )
 if /I "!FMT_MODE!"=="done" (
@@ -463,8 +490,14 @@ if /I "!FMT_MODE!"=="done" (
 ) else (
   if "!IS_ADMIN!"=="1" echo %M_WARN%  auto-format failed. Falling back to manual format.
   if "!IS_ADMIN!"=="0" echo %M_WARN%  not elevated -- cannot auto-format. Please do this now:
-  echo %M_INFO%    Explorer -^> right-click !TARGET! -^> Format...
-  echo %M_INFO%      File system: FAT32   Volume label: MZD   Quick Format: ON
+  if "!FMT_TOO_BIG!"=="1" (
+    echo %M_ERR%    !TARGET! is larger than 32 GB -- Windows cannot format FAT32 on it.
+    echo %M_ERR%    Use "fat32format" ^(https://ridgecrop.co.uk/fat32format.htm^) or
+    echo %M_ERR%    Rufus ^(https://rufus.ie^) to format as FAT32 with label MZD, then rerun.
+  ) else (
+    echo %M_INFO%    Explorer -^> right-click !TARGET! -^> Format...
+    echo %M_INFO%      File system: FAT32   Volume label: MZD   Quick Format: ON
+  )
   echo.
   set "OK="
   set /p "OK=formatted as FAT32 with label MZD? [y/N] > "
@@ -486,10 +519,17 @@ goto usb_wait_mount
 :: silently return 0 on chcp 65001 (UTF-8) Windows builds and to misbehave
 :: when Windows Defender quarantines .sh/.mp3 files during the copy.
 :: PowerShell throws + we capture the exact message.
+::
+:: PATH vs LITERALPATH:
+::   -LiteralPath forbids wildcards -- `path\*` is passed verbatim.
+::   -Path treats * as a wildcard, which is what we want for globbing.
+::   Mixing them is the "A parameter cannot be found" family of errors seen
+::   on PS 3.0/4.0 where some cmdlets don't support -LiteralPath at all
+::   (e.g. New-Item got -LiteralPath only in PS 5.0).
 echo %M_INFO%step 2/4 . copying payload
 set "COPYLOG=%TEMP%\mzd_copy.txt"
 del /q "%COPYLOG%" 2>nul
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { Copy-Item -LiteralPath '%FILES%\usb_unlock\*' -Destination '!TARGET_BS!' -Recurse -Force; 'OK' } catch { 'FAIL: ' + $_.Exception.Message }" > "%COPYLOG%" 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { Copy-Item -Path '%FILES%\usb_unlock\*' -Destination '!TARGET_BS!' -Recurse -Force; 'OK' } catch { 'FAIL: ' + $_.Exception.Message }" > "%COPYLOG%" 2>&1
 type "%COPYLOG%"
 findstr /B /L "OK" "%COPYLOG%" >nul
 if errorlevel 1 (
@@ -506,19 +546,37 @@ del /q "%COPYLOG%" 2>nul
 
 :: Mp3s at the drive ROOT too -- some CMUs autoplay the first root-level
 :: audio track on insert, which pops the XSS menu with zero manual action.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Copy-Item -LiteralPath '%FILES%\usb_unlock\mp3\*.mp3' -Destination '!TARGET_BS!' -Force } catch {}" >nul 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Copy-Item -Path '%FILES%\usb_unlock\mp3\*.mp3' -Destination '!TARGET_BS!' -Force } catch {}" >nul 2>&1
 
 :: hud-mod/ rides on the same stick: XSS menu buttons HUD+ / HUD- / HUD?
 :: run hud-mod\usb_run.sh. Every file is md5-compared with the toolkit copy.
+:: NOTE: md5-verification goes through certutil, NOT Get-FileHash, so this
+:: works on Windows 8 / PS 3.0 too (Get-FileHash shipped first in PS 4.0).
 if exist "%UNIFIED%\usb_run.sh" (
   echo %M_INFO%  copying CarPlay + Android Auto HUD patch to !TARGET!\hud-mod\
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { if (-not (Test-Path -LiteralPath '!TARGET_BS!hud-mod')) { New-Item -ItemType Directory -LiteralPath '!TARGET_BS!hud-mod' -Force | Out-Null }; Copy-Item -LiteralPath '%UNIFIED%\*' -Destination '!TARGET_BS!hud-mod' -Recurse -Force; 'OK' } catch { 'FAIL: ' + $_.Exception.Message }" > "%TEMP%\mzd_hudmod.txt" 2>&1
+  if not exist "!TARGET_BS!hud-mod" mkdir "!TARGET_BS!hud-mod" 2>nul
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { Copy-Item -Path '%UNIFIED%\*' -Destination '!TARGET_BS!hud-mod' -Recurse -Force; 'OK' } catch { 'FAIL: ' + $_.Exception.Message }" > "%TEMP%\mzd_hudmod.txt" 2>&1
   type "%TEMP%\mzd_hudmod.txt"
   findstr /B /L "OK" "%TEMP%\mzd_hudmod.txt" >nul
   if errorlevel 1 (echo %M_ERR%copy of hud-mod failed & del /q "%TEMP%\mzd_hudmod.txt" 2>nul & exit /b 1)
   del /q "%TEMP%\mzd_hudmod.txt" 2>nul
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "$bad=0; Get-ChildItem -LiteralPath '%UNIFIED%' -File | ForEach-Object { $d = Join-Path '!TARGET_BS!hud-mod' $_.Name; if (-not (Test-Path -LiteralPath $d) -or (Get-FileHash -Algorithm MD5 -LiteralPath $_.FullName).Hash -ne (Get-FileHash -Algorithm MD5 -LiteralPath $d).Hash) { Write-Output ('  CORRUPT/MISSING: hud-mod\' + $_.Name); $bad++ } }; exit $bad"
-  if errorlevel 1 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
+  :: md5-verify every file via certutil (PS 3.0 safe)
+  set "HUDBAD=0"
+  for %%F in ("%UNIFIED%\*") do (
+    if exist "!TARGET_BS!hud-mod\%%~nxF" (
+      call :md5_local "%%~fF"
+      set "SRC_MD5=!LMD5!"
+      call :md5_local "!TARGET_BS!hud-mod\%%~nxF"
+      if /I not "!SRC_MD5!"=="!LMD5!" (
+        echo %M_ERR%  CORRUPT/MISSING: hud-mod\%%~nxF
+        set /a HUDBAD+=1
+      )
+    ) else (
+      echo %M_ERR%  MISSING: hud-mod\%%~nxF
+      set /a HUDBAD+=1
+    )
+  )
+  if !HUDBAD! GTR 0 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
   echo %M_OK%  hud-mod verified
 )
 
@@ -554,31 +612,54 @@ del /q "!UPSCRIPT!" 2>nul
 if !UPCOUNT! GEQ 2 (
   echo %M_OK%  !UPCOUNT! .up injection payloads present
 ) else (
-  echo %M_ERR%  expected 2 .up payload files, found !UPCOUNT! -- auto-trigger will not work
+  echo %M_ERR%  expected 2 .up payload files, found !UPCOUNT!
+  echo %M_ERR%  The payload filenames contain awk sprintf+system^(^) that some
+  echo %M_ERR%  antivirus engines ^(AMSI / Defender / Sophos^) flag as shell-injection.
+  echo %M_ERR%  Fix: exclude %%TEMP%% and the USB drive letter from your AV,
+  echo %M_ERR%       then re-run option 1. The payload is harmless on Windows --
+  echo %M_ERR%       it is parsed only by the CMU's reflash scanner.
+  echo %M_ERR%  Auto-trigger will not work without these; USB install still works
+  echo %M_ERR%  via Media -^> USB -^> any mp3 -^> HUD+ fallback.
   exit /b 1
 )
 
 :: --- MD5-verify every critical file on the stick (match toolkit.sh exactly) ---
+:: Done entirely in CMD + certutil (via :md5_local). We deliberately do NOT
+:: use Get-FileHash here: it was introduced in PowerShell 4.0, so Win 8 would
+:: crash step 4/4 and tell the user their stick is bad even when every file
+:: is byte-identical. certutil ships with every Windows since XP.
 echo %M_INFO%step 4/4 . verifying every critical file
-set "VSCRIPT=%TEMP%\mzd_verify.ps1"
->  "!VSCRIPT!" echo $ErrorActionPreference='SilentlyContinue'
->> "!VSCRIPT!" echo $src=$args[0]; $dst=$args[1]; $problems=0
->> "!VSCRIPT!" echo $files=@('s','dev.html','mp3/a.mp3','mp3/b.mp3','mp3/c.mp3','mp3/d.mp3','a.mp3','b.mp3','c.mp3','d.mp3','js/run.js','js/enable_ssh.sh','css/init.css','jci-autoupdate','dataRetrieval_config.txt','tweaks.sh','t','h')
->> "!VSCRIPT!" echo foreach ($f in $files) {
->> "!VSCRIPT!" echo   $dstp=Join-Path $dst ($f -replace '/','\')
->> "!VSCRIPT!" echo   if (-not (Test-Path -LiteralPath $dstp)) { Write-Output ("  MISSING: " + $f); $problems++; continue }
->> "!VSCRIPT!" echo   if ($f -match '^[abcd]\.mp3$') { $srcp = Join-Path $src ("mp3\" + $f) } else { $srcp = Join-Path $src ($f -replace '/','\') }
->> "!VSCRIPT!" echo   if (-not (Test-Path -LiteralPath $srcp)) { continue }
->> "!VSCRIPT!" echo   $sh = (Get-FileHash -Algorithm MD5 -LiteralPath $srcp).Hash
->> "!VSCRIPT!" echo   $dh = (Get-FileHash -Algorithm MD5 -LiteralPath $dstp).Hash
->> "!VSCRIPT!" echo   if ($sh -ne $dh) { Write-Output ("  CORRUPT: " + $f + " (src=" + $sh.ToLower() + " dst=" + $dh.ToLower() + ")"); $problems++ }
->> "!VSCRIPT!" echo }
->> "!VSCRIPT!" echo $dsc = (Get-ChildItem -LiteralPath $dst -Recurse -Force -Filter '._*' -ErrorAction SilentlyContinue).Count
->> "!VSCRIPT!" echo if ($dsc -gt 0) { Write-Output ("  " + $dsc + " AppleDouble (._*) sidecars leaked -- would break the CMU"); $problems += $dsc }
->> "!VSCRIPT!" echo exit $problems
-powershell -NoProfile -ExecutionPolicy Bypass -File "!VSCRIPT!" "%FILES%\usb_unlock" "!TARGET_BS!"
-set "VRC=!errorlevel!"
-del /q "!VSCRIPT!" 2>nul
+set "VRC=0"
+:: File list is kept in the exact same order and name set as toolkit.sh:make_usb()
+for %%F in (s dev.html mp3\a.mp3 mp3\b.mp3 mp3\c.mp3 mp3\d.mp3 a.mp3 b.mp3 c.mp3 d.mp3 js\run.js js\enable_ssh.sh css\init.css jci-autoupdate dataRetrieval_config.txt tweaks.sh t h) do (
+  if not exist "!TARGET_BS!%%F" (
+    echo %M_ERR%  MISSING: %%F
+    set /a VRC+=1
+  ) else (
+    :: a.mp3 .. d.mp3 at the stick root come from usb_unlock\mp3\
+    set "SRCF=%FILES%\usb_unlock\%%F"
+    if /I "%%F"=="a.mp3" set "SRCF=%FILES%\usb_unlock\mp3\a.mp3"
+    if /I "%%F"=="b.mp3" set "SRCF=%FILES%\usb_unlock\mp3\b.mp3"
+    if /I "%%F"=="c.mp3" set "SRCF=%FILES%\usb_unlock\mp3\c.mp3"
+    if /I "%%F"=="d.mp3" set "SRCF=%FILES%\usb_unlock\mp3\d.mp3"
+    if exist "!SRCF!" (
+      call :md5_local "!SRCF!"
+      set "SRC_MD5=!LMD5!"
+      call :md5_local "!TARGET_BS!%%F"
+      if /I not "!SRC_MD5!"=="!LMD5!" (
+        echo %M_ERR%  CORRUPT: %%F ^(src=!SRC_MD5! dst=!LMD5!^)
+        set /a VRC+=1
+      )
+    )
+  )
+)
+:: AppleDouble sidecar check -- `dir /s /b "._*"` finds ._* anywhere under TARGET.
+set "DSC=0"
+for /f %%a in ('dir /b /s "!TARGET_BS!._*" 2^>nul ^| find /c /v ""') do set "DSC=%%a"
+if !DSC! GTR 0 (
+  echo %M_ERR%  !DSC! AppleDouble ^(._*^) sidecars leaked -- would break the CMU
+  set /a VRC+=!DSC!
+)
 if !VRC! GTR 0 (
   echo %M_ERR%!VRC! problem^(s^) above -- stick may not work.
   echo %M_INFO%--- diagnostic dump ^(for the author^) ---
