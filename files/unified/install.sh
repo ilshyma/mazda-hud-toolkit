@@ -36,14 +36,14 @@ log() { echo "$TAG $*"; }
 die() { echo "$TAG ERROR: $*"; mount -o remount,ro / 2>/dev/null; exit 1; }
 
 # --- preflight ---------------------------------------------------------------
-# When /jci/sm/sm.conf is missing but /jci/version.ini is present, we have a
-# CMU that identifies itself (so usb_run.sh prints a sane FW line on screen)
-# but whose service-manager layout is wrong for this installer. Previous
-# versions just died with "not a CMU" and left nothing actionable in run.log.
-# Dump the places we would want to check over SSH before dying, so system.txt
-# (and the run.log that goes into the stick) carries the real picture.
-if [ ! -f /jci/sm/sm.conf ]; then
-  echo "$TAG --- preflight fail: /jci/sm/sm.conf is missing ---"
+# WCP-only CMUs (board_type=2) ship only /jci/sm/sm_WCP.conf -- there is no
+# /jci/sm/sm.conf on them. The installer already picks the right file below
+# (CONF=sm_WCP.conf when get_board_type.sh returns 2), so the preflight has
+# to accept either variant; it only means "no CMU" when BOTH are missing.
+# When they both are missing, dump the places we would want to check over SSH
+# before dying, so run.log and system.txt carry a real picture of /jci.
+if [ ! -f /jci/sm/sm.conf ] && [ ! -f /jci/sm/sm_WCP.conf ]; then
+  echo "$TAG --- preflight fail: neither /jci/sm/sm.conf nor /jci/sm/sm_WCP.conf is present ---"
   echo "$TAG   /jci exists?       $([ -d /jci ] && echo yes || echo NO)"
   echo "$TAG   /jci/sm exists?    $([ -d /jci/sm ] && echo yes || echo NO)"
   echo "$TAG   /jci/version.ini?  $([ -f /jci/version.ini ] && echo yes || echo NO)"
@@ -57,7 +57,7 @@ if [ ! -f /jci/sm/sm.conf ]; then
   (mount 2>/dev/null || cat /proc/mounts 2>/dev/null) | grep -E 'jci|data_persist|system' | sed "s/^/$TAG     /"
   echo "$TAG   /jci/version.ini (if readable):"
   cat /jci/version.ini 2>&1 | head -10 | sed "s/^/$TAG     /"
-  die "not a CMU (no /jci/sm/sm.conf)"
+  die "not a CMU (no /jci/sm/sm.conf or /jci/sm/sm_WCP.conf)"
 fi
 for s in $SHIMS; do
   [ -f "$SRC/libpatch-$s.so" ] || die "missing $SRC/libpatch-$s.so"

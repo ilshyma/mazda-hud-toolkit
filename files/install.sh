@@ -21,7 +21,7 @@ die() { echo "$TAG ERROR: $*"; mount -o remount,ro / 2>/dev/null; exit 1; }
 
 # --- preflight ---------------------------------------------------------------
 [ -f "$SO_SRC" ] || die "libpatch-blmjcicarplay.so not found next to install.sh ($SO_SRC). Build it first (see ../mazda)."
-[ -f /jci/sm/sm.conf ] || die "not a CMU (no /jci/sm/sm.conf) — aborting"
+[ -f /jci/sm/sm.conf ] || [ -f /jci/sm/sm_WCP.conf ] || die "not a CMU (no /jci/sm/sm.conf or sm_WCP.conf) — aborting"
 log "installing from $SO_SRC ($(wc -c < "$SO_SRC") bytes)"
 
 # --- pick the sm config the SM actually launches jciCARPLAY from -------------

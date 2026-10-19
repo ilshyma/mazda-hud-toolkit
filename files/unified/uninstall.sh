@@ -13,7 +13,7 @@ BAK_DIR=/data_persist/hud-mod-backup
 MASTER=/etc/devmgr_config_master.xml
 log() { echo "$TAG $*"; }
 
-[ -f /jci/sm/sm.conf ] || { log "not a CMU — aborting"; exit 1; }
+[ -f /jci/sm/sm.conf ] || [ -f /jci/sm/sm_WCP.conf ] || { log "not a CMU — aborting"; exit 1; }
 mount -o remount,rw / 2>/dev/null || { log "remount rw failed"; exit 1; }
 
 for C in /jci/sm/sm.conf /jci/sm/sm_WCP.conf; do
