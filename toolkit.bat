@@ -512,12 +512,28 @@ xcopy /Y "%FILES%\usb_unlock\mp3\*.mp3" "!TARGET_BS!" >nul 2>nul
 
 :: hud-mod/ rides on the same stick: XSS menu buttons HUD+ / HUD- / HUD?
 :: run hud-mod\usb_run.sh. Every file is md5-compared with the toolkit copy.
+:: md5 check goes through :md5_local, which picks Get-FileHash (PS 4+) or
+:: certutil (PS 3 / Win 8) based on PSMAJOR detected at startup.
 if exist "%UNIFIED%\usb_run.sh" (
   echo %M_INFO%  copying CarPlay + Android Auto HUD patch to !TARGET!\hud-mod\
   xcopy /E /I /Y "%UNIFIED%\*" "!TARGET_BS!hud-mod\" >nul
   if errorlevel 1 (echo %M_ERR%copy of hud-mod failed & exit /b 1)
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "$bad=0; Get-ChildItem -LiteralPath '%UNIFIED%' -File | ForEach-Object { $d = Join-Path '!TARGET_BS!hud-mod' $_.Name; if (-not (Test-Path -LiteralPath $d) -or (Get-FileHash -Algorithm MD5 -LiteralPath $_.FullName).Hash -ne (Get-FileHash -Algorithm MD5 -LiteralPath $d).Hash) { Write-Output ('  CORRUPT/MISSING: hud-mod\' + $_.Name); $bad++ } }; exit $bad"
-  if errorlevel 1 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
+  set "HUDBAD=0"
+  for %%F in ("%UNIFIED%\*") do (
+    if not exist "!TARGET_BS!hud-mod\%%~nxF" (
+      echo %M_ERR%  MISSING: hud-mod\%%~nxF
+      set /a HUDBAD+=1
+    ) else (
+      call :md5_local "%%~fF"
+      set "SRC_MD5=!LMD5!"
+      call :md5_local "!TARGET_BS!hud-mod\%%~nxF"
+      if /I not "!SRC_MD5!"=="!LMD5!" (
+        echo %M_ERR%  CORRUPT: hud-mod\%%~nxF ^(src=!SRC_MD5! dst=!LMD5!^)
+        set /a HUDBAD+=1
+      )
+    )
+  )
+  if !HUDBAD! GTR 0 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
   echo %M_OK%  hud-mod verified
 )
 
@@ -558,26 +574,40 @@ if !UPCOUNT! GEQ 2 (
 )
 
 :: --- MD5-verify every critical file on the stick (match toolkit.sh exactly) ---
+:: Pure CMD loop + :md5_local -- which already picks Get-FileHash on PS 4+ and
+:: certutil on PS 3. No dynamic .ps1, no Get-FileHash dependency, no inline
+:: PowerShell at all here. The file list mirrors toolkit.sh:make_usb() 1:1.
 echo %M_INFO%step 4/4 . verifying every critical file
-set "VSCRIPT=%TEMP%\mzd_verify.ps1"
->  "!VSCRIPT!" echo $ErrorActionPreference='SilentlyContinue'
->> "!VSCRIPT!" echo $src=$args[0]; $dst=$args[1]; $problems=0
->> "!VSCRIPT!" echo $files=@('s','dev.html','mp3/a.mp3','mp3/b.mp3','mp3/c.mp3','mp3/d.mp3','a.mp3','b.mp3','c.mp3','d.mp3','js/run.js','js/enable_ssh.sh','css/init.css','jci-autoupdate','dataRetrieval_config.txt','tweaks.sh','t','h')
->> "!VSCRIPT!" echo foreach ($f in $files) {
->> "!VSCRIPT!" echo   $dstp=Join-Path $dst ($f -replace '/','\')
->> "!VSCRIPT!" echo   if (-not (Test-Path -LiteralPath $dstp)) { Write-Output ("  MISSING: " + $f); $problems++; continue }
->> "!VSCRIPT!" echo   if ($f -match '^[abcd]\.mp3$') { $srcp = Join-Path $src ("mp3\" + $f) } else { $srcp = Join-Path $src ($f -replace '/','\') }
->> "!VSCRIPT!" echo   if (-not (Test-Path -LiteralPath $srcp)) { continue }
->> "!VSCRIPT!" echo   $sh = (Get-FileHash -Algorithm MD5 -LiteralPath $srcp).Hash
->> "!VSCRIPT!" echo   $dh = (Get-FileHash -Algorithm MD5 -LiteralPath $dstp).Hash
->> "!VSCRIPT!" echo   if ($sh -ne $dh) { Write-Output ("  CORRUPT: " + $f + " (src=" + $sh.ToLower() + " dst=" + $dh.ToLower() + ")"); $problems++ }
->> "!VSCRIPT!" echo }
->> "!VSCRIPT!" echo $dsc = (Get-ChildItem -LiteralPath $dst -Recurse -Force -Filter '._*' -ErrorAction SilentlyContinue).Count
->> "!VSCRIPT!" echo if ($dsc -gt 0) { Write-Output ("  " + $dsc + " AppleDouble (._*) sidecars leaked -- would break the CMU"); $problems += $dsc }
->> "!VSCRIPT!" echo exit $problems
-powershell -NoProfile -ExecutionPolicy Bypass -File "!VSCRIPT!" "%FILES%\usb_unlock" "!TARGET_BS!"
-set "VRC=!errorlevel!"
-del /q "!VSCRIPT!" 2>nul
+set "VRC=0"
+for %%F in (s dev.html mp3\a.mp3 mp3\b.mp3 mp3\c.mp3 mp3\d.mp3 a.mp3 b.mp3 c.mp3 d.mp3 js\run.js js\enable_ssh.sh css\init.css jci-autoupdate dataRetrieval_config.txt tweaks.sh t h) do (
+  if not exist "!TARGET_BS!%%F" (
+    echo %M_ERR%  MISSING: %%F
+    set /a VRC+=1
+  ) else (
+    :: a.mp3..d.mp3 at the stick root are sourced from usb_unlock\mp3\
+    set "SRCF=%FILES%\usb_unlock\%%F"
+    if /I "%%F"=="a.mp3" set "SRCF=%FILES%\usb_unlock\mp3\a.mp3"
+    if /I "%%F"=="b.mp3" set "SRCF=%FILES%\usb_unlock\mp3\b.mp3"
+    if /I "%%F"=="c.mp3" set "SRCF=%FILES%\usb_unlock\mp3\c.mp3"
+    if /I "%%F"=="d.mp3" set "SRCF=%FILES%\usb_unlock\mp3\d.mp3"
+    if exist "!SRCF!" (
+      call :md5_local "!SRCF!"
+      set "SRC_MD5=!LMD5!"
+      call :md5_local "!TARGET_BS!%%F"
+      if /I not "!SRC_MD5!"=="!LMD5!" (
+        echo %M_ERR%  CORRUPT: %%F ^(src=!SRC_MD5! dst=!LMD5!^)
+        set /a VRC+=1
+      )
+    )
+  )
+)
+:: AppleDouble sidecars (._*) left by macOS -- `dir /s /b "._*"` finds them.
+set "DSC=0"
+for /f %%a in ('dir /b /s "!TARGET_BS!._*" 2^>nul ^| find /c /v ""') do set "DSC=%%a"
+if !DSC! GTR 0 (
+  echo %M_ERR%  !DSC! AppleDouble ^(._*^) sidecars leaked -- would break the CMU
+  set /a VRC+=!DSC!
+)
 if !VRC! GTR 0 (
   echo %M_ERR%!VRC! problem^(s^) above -- stick may not work. Re-run option 1.
   exit /b 1
