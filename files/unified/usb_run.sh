@@ -164,7 +164,15 @@ result() {
 snapshot() {
   {
     echo "=== $ACTION | $FACTS | uptime $(cut -d' ' -f1 /proc/uptime)"
-    echo "--- version.ini"; grep -E '^JCI_(SW_VER|SW_FLAVOR|SW_VER_PATCH|OEM_PART_NUMBER)=' /jci/version.ini
+    echo "--- version.ini"; grep -E '^JCI_(SW_VER|SW_FLAVOR|SW_VER_PATCH|OEM_PART_NUMBER)=' /jci/version.ini 2>&1
+    echo "--- /jci layout (for diagnosing \"not a CMU\" false negatives)"
+    echo "/jci exists?    $([ -d /jci ] && echo yes || echo NO)"
+    echo "/jci/sm exists? $([ -d /jci/sm ] && echo yes || echo NO)"
+    echo "ls -la /jci:"; ls -la /jci 2>&1 | head -25
+    echo "ls -la /jci/sm:"; ls -la /jci/sm 2>&1 | head -20
+    echo "any sm*.conf under /jci:"; find /jci -maxdepth 4 -name 'sm*.conf' 2>/dev/null
+    echo "mounts (jci / data_persist / system):"
+    (mount 2>/dev/null || cat /proc/mounts 2>/dev/null) | grep -E 'jci|data_persist|system|rootfs'
     echo "--- sm configs (preloads + target services)"
     for c in /jci/sm/sm.conf /jci/sm/sm_WCP.conf; do
       echo "[$c]"; grep -nE 'LD_PRELOAD|LD_LIBRARY_PATH|name="(jciCARPLAY|jciAAPA|jcinavi|aap_service)"' "$c" 2>/dev/null

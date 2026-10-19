@@ -36,7 +36,29 @@ log() { echo "$TAG $*"; }
 die() { echo "$TAG ERROR: $*"; mount -o remount,ro / 2>/dev/null; exit 1; }
 
 # --- preflight ---------------------------------------------------------------
-[ -f /jci/sm/sm.conf ] || die "not a CMU (no /jci/sm/sm.conf)"
+# When /jci/sm/sm.conf is missing but /jci/version.ini is present, we have a
+# CMU that identifies itself (so usb_run.sh prints a sane FW line on screen)
+# but whose service-manager layout is wrong for this installer. Previous
+# versions just died with "not a CMU" and left nothing actionable in run.log.
+# Dump the places we would want to check over SSH before dying, so system.txt
+# (and the run.log that goes into the stick) carries the real picture.
+if [ ! -f /jci/sm/sm.conf ]; then
+  echo "$TAG --- preflight fail: /jci/sm/sm.conf is missing ---"
+  echo "$TAG   /jci exists?       $([ -d /jci ] && echo yes || echo NO)"
+  echo "$TAG   /jci/sm exists?    $([ -d /jci/sm ] && echo yes || echo NO)"
+  echo "$TAG   /jci/version.ini?  $([ -f /jci/version.ini ] && echo yes || echo NO)"
+  echo "$TAG   ls -la /jci (first 20 entries):"
+  ls -la /jci 2>&1 | head -20 | sed "s/^/$TAG     /"
+  echo "$TAG   ls -la /jci/sm (if any):"
+  ls -la /jci/sm 2>&1 | head -20 | sed "s/^/$TAG     /"
+  echo "$TAG   any sm*.conf under /jci:"
+  find /jci -maxdepth 4 -name 'sm*.conf' 2>/dev/null | sed "s/^/$TAG     /"
+  echo "$TAG   mounts touching /jci or /data_persist:"
+  (mount 2>/dev/null || cat /proc/mounts 2>/dev/null) | grep -E 'jci|data_persist|system' | sed "s/^/$TAG     /"
+  echo "$TAG   /jci/version.ini (if readable):"
+  cat /jci/version.ini 2>&1 | head -10 | sed "s/^/$TAG     /"
+  die "not a CMU (no /jci/sm/sm.conf)"
+fi
 for s in $SHIMS; do
   [ -f "$SRC/libpatch-$s.so" ] || die "missing $SRC/libpatch-$s.so"
 done
