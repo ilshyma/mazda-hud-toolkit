@@ -572,7 +572,12 @@ set "VSCRIPT=%TEMP%\mzd_verify.ps1"
 >> "!VSCRIPT!" echo $dsc = (Get-ChildItem -LiteralPath $dst -Recurse -Force -Filter '._*' -ErrorAction SilentlyContinue).Count
 >> "!VSCRIPT!" echo if ($dsc -gt 0) { Write-Output ("  " + $dsc + " AppleDouble (._*) sidecars leaked -- would break the CMU"); $problems += $dsc }
 >> "!VSCRIPT!" echo exit $problems
-powershell -NoProfile -ExecutionPolicy Bypass -File "!VSCRIPT!" "%FILES%\usb_unlock" "!TARGET_BS!"
+rem Pass "!TARGET!" (e.g. H:) WITHOUT the trailing backslash. The Windows CRT
+rem arg-parser treats `\"` as an escaped quote, so `"H:\"` arrives at PowerShell
+rem as `H:` + a stray `"` + a space -- which then makes every Test-Path -LiteralPath
+rem fail with "Illegal characters in path" and shows every file as MISSING even
+rem when xcopy copied them correctly. Join-Path 'H:' 's' still gives H:\s.
+powershell -NoProfile -ExecutionPolicy Bypass -File "!VSCRIPT!" "%FILES%\usb_unlock" "!TARGET!"
 set "VRC=!errorlevel!"
 del /q "!VSCRIPT!" 2>nul
 if !VRC! GTR 0 (
