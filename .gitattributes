@@ -1,0 +1,39 @@
+# Repo-wide default: text, auto-detect, LF in the repo. This is applied
+# first; the per-extension overrides below win because git uses the LAST
+# matching rule for each attribute.
+* text=auto eol=lf
+
+# Binaries -- never touch.
+*.so  binary
+*.mp3 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.zip binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# .bat is treated as binary so git NEVER rewrites line endings on checkout.
+# cmd.exe parses LF-only .bat unreliably (parser errors like
+# "'t' is not recognized" on some Windows builds; see v2.4.1 release notes).
+# When editing .bat, keep CRLF yourself (any decent editor does this; or
+# `perl -i -pe 's/\r?\n/\r\n/' toolkit.bat`). "binary" costs us text-diff
+# in `git log -p`, but we rarely need that for a batch file.
+*.bat binary
+
+# Everything else text explicitly LF (CMU + macOS/Linux + the stuff we
+# scp onto the CMU all need Unix line endings).
+*.sh text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.conf text eol=lf
+*.xml text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+Makefile text eol=lf
+MD5SUMS text eol=lf
+VERSION text eol=lf

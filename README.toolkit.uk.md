@@ -112,6 +112,17 @@ mazda-hud-toolkit/
 - Демон-дзеркало: наш ~60-рядковий shell-скрипт; пасивно слухає виклики `com.jci.vbs.navi.SetHUDDisplayMsgReq` (від НЕ-нашого шима) і пише `<km/h> <unix_ts>` у `/data_persist/splim`. Оновлюється кожні 3 сек, TTL 3600 сек.
 - Шим при кожному keep-alive-кадрі читає `/data_persist/splim`; якщо файл свіжий — вставляє значення; якщо пустий/старий — надсилає `0`.
 
+## Windows: `toolkit.bat` сипле помилки парсера? Запускайте через Git Bash
+
+Якщо `toolkit.bat` на Windows видає `'t' is not recognized`, `Missing expression after ','`, `cannot find batch label` або подібне — це `cmd.exe` на деяких збірках Windows не справляється з парсингом .bat. Сам тулкіт у порядку; найшвидший обхід — запустити `toolkit.sh` через Git Bash:
+
+1. Встановіть **Git for Windows** — https://git-scm.com/download/win (один клік, ~50 МБ).
+2. Відкрийте **Git Bash** із меню Пуск.
+3. `cd` у папку тулкіта, наприклад: `cd /c/Users/<ваше_ім'я>/Downloads/mazda-hud-toolkit/mazda-hud-toolkit`
+4. Запустіть: `bash toolkit.sh`
+
+Все, крім **Створення USB-флешки** (опція 1), працює повністю через Git Bash — бекап, встановлення, відкат, валідація, Bootstrap SSH-ключа. Для створення флешки або використайте `toolkit.bat` опція 1 на цьому ж Windows, або відформатуйте флешку вручну (FAT32, мітка `MZD`) і скопіюйте `files/usb_unlock/` + `files/unified/` → `hud-mod/` на неї.
+
 ## Що робити, якщо не працює
 
 Якщо SSH не відповідає на порту 36000 — `sshd` на голові було вбито read-only rootfs при завантаженні. Повторіть USB → XSS → SSH.

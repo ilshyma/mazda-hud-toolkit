@@ -112,6 +112,17 @@ Pick A if you just want the HUD mod. Pick B if you also want backups, auto-valid
 - Speed-mirror daemon: our own ~60-line shell script; passively watches `com.jci.vbs.navi.SetHUDDisplayMsgReq` calls whose sender is *not* our own shim, and writes `<km/h> <unix_ts>` to `/data_persist/splim`. Rebuilt every 3 s to keep the shim's stale-check happy; TTL 3600 s so a genuine dead-zone longer than an hour clears the value.
 - The shim reads `/data_persist/splim` on every keep-alive frame; if fresh, includes the value; if empty/stale, sends `0` (behaving like the stock installer's build).
 
+## Windows: `toolkit.bat` throws parser errors? Use Git Bash instead
+
+If `toolkit.bat` on Windows spits out `'t' is not recognized`, `Missing expression after ','`, `cannot find batch label` or similar — the file is being parsed by `cmd.exe` in a way that chokes on some Windows builds. The toolkit itself is fine; the fastest workaround is to run `toolkit.sh` through Git Bash:
+
+1. Install **Git for Windows** — https://git-scm.com/download/win (one click, ~50 MB).
+2. Open **Git Bash** from the Start menu.
+3. `cd` into the toolkit folder, e.g. `cd /c/Users/<you>/Downloads/mazda-hud-toolkit/mazda-hud-toolkit`
+4. Run: `bash toolkit.sh`
+
+Everything except **Create USB stick** (option 1) works end-to-end through Git Bash — backup, install, rollback, validate, Bootstrap SSH key. For the USB-create step either use `toolkit.bat` option 1 on the same Windows machine, or format the stick manually (FAT32, label `MZD`) and copy `files/usb_unlock/` + `files/unified/` → `hud-mod/` to it.
+
 ## Support
 
 If SSH refuses to connect on port 36000, the `sshd` on the head unit was killed by the read-only rootfs at boot. Re-run the USB → XSS → SSH step and it comes back up.

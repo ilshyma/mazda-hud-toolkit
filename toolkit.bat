@@ -1,5 +1,22 @@
 @echo off
 :: ============================================================================
+::  IF THIS SCRIPT SPITS OUT LOTS OF "'t' is not recognized as an internal or
+::  external command" / "cannot find batch label" / "Missing expression after
+::  ',' in pipeline element" ERRORS -- your Windows cmd.exe is choking on this
+::  .bat for reasons that have nothing to do with the toolkit itself.
+::
+::  QUICKEST FIX: run this toolkit through Git Bash instead of cmd.exe.
+::    1. Install Git for Windows (one click): https://git-scm.com/download/win
+::    2. Open "Git Bash" from the Start menu.
+::    3. cd into this folder.  Example:
+::         cd /c/Users/<your_user>/Downloads/mazda-hud-toolkit/mazda-hud-toolkit
+::    4. Run:   bash toolkit.sh
+::
+::  Everything except "Create USB stick" works end-to-end through Git Bash
+::  (backup, install, rollback, validate, SSH bootstrap). For the USB-create
+::  step you still need cmd.exe (option 1 in toolkit.bat) or format + copy the
+::  files/usb_unlock/ tree by hand.
+:: ============================================================================
 ::  Mazda CMU CarPlay-HUD toolkit -- Windows 10/11  (sync-parity with toolkit.sh)
 :: ============================================================================
 ::  Requires: OpenSSH Client (Win10 1803+ ships it; verify under Settings >
@@ -64,6 +81,15 @@ set "UNIFIED_DIR=/data_persist/oem-aa-mod"
 :: so the inner quotes on the KEY path survive to ssh.exe.
 set SSHOPTS=-i "%KEY%" -o PubkeyAcceptedAlgorithms=+ssh-rsa -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 -o TCPKeepAlive=yes
 
+:: --- toolkit version (read from files\VERSION, one source of truth) --------
+:: Shown in the main-menu header; the CMU-side scripts read their own copy
+:: of VERSION (which travels on the USB stick and in the SSH install folder)
+:: and stamp it into every run.log + the on-screen FACTS line.
+set "MOD_VERSION=unknown"
+if exist "%FILES%\VERSION" (
+  for /f "usebackq delims=" %%v in ("%FILES%\VERSION") do set "MOD_VERSION=%%v"
+)
+
 :: --- expected md5s of shipped payloads -------------------------------------
 set "MD5_SO_PURE=0ce29da4f16f72b0b8f931bee88ff332"
 set "MD5_SO_MOD=faf82efb028c6af9898122a5ff5833be"
@@ -84,24 +110,6 @@ set "M_INFO=  > "
 :: without the SSH key still works.
 where powershell  >nul 2>&1
 if errorlevel 1 (echo. & echo ERROR: powershell.exe not found. ^(Highly unusual on Windows.^) & pause & goto :end_err)
-
-:: --- toolkit version (one source of truth: files\VERSION) -------------------
-:: Shown in the main-menu header; CMU-side scripts read their own copy of
-:: VERSION (ships on the stick and in the SSH install folder) and stamp it
-:: into every run.log + the on-screen FACTS line.
-set "MOD_VERSION=unknown"
-if exist "%FILES%\VERSION" (
-  for /f "usebackq delims=" %%v in ("%FILES%\VERSION") do if not defined _V set "_V=%%v"
-  if defined _V set "MOD_VERSION=!_V!"
-  set "_V="
-)
-:: Strip a leading UTF-8 BOM if Notepad re-saved the file.
-if "!MOD_VERSION:~0,1!"=="﻿" set "MOD_VERSION=!MOD_VERSION:~1!"
-
-:: --- detect PowerShell major version (3 on Win 8, 4 on Win 8.1, 5+ on Win 10+)
-:: Get-FileHash only exists on PS 4.0+, so we branch in :md5_local accordingly.
-set "PSMAJOR=0"
-for /f "usebackq delims=" %%v in (`powershell -NoProfile -Command "$PSVersionTable.PSVersion.Major" 2^>nul`) do set "PSMAJOR=%%v"
 
 :: Restrict key perms if the key exists (OpenSSH refuses world-readable keys).
 :: Silent no-op when the key is missing or already restricted.
@@ -258,23 +266,12 @@ goto wait_for_ssh_loop
 
 :: ===========================================================================
 :: Helper: md5_local  FILE  ->  LMD5 (lowercase hex)
-:: PowerShell 4+ (Win 8.1 / Win 10 / Win 11): Get-FileHash is fast and reliable.
-:: PowerShell 3 and older (Win 8): no Get-FileHash -- fall back to certutil
-:: which ships with every Windows since XP.
+:: Uses Get-FileHash (PowerShell 4+ / Win 8.1+). certutil output format
+:: differs between Windows versions, so we do not use it.
 :: ===========================================================================
 :md5_local
 set "LMD5="
-if !PSMAJOR! GEQ 4 (
-  for /f "usebackq delims=" %%h in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-FileHash -Algorithm MD5 -LiteralPath '%~1').Hash.ToLower()"`) do set "LMD5=%%h"
-) else (
-  for /f "usebackq skip=1 tokens=*" %%h in (`certutil -hashfile "%~1" MD5 2^>nul`) do (
-    if not defined LMD5 (
-      set "RAW=%%h"
-      if not "!RAW:~0,8!"=="CertUtil" set "LMD5=!RAW: =!"
-    )
-  )
-  if defined LMD5 for /f "usebackq delims=" %%l in (`powershell -NoProfile -Command "'!LMD5!'.ToLower()"`) do set "LMD5=%%l"
-)
+for /f "usebackq delims=" %%h in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-FileHash -Algorithm MD5 -LiteralPath '%~1').Hash.ToLower()"`) do set "LMD5=%%h"
 exit /b 0
 
 :: ===========================================================================
@@ -512,28 +509,12 @@ xcopy /Y "%FILES%\usb_unlock\mp3\*.mp3" "!TARGET_BS!" >nul 2>nul
 
 :: hud-mod/ rides on the same stick: XSS menu buttons HUD+ / HUD- / HUD?
 :: run hud-mod\usb_run.sh. Every file is md5-compared with the toolkit copy.
-:: md5 check goes through :md5_local, which picks Get-FileHash (PS 4+) or
-:: certutil (PS 3 / Win 8) based on PSMAJOR detected at startup.
 if exist "%UNIFIED%\usb_run.sh" (
   echo %M_INFO%  copying CarPlay + Android Auto HUD patch to !TARGET!\hud-mod\
   xcopy /E /I /Y "%UNIFIED%\*" "!TARGET_BS!hud-mod\" >nul
   if errorlevel 1 (echo %M_ERR%copy of hud-mod failed & exit /b 1)
-  set "HUDBAD=0"
-  for %%F in ("%UNIFIED%\*") do (
-    if not exist "!TARGET_BS!hud-mod\%%~nxF" (
-      echo %M_ERR%  MISSING: hud-mod\%%~nxF
-      set /a HUDBAD+=1
-    ) else (
-      call :md5_local "%%~fF"
-      set "SRC_MD5=!LMD5!"
-      call :md5_local "!TARGET_BS!hud-mod\%%~nxF"
-      if /I not "!SRC_MD5!"=="!LMD5!" (
-        echo %M_ERR%  CORRUPT: hud-mod\%%~nxF ^(src=!SRC_MD5! dst=!LMD5!^)
-        set /a HUDBAD+=1
-      )
-    )
-  )
-  if !HUDBAD! GTR 0 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "$bad=0; Get-ChildItem -LiteralPath '%UNIFIED%' -File | ForEach-Object { $d = Join-Path '!TARGET_BS!hud-mod' $_.Name; if (-not (Test-Path -LiteralPath $d) -or (Get-FileHash -Algorithm MD5 -LiteralPath $_.FullName).Hash -ne (Get-FileHash -Algorithm MD5 -LiteralPath $d).Hash) { Write-Output ('  CORRUPT/MISSING: hud-mod\' + $_.Name); $bad++ } }; exit $bad"
+  if errorlevel 1 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
   echo %M_OK%  hud-mod verified
 )
 
@@ -574,40 +555,26 @@ if !UPCOUNT! GEQ 2 (
 )
 
 :: --- MD5-verify every critical file on the stick (match toolkit.sh exactly) ---
-:: Pure CMD loop + :md5_local -- which already picks Get-FileHash on PS 4+ and
-:: certutil on PS 3. No dynamic .ps1, no Get-FileHash dependency, no inline
-:: PowerShell at all here. The file list mirrors toolkit.sh:make_usb() 1:1.
 echo %M_INFO%step 4/4 . verifying every critical file
-set "VRC=0"
-for %%F in (s dev.html mp3\a.mp3 mp3\b.mp3 mp3\c.mp3 mp3\d.mp3 a.mp3 b.mp3 c.mp3 d.mp3 js\run.js js\enable_ssh.sh css\init.css jci-autoupdate dataRetrieval_config.txt tweaks.sh t h) do (
-  if not exist "!TARGET_BS!%%F" (
-    echo %M_ERR%  MISSING: %%F
-    set /a VRC+=1
-  ) else (
-    :: a.mp3..d.mp3 at the stick root are sourced from usb_unlock\mp3\
-    set "SRCF=%FILES%\usb_unlock\%%F"
-    if /I "%%F"=="a.mp3" set "SRCF=%FILES%\usb_unlock\mp3\a.mp3"
-    if /I "%%F"=="b.mp3" set "SRCF=%FILES%\usb_unlock\mp3\b.mp3"
-    if /I "%%F"=="c.mp3" set "SRCF=%FILES%\usb_unlock\mp3\c.mp3"
-    if /I "%%F"=="d.mp3" set "SRCF=%FILES%\usb_unlock\mp3\d.mp3"
-    if exist "!SRCF!" (
-      call :md5_local "!SRCF!"
-      set "SRC_MD5=!LMD5!"
-      call :md5_local "!TARGET_BS!%%F"
-      if /I not "!SRC_MD5!"=="!LMD5!" (
-        echo %M_ERR%  CORRUPT: %%F ^(src=!SRC_MD5! dst=!LMD5!^)
-        set /a VRC+=1
-      )
-    )
-  )
-)
-:: AppleDouble sidecars (._*) left by macOS -- `dir /s /b "._*"` finds them.
-set "DSC=0"
-for /f %%a in ('dir /b /s "!TARGET_BS!._*" 2^>nul ^| find /c /v ""') do set "DSC=%%a"
-if !DSC! GTR 0 (
-  echo %M_ERR%  !DSC! AppleDouble ^(._*^) sidecars leaked -- would break the CMU
-  set /a VRC+=!DSC!
-)
+set "VSCRIPT=%TEMP%\mzd_verify.ps1"
+>  "!VSCRIPT!" echo $ErrorActionPreference='SilentlyContinue'
+>> "!VSCRIPT!" echo $src=$args[0]; $dst=$args[1]; $problems=0
+>> "!VSCRIPT!" echo $files=@('s','dev.html','mp3/a.mp3','mp3/b.mp3','mp3/c.mp3','mp3/d.mp3','a.mp3','b.mp3','c.mp3','d.mp3','js/run.js','js/enable_ssh.sh','css/init.css','jci-autoupdate','dataRetrieval_config.txt','tweaks.sh','t','h')
+>> "!VSCRIPT!" echo foreach ($f in $files) {
+>> "!VSCRIPT!" echo   $dstp=Join-Path $dst ($f -replace '/','\')
+>> "!VSCRIPT!" echo   if (-not (Test-Path -LiteralPath $dstp)) { Write-Output ("  MISSING: " + $f); $problems++; continue }
+>> "!VSCRIPT!" echo   if ($f -match '^[abcd]\.mp3$') { $srcp = Join-Path $src ("mp3\" + $f) } else { $srcp = Join-Path $src ($f -replace '/','\') }
+>> "!VSCRIPT!" echo   if (-not (Test-Path -LiteralPath $srcp)) { continue }
+>> "!VSCRIPT!" echo   $sh = (Get-FileHash -Algorithm MD5 -LiteralPath $srcp).Hash
+>> "!VSCRIPT!" echo   $dh = (Get-FileHash -Algorithm MD5 -LiteralPath $dstp).Hash
+>> "!VSCRIPT!" echo   if ($sh -ne $dh) { Write-Output ("  CORRUPT: " + $f + " (src=" + $sh.ToLower() + " dst=" + $dh.ToLower() + ")"); $problems++ }
+>> "!VSCRIPT!" echo }
+>> "!VSCRIPT!" echo $dsc = (Get-ChildItem -LiteralPath $dst -Recurse -Force -Filter '._*' -ErrorAction SilentlyContinue).Count
+>> "!VSCRIPT!" echo if ($dsc -gt 0) { Write-Output ("  " + $dsc + " AppleDouble (._*) sidecars leaked -- would break the CMU"); $problems += $dsc }
+>> "!VSCRIPT!" echo exit $problems
+powershell -NoProfile -ExecutionPolicy Bypass -File "!VSCRIPT!" "%FILES%\usb_unlock" "!TARGET_BS!"
+set "VRC=!errorlevel!"
+del /q "!VSCRIPT!" 2>nul
 if !VRC! GTR 0 (
   echo %M_ERR%!VRC! problem^(s^) above -- stick may not work. Re-run option 1.
   exit /b 1
