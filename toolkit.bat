@@ -101,7 +101,13 @@ set "MD5_SPLIM_LAUNCHER=26cdb9e1a2333425e57923b334c5cc50"
 set "M_OK=  * "
 set "M_ERR=  x "
 set "M_WARN=  ! "
-set "M_INFO=  > "
+rem M_INFO was "  > " for a long time. Looks nice but a bare `>` in a CMD
+rem variable turns `echo %M_INFO%anything` into `echo   >   anything`, which
+rem CMD then parses as "echo (nothing) + redirect-to-filename `  anything`".
+rem The whole line vanishes from the screen (every info-level line in :usb
+rem printed nothing, including the "USB ready. In the car:" instructions).
+rem `.` keeps the compact look without the redirect trap.
+set "M_INFO=  . "
 
 :: --- preflight: ONLY things every path (USB creation included) needs --------
 :: PowerShell is required even for :usb (enumeration + Format-Volume + md5),
