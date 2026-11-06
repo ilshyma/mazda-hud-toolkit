@@ -462,10 +462,9 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">03</span>What it does</h2>
-  <p class="sublede">Adds CarPlay and Android Auto maneuver arrows, distance, and speed to your instrument-cluster HUD — exactly like the built-in native navigation. Built on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> and <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a> projects, with three additions:</p>
+  <p class="sublede">Adds CarPlay and Android Auto maneuver arrows, distance, and speed to your instrument-cluster HUD — exactly like the built-in native navigation. Built on top of the community <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> and <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a> projects, with two additions:</p>
   <ul>
     <li><strong>Unified patch.</strong> A single install that enables both CarPlay and Android Auto turn-by-turn on the HUD. No need to choose one or the other.</li>
-    <li><strong>km/h fix.</strong> The original shim used <code>displaySpeedUnit = 1</code> (mph). On an EU HUD this renders a <code>50 km/h</code> sign as <code>≈80</code>. Fixed to <code>2</code> (km/h).</li>
     <li><strong>Speed-limit mirror daemon.</strong> A shell script that passively watches the OEM <code>svcjcinavi.so</code> HUD stream and copies the current value into the shim's keep-alive frames. Without it the shim overwrites the speed slot with <code>0</code> every 500 ms and the value dies to <code>---</code>.</li>
   </ul>
 </div></section>
@@ -587,10 +586,9 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">03</span>Що робить</h2>
-  <p class="sublede">Додає стрілки маневрів CarPlay та Android Auto, дистанцію та швидкість на HUD приладової панелі — як штатна навігація. Побудовано на базі <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> та <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, з трьома доповненнями:</p>
+  <p class="sublede">Додає стрілки маневрів CarPlay та Android Auto, дистанцію та швидкість на HUD приладової панелі — як штатна навігація. Побудовано на базі <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> та <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, з двома доповненнями:</p>
   <ul>
     <li><strong>Уніфікований патч.</strong> Одне встановлення вмикає і CarPlay, і Android Auto turn-by-turn на HUD. Не потрібно обирати.</li>
-    <li><strong>Виправлення км/год.</strong> Оригінальний шим використовував <code>displaySpeedUnit = 1</code> (mph). На EU HUD знак <code>50 км/год</code> малювався як <code>≈80</code>. Виправлено на <code>2</code> (km/h).</li>
     <li><strong>Демон-дзеркало ліміту швидкості.</strong> Shell-скрипт, що пасивно слухає штатний потік <code>svcjcinavi.so</code> і копіює поточне значення у keep-alive-кадри шима. Без нього шим кожні 500 мс перезаписує slot нулем і значення падає в <code>---</code>.</li>
   </ul>
 </div></section>
@@ -712,10 +710,9 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">03</span>Qué hace</h2>
-  <p class="sublede">Añade flechas de maniobra, distancia y velocidad de CarPlay y Android Auto al HUD del cuadro de instrumentos — igual que la navegación nativa. Basado en <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> y <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, con tres añadidos:</p>
+  <p class="sublede">Añade flechas de maniobra, distancia y velocidad de CarPlay y Android Auto al HUD del cuadro de instrumentos — igual que la navegación nativa. Basado en <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> y <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, con dos añadidos:</p>
   <ul>
     <li><strong>Parche unificado.</strong> Una sola instalación activa tanto CarPlay como Android Auto turn-by-turn en el HUD.</li>
-    <li><strong>Corrección km/h.</strong> El shim original usaba <code>displaySpeedUnit = 1</code> (mph). En un HUD europeo <code>50 km/h</code> se dibujaba como <code>≈80</code>. Corregido a <code>2</code> (km/h).</li>
     <li><strong>Daemon-espejo.</strong> Script shell que escucha pasivamente el flujo OEM de <code>svcjcinavi.so</code> y copia el valor actual en los frames keep-alive del shim. Sin él, el shim sobrescribe el slot con <code>0</code> cada 500 ms y el valor cae a <code>---</code>.</li>
   </ul>
 </div></section>
@@ -837,10 +834,9 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">03</span>Was es macht</h2>
-  <p class="sublede">Fügt CarPlay- und Android-Auto-Manöverpfeile, Entfernung und Geschwindigkeit zum HUD im Kombiinstrument hinzu — genau wie die eingebaute Werksnavigation. Basiert auf <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> und <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, mit drei Ergänzungen:</p>
+  <p class="sublede">Fügt CarPlay- und Android-Auto-Manöverpfeile, Entfernung und Geschwindigkeit zum HUD im Kombiinstrument hinzu — genau wie die eingebaute Werksnavigation. Basiert auf <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> und <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, mit zwei Ergänzungen:</p>
   <ul>
     <li><strong>Einheitlicher Patch.</strong> Eine Installation aktiviert sowohl CarPlay als auch Android Auto Turn-by-Turn auf dem HUD.</li>
-    <li><strong>km/h-Fix.</strong> Der Original-Shim nutzte <code>displaySpeedUnit = 1</code> (mph). Auf einem EU-HUD wurde <code>50 km/h</code> als <code>≈80</code> gezeichnet. Korrigiert auf <code>2</code> (km/h).</li>
     <li><strong>Speed-Limit-Spiegel-Daemon.</strong> Shell-Skript, das passiv den OEM-Stream von <code>svcjcinavi.so</code> beobachtet und den aktuellen Wert in die Keep-alive-Frames des Shim kopiert. Ohne ihn überschreibt der Shim den Slot alle 500 ms mit <code>0</code> und der Wert fällt auf <code>---</code>.</li>
   </ul>
 </div></section>
@@ -962,10 +958,9 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
 
 <section><div class="wrap">
   <h2><span class="num">03</span>O que faz</h2>
-  <p class="sublede">Adiciona setas de manobra, distância e velocidade do CarPlay e Android Auto ao HUD do painel — igual à navegação nativa. Baseado em <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> e <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, com três acréscimos:</p>
+  <p class="sublede">Adiciona setas de manobra, distância e velocidade do CarPlay e Android Auto ao HUD do painel — igual à navegação nativa. Baseado em <a href="https://github.com/KidMixer/mazda-carplay-hud" target="_blank" rel="noopener">KidMixer/mazda-carplay-hud</a> e <a href="https://github.com/VitaliyKurokhtin/oem-aa-mod" target="_blank" rel="noopener">oem-aa-mod</a>, com dois acréscimos:</p>
   <ul>
     <li><strong>Patch unificado.</strong> Uma instalação que ativa tanto CarPlay quanto Android Auto turn-by-turn no HUD.</li>
-    <li><strong>Correção km/h.</strong> O shim original usava <code>displaySpeedUnit = 1</code> (mph). Num HUD europeu <code>50 km/h</code> desenhava como <code>≈80</code>. Corrigido para <code>2</code> (km/h).</li>
     <li><strong>Daemon-espelho.</strong> Script shell que escuta passivamente o fluxo OEM de <code>svcjcinavi.so</code> e copia o valor atual nos frames keep-alive do shim. Sem ele, o shim sobrescreve o slot com <code>0</code> a cada 500 ms e o valor cai para <code>---</code>.</li>
   </ul>
 </div></section>
