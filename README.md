@@ -10,13 +10,14 @@ Apple CarPlay turn-by-turn navigation on the instrument-cluster HUD for Mazda CM
 
 ## v2.5 — What's new
 
-- **Wireless CarPlay (WCP)** — optional: enable native WiFi-based CarPlay on CMU150 units that shipped with wired-only. iPhone connects via 2.4 GHz WiFi after the first wired pairing. Enable/disable from the USB menu. Based on community research (Kenatia, ASH8, ingbrzy).
+- **Wireless CarPlay (WCP)** — optional: enable native WiFi-based CarPlay on CMU150 units that shipped with wired-only. iPhone connects via 2.4 GHz WiFi after the first wired pairing. Enable/disable from the USB menu. Based on [Kenatia/mazda-cmu150-wcp-mod](https://github.com/Kenatia/mazda-cmu150-wcp-mod) and community research (ASH8, ingbrzy).
 - **RHD roundabout fix** — left-hand-traffic HUD exit arrows were mirrored. Fixed in source (`hud_send.cpp`), auto-detected from the CarPlay protocol. Thanks to [@shannang97](https://github.com/shannang97) for the report and binary-level analysis ([#1](../../issues/1)).
 
 ## Based on
 
 - [KidMixer/mazda-carplay-hud v2.0.0](https://github.com/KidMixer/mazda-carplay-hud) (AGPL-3.0)
 - [VitaliyKurokhtin/oem-aa-mod](https://github.com/VitaliyKurokhtin/oem-aa-mod) — Android Auto HUD support
+- [Kenatia/mazda-cmu150-wcp-mod](https://github.com/Kenatia/mazda-cmu150-wcp-mod) — Wireless CarPlay enabler
 
 ## What's different
 
