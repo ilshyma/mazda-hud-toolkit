@@ -50,7 +50,7 @@ shim_state() {
 }
 
 case "$ACTION" in
-  install|uninstall|status) ;;
+  install|uninstall|status|wcp_enable|wcp_disable) ;;
   check)
     [ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ] || { echo "MISS the HUD patch is not installed"; exit 3; }
     rc=0
@@ -106,9 +106,11 @@ dialog() {  # text — replaces whatever dialog is showing; mirrored to the pane
   echo "[screen] $1"
 }
 case "$ACTION" in
-  install)   dialog "Installing the HUD patch...\nDo not remove the USB drive." ;;
-  uninstall) dialog "Removing the HUD patch...\nDo not remove the USB drive." ;;
-  status)    dialog "Checking the HUD patch..." ;;
+  install)     dialog "Installing the HUD patch...\nDo not remove the USB drive." ;;
+  uninstall)   dialog "Removing the HUD patch...\nDo not remove the USB drive." ;;
+  status)      dialog "Checking the HUD patch..." ;;
+  wcp_enable)  dialog "Enabling Wireless CarPlay...\nDo not remove the USB drive." ;;
+  wcp_disable) dialog "Disabling Wireless CarPlay...\nDo not remove the USB drive." ;;
 esac
 
 VER=$(grep '^JCI_SW_VER=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/MAZ_CMU-150_//')
@@ -320,4 +322,28 @@ status)
     result S1 "HUD patch installed but $bad part(s) not active." "${lines}" "Restart the car once. If it stays, send this photo."
   fi
   finish 2 ;;
+
+wcp_enable)
+  dialog "[1/2]  Enabling Wireless CarPlay...\n[2/2]  Reboot"
+  sh "$D/wcp_enable.sh"
+  if grep -q 'DONE\. Reboot' "$LOG"; then
+    dialog "[1/2]  Wireless CarPlay enabled\n[2/2]  Rebooting..."
+    result OK "Wireless CarPlay enabled." "iPhone will connect via WiFi (2.4 GHz).\nFirst pairing: connect by cable once, then go wireless." ""
+    finish 0
+  fi
+  err=$(grep -m1 'ERROR\|FAIL\|ABORT' "$LOG" | cut -c1-90)
+  result E7 "Could not enable Wireless CarPlay." "${err:-see the full log}" "Send the photo and this folder from the USB."
+  finish 1 ;;
+
+wcp_disable)
+  dialog "[1/2]  Disabling Wireless CarPlay...\n[2/2]  Reboot"
+  sh "$D/wcp_disable.sh"
+  if grep -q 'DONE\. Reboot' "$LOG"; then
+    dialog "[1/2]  Wireless CarPlay disabled\n[2/2]  Rebooting..."
+    result OK "Wireless CarPlay disabled, back to wired." "" ""
+    finish 0
+  fi
+  err=$(grep -m1 'ERROR\|FAIL' "$LOG" | cut -c1-90)
+  result U2 "WCP removal did not finish." "${err:-see the full log}" "Send the photo and this folder from the USB."
+  finish 1 ;;
 esac

@@ -603,6 +603,8 @@ echo %M_INFO%  2. If no dialog: Media -^> USB -^> tap any mp3 -^> XSS menu appea
 echo %M_INFO%     SSH   -- enable SSH for this toolkit
 echo %M_INFO%     HUD+  -- install the CarPlay + Android Auto HUD patch
 echo %M_INFO%     HUD-  -- remove it           HUD? -- check it is active
+echo %M_INFO%  3. After install: Wireless CarPlay button lets you enable/disable
+echo %M_INFO%     native WiFi CarPlay ^(2.4 GHz, first pair by cable^).
 exit /b 0
 
 :: ===========================================================================

@@ -21,12 +21,40 @@ if [ ! -f "$RUNNER" ]; then
     sleep 15; killall -q jci-dialog; exit 1
 fi
 
-if [ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ]; then
-    $DLG --question --title="$TITLE" \
-      --text="The HUD patch is installed.\nWhat would you like to do?" \
-      --ok-label="Uninstall" --cancel-label="Check Status"
-    if [ $? -eq 0 ]; then
+# Detect current state
+HUD_INSTALLED=false
+WCP_ENABLED=false
+[ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ] && HUD_INSTALLED=true
+grep -q "vim_app" /jci/scripts/get_board_type.sh 2>/dev/null && WCP_ENABLED=true
+
+if [ "$HUD_INSTALLED" = true ]; then
+    if [ "$WCP_ENABLED" = true ]; then
+        WCP_TAG=" | WCP: ON"
+    else
+        WCP_TAG=" | WCP: OFF"
+    fi
+    $DLG --3-button-dialog --title="$TITLE" \
+      --text="HUD patch is installed${WCP_TAG}.\nWhat would you like to do?" \
+      --ok-label="Uninstall HUD" --cancel-label="Wireless CarPlay" --button3-label="Check Status"
+    CHOICE=$?
+    if [ "$CHOICE" -eq 0 ]; then
         sh "$RUNNER" uninstall
+    elif [ "$CHOICE" -eq 1 ]; then
+        if [ "$WCP_ENABLED" = true ]; then
+            $DLG --question --title="Wireless CarPlay" \
+              --text="Wireless CarPlay is currently ENABLED.\nDisable it?" \
+              --ok-label="Disable WCP" --cancel-label="Keep"
+            if [ $? -eq 0 ]; then
+                sh "$RUNNER" wcp_disable
+            fi
+        else
+            $DLG --question --title="Wireless CarPlay" \
+              --text="Enable native Wireless CarPlay?\n(iPhone connects via WiFi, no cable needed)\n\nNote: 2.4 GHz WiFi only." \
+              --ok-label="Enable WCP" --cancel-label="Cancel"
+            if [ $? -eq 0 ]; then
+                sh "$RUNNER" wcp_enable
+            fi
+        fi
     else
         sh "$RUNNER" status
     fi

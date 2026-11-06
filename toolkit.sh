@@ -326,6 +326,8 @@ make_usb() {
   info "     SSH   — enable SSH for this toolkit"
   info "     HUD+  — install the CarPlay + Android Auto HUD patch"
   info "     HUD-  — remove it (back to stock)      HUD? — check that every part is active"
+  info "  3. After install: 'Wireless CarPlay' button lets you enable/disable"
+  info "     native WiFi CarPlay (2.4 GHz, first pair by cable)."
   info "  Every action ends with a message on screen — if it says ERROR, photo it and send it;"
   info "  the same text + the full log are on the stick in hud-mod/logs/."
 }
