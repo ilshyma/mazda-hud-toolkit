@@ -9,7 +9,9 @@
 MYDIR=$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")
 RUNNER="$MYDIR/hud-mod/usb_run.sh"
 DLG=/jci/tools/jci-dialog
-TITLE="HUD Patch: CarPlay + Android Auto"
+MOD_VER=$(cat "$MYDIR/hud-mod/VERSION" 2>/dev/null | tr -d '[:space:]')
+: "${MOD_VER:=?}"
+TITLE="HUD Patch v$MOD_VER"
 
 hwclock --hctosys 2>/dev/null
 echo 1 > "/sys/class/gpio/Watchdog Disable/value" 2>/dev/null

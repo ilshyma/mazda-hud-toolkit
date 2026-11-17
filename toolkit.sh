@@ -57,9 +57,50 @@ CMU=cmu@192.168.53.1
 PORT=36000
 # One source of truth for the shipping toolkit version -- stamped into the
 # main-menu header and used by install/uninstall/usb_run on the CMU side.
-# Bump files/VERSION + files/unified/VERSION together with every release.
+# Bump files/VERSION + files/hud/VERSION together with every release.
 MOD_VERSION=$(cat "$FILES/VERSION" 2>/dev/null | tr -d '[:space:]')
 : "${MOD_VERSION:=unknown}"
+
+# HUD configuration — traffic side (RHT/LHT) and speed units (KMH/MPH).
+# The shim reads /data_persist/hud_config at runtime; this file is a local
+# cache of the user's choices, written by prompt_hud_config().
+HUD_CFG_FILE="$DIR/.hud_config"
+
+prompt_hud_config() {
+  hdr "HUD configuration"
+  info "the shim needs to know your traffic side and speed-unit preference."
+  echo
+  printf "  %s1%s  Right-hand traffic (drive on the right — EU, US, …)  %s[default]%s\n" "$C_BOLD" "$C_0" "$C_DIM" "$C_0"
+  printf "  %s2%s  Left-hand traffic  (drive on the left  — UK, JP, AU, …)\n"            "$C_BOLD" "$C_0"
+  echo
+  printf "Traffic side > "
+  read TS_CH
+  case "$TS_CH" in
+    2) HUD_TRAFFIC_SIDE=LHT ;;
+    *) HUD_TRAFFIC_SIDE=RHT ;;
+  esac
+  echo
+  printf "  %s1%s  km/h  %s[default]%s\n" "$C_BOLD" "$C_0" "$C_DIM" "$C_0"
+  printf "  %s2%s  mph\n"                 "$C_BOLD" "$C_0"
+  echo
+  printf "Speed unit > "
+  read SU_CH
+  case "$SU_CH" in
+    2) HUD_SPEED_UNIT=MPH ;;
+    *) HUD_SPEED_UNIT=KMH ;;
+  esac
+  printf "traffic_side=%s\nspeed_unit=%s\n" "$HUD_TRAFFIC_SIDE" "$HUD_SPEED_UNIT" > "$HUD_CFG_FILE"
+  ok "saved: traffic_side=$HUD_TRAFFIC_SIDE  speed_unit=$HUD_SPEED_UNIT"
+}
+
+load_hud_config() {
+  if [ -f "$HUD_CFG_FILE" ]; then
+    HUD_TRAFFIC_SIDE=$(awk -F= '/^traffic_side=/{print $2}' "$HUD_CFG_FILE")
+    HUD_SPEED_UNIT=$(awk -F= '/^speed_unit=/{print $2}' "$HUD_CFG_FILE")
+  fi
+  : "${HUD_TRAFFIC_SIDE:=RHT}"
+  : "${HUD_SPEED_UNIT:=KMH}"
+}
 
 # Expected md5 of shipped payloads (used to verify what's on the CMU after copy)
 MD5_SO_PURE=0ce29da4f16f72b0b8f931bee88ff332
@@ -102,6 +143,11 @@ hdr(){  echo; printf "%s═══ %s ═══%s\n" "$C_BC" "$*" "$C_0"; }
 # 1) Create USB unlock stick — number-picker (no path typing, no /dev/ mistakes)
 make_usb() {
   hdr "Create USB unlock stick"
+
+  # Ask traffic side + speed unit before touching any disk — the answers go
+  # onto the stick as hud-mod/hud_config so the in-car installer deploys them.
+  prompt_hud_config
+
   info "detecting external USB drives..."
   echo
 
@@ -216,6 +262,10 @@ make_usb() {
     ( export COPYFILE_DISABLE=1 && mkdir -p /Volumes/MZD/hud-mod && cp "$UNIFIED/"* /Volumes/MZD/hud-mod/ ) || {
       err "copy of hud-mod failed"; return 1;
     }
+    # Write the user's traffic-side / speed-unit choices so the in-car
+    # installer can deploy them to /data_persist/hud_config.
+    load_hud_config
+    printf "traffic_side=%s\nspeed_unit=%s\n" "$HUD_TRAFFIC_SIDE" "$HUD_SPEED_UNIT" > /Volumes/MZD/hud-mod/hud_config
   fi
   if [ -f "$FILES/usb_unlock/h" ]; then
     ( export COPYFILE_DISABLE=1 && cp "$FILES/usb_unlock/h" /Volumes/MZD/h ) || {
@@ -848,13 +898,13 @@ validate() {
 # ============================================================================
 #  MAIN FLOW — menu U / R  (CarPlay + Android Auto, one patch)
 # ============================================================================
-# files/unified/ is the release package of the unified branch
+# files/hud/ is the release package of the unified branch
 # (github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa):
 #   4 shims — CarPlay (blmjcicarplay), Android Auto (blmjciaapa + aap_service)
 #   and the svcjcinavi HUD arbiter that gives both phones the stock-nav speed
 #   limit — plus its own install.sh / uninstall.sh, libpatch.conf and the AA
 #   system-attribute XMLs. MD5SUMS pins the shims.
-UNIFIED="$FILES/unified"
+UNIFIED="$FILES/hud"
 UNIFIED_REMOTE=/tmp/hud-mod
 UNIFIED_DIR=/data_persist/oem-aa-mod
 
@@ -921,6 +971,13 @@ install_unified() {
   echo
   info "1/3 · copying the package (md5-verified)"
   unified_push || { err "aborted — package did not land correctly, nothing was changed"; return 1; }
+
+  # Deploy hud_config (traffic side + speed unit) alongside the shims.
+  load_hud_config
+  info "  hud_config: traffic_side=$HUD_TRAFFIC_SIDE speed_unit=$HUD_SPEED_UNIT"
+  printf "traffic_side=%s\nspeed_unit=%s\n" "$HUD_TRAFFIC_SIDE" "$HUD_SPEED_UNIT" > /tmp/hud_config_local
+  $SCP /tmp/hud_config_local "$CMU:$UNIFIED_REMOTE/hud_config" 2>/dev/null
+  rm -f /tmp/hud_config_local
 
   info "2/3 · running the installer on the CMU"
   local log

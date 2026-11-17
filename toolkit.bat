@@ -69,7 +69,7 @@ chcp 65001 >nul 2>&1
 set "DIR=%~dp0"
 set "FILES=%DIR%files"
 set "KEY=%DIR%id_rsa_cmu"
-set "UNIFIED=%FILES%\unified"
+set "UNIFIED=%FILES%\hud"
 set "CMU=cmu@192.168.53.1"
 set "PORT=36000"
 set "UNIFIED_REMOTE=/tmp/hud-mod"
@@ -120,6 +120,11 @@ if errorlevel 1 (echo. & echo ERROR: powershell.exe not found. ^(Highly unusual 
 :: Restrict key perms if the key exists (OpenSSH refuses world-readable keys).
 :: Silent no-op when the key is missing or already restricted.
 if exist "%KEY%" icacls "%KEY%" /inheritance:r /grant:r "%USERNAME%":R >nul 2>&1
+
+:: HUD configuration — traffic side (RHT/LHT) and speed unit (KMH/MPH).
+set "HUD_CFG_FILE=%DIR%.hud_config"
+set "HUD_TRAFFIC_SIDE=RHT"
+set "HUD_SPEED_UNIT=KMH"
 
 :: Detect elevation once (used by :usb to offer PowerShell auto-format).
 net session >nul 2>&1
@@ -414,12 +419,53 @@ echo %M_INFO%Next: option 2 ^(backup^), then option 4 ^(install HUD patch^).
 exit /b 0
 
 :: ===========================================================================
+:: HUD configuration prompts (traffic side + speed unit)
+:: ===========================================================================
+:prompt_hud_config
+echo.
+echo === HUD configuration ===
+echo %M_INFO%the shim needs to know your traffic side and speed-unit preference.
+echo.
+echo   1  Right-hand traffic ^(drive on the right -- EU, US, ...^)  [default]
+echo   2  Left-hand traffic  ^(drive on the left  -- UK, JP, AU, ...^)
+echo.
+set "TS_CH="
+set /p "TS_CH=Traffic side > "
+if "!TS_CH!"=="2" (set "HUD_TRAFFIC_SIDE=LHT") else (set "HUD_TRAFFIC_SIDE=RHT")
+echo.
+echo   1  km/h  [default]
+echo   2  mph
+echo.
+set "SU_CH="
+set /p "SU_CH=Speed unit > "
+if "!SU_CH!"=="2" (set "HUD_SPEED_UNIT=MPH") else (set "HUD_SPEED_UNIT=KMH")
+> "!HUD_CFG_FILE!" echo traffic_side=!HUD_TRAFFIC_SIDE!
+>> "!HUD_CFG_FILE!" echo speed_unit=!HUD_SPEED_UNIT!
+echo %M_OK%saved: traffic_side=!HUD_TRAFFIC_SIDE!  speed_unit=!HUD_SPEED_UNIT!
+exit /b 0
+
+:load_hud_config
+if exist "!HUD_CFG_FILE!" (
+  for /f "usebackq tokens=1,2 delims==" %%a in ("!HUD_CFG_FILE!") do (
+    if /I "%%a"=="traffic_side" set "HUD_TRAFFIC_SIDE=%%b"
+    if /I "%%a"=="speed_unit"   set "HUD_SPEED_UNIT=%%b"
+  )
+)
+if not defined HUD_TRAFFIC_SIDE set "HUD_TRAFFIC_SIDE=RHT"
+if not defined HUD_SPEED_UNIT   set "HUD_SPEED_UNIT=KMH"
+exit /b 0
+
+:: ===========================================================================
 :: 1) Create USB stick  --  removable drive picker, format (auto if admin,
 ::    otherwise manual), copy payload, md5-verify every critical file.
 :: ===========================================================================
 :usb
 echo.
 echo === Create USB stick ===
+
+:: Ask traffic side + speed unit before touching any disk.
+call :prompt_hud_config
+
 echo %M_INFO%detecting removable USB drives...
 echo.
 
@@ -522,6 +568,10 @@ if exist "%UNIFIED%\usb_run.sh" (
   powershell -NoProfile -ExecutionPolicy Bypass -Command "$bad=0; Get-ChildItem -LiteralPath '%UNIFIED%' -File | ForEach-Object { $d = Join-Path '!TARGET_BS!hud-mod' $_.Name; if (-not (Test-Path -LiteralPath $d) -or (Get-FileHash -Algorithm MD5 -LiteralPath $_.FullName).Hash -ne (Get-FileHash -Algorithm MD5 -LiteralPath $d).Hash) { Write-Output ('  CORRUPT/MISSING: hud-mod\' + $_.Name); $bad++ } }; exit $bad"
   if errorlevel 1 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
   echo %M_OK%  hud-mod verified
+  :: Write the user's traffic-side / speed-unit choices to the stick.
+  call :load_hud_config
+  > "!TARGET_BS!hud-mod\hud_config" echo traffic_side=!HUD_TRAFFIC_SIDE!
+  >> "!TARGET_BS!hud-mod\hud_config" echo speed_unit=!HUD_SPEED_UNIT!
 )
 
 :: The 'h' dispatcher sits at the stick root; HUD buttons fire
@@ -742,6 +792,15 @@ for %%F in ("%UNIFIED%\*") do (
 )
 :install_unified_done
 if "!UNIFIED_FAIL!"=="1" exit /b 1
+
+:: Deploy hud_config (traffic side + speed unit) alongside the shims.
+call :load_hud_config
+echo %M_INFO%  hud_config: traffic_side=!HUD_TRAFFIC_SIDE! speed_unit=!HUD_SPEED_UNIT!
+set "HUD_TMP=%TEMP%\hud_config_local"
+> "!HUD_TMP!" echo traffic_side=!HUD_TRAFFIC_SIDE!
+>> "!HUD_TMP!" echo speed_unit=!HUD_SPEED_UNIT!
+scp %SSHOPTS% -P %PORT% "!HUD_TMP!" %CMU%:%UNIFIED_REMOTE%/hud_config >nul 2>&1
+del /q "!HUD_TMP!" 2>nul
 
 echo %M_INFO%2/3 . running the installer on the CMU
 set "INSTLOG=%TEMP%\hudmod_install.txt"

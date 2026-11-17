@@ -1,0 +1,17 @@
+# SSH private key — NEVER commit
+id_rsa_cmu
+
+# Local HUD config (user-specific traffic side + speed unit)
+.hud_config
+
+# Backups and logs (local-only)
+backups/
+logs/
+
+# macOS junk
+.DS_Store
+._*
+
+# Windows junk
+Thumbs.db
+desktop.ini
