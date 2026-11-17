@@ -1488,13 +1488,15 @@ while :; do
   echo
   printf "%s Mazda CMU HUD toolkit — CarPlay + Android Auto  %sv%s%s\n" "$C_BOLD" "$C_DIM" "$MOD_VERSION" "$C_0"
   printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
-  printf "  %s1%s   Create USB stick  (SSH unlock + HUD patch on one stick)\n" "$C_BOLD" "$C_0"
+  printf "  %s1%s   Create USB stick  (unlock + HUD patch — no laptop needed)\n" "$C_BOLD" "$C_0"
+  printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
+  printf "  %sAlready have SSH + Wi-Fi access to the head unit?%s\n"             "$C_DIM" "$C_0"
   printf "  %s2%s   Backup CMU\n"                                               "$C_BOLD" "$C_0"
   printf "  %s3%s   Rollback  (remove every HUD patch, back to stock)\n"        "$C_BOLD" "$C_0"
   printf "  %s4%s   Install HUD patch  (CarPlay + Android Auto)\n"              "$C_BOLD" "$C_0"
+  printf "  %sB%s   Bootstrap SSH key  (first time only)\n"                     "$C_BOLD" "$C_0"
+  printf "  %sA%s   Advanced options\n"                                         "$C_BOLD" "$C_0"
   printf "%s══════════════════════════════════════════════════════════%s\n" "$C_BG" "$C_0"
-  printf "  %sB%s   Bootstrap SSH key  (first time only — install the id_rsa_cmu key)\n" "$C_BOLD" "$C_0"
-  printf "  %sA%s   Advanced options\n" "$C_BOLD" "$C_0"
   printf "  %s0%s   Exit\n"             "$C_BOLD" "$C_0"
   echo
   printf "> "
