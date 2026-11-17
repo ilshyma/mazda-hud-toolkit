@@ -20,10 +20,11 @@ the toolkit builds and deploys everything.
 7. [HUD output protocol](#7-hud-output-protocol)
 8. [USB unlock and install chain](#8-usb-unlock-and-install-chain)
 9. [On-device installer (install.sh)](#9-on-device-installer-installsh)
-10. [Build system](#10-build-system)
-11. [File layout](#11-file-layout)
-12. [Source code map](#12-source-code-map)
-13. [Gotchas and hard-won lessons](#13-gotchas-and-hard-won-lessons)
+10. [USB logging and diagnostics (usb_run.sh)](#10-usb-logging-and-diagnostics-usb_runsh)
+11. [Build system](#11-build-system)
+12. [File layout](#12-file-layout)
+13. [Source code map](#13-source-code-map)
+14. [Gotchas and hard-won lessons](#14-gotchas-and-hard-won-lessons)
 
 ---
 
@@ -413,7 +414,130 @@ Runs on the CMU as root. Idempotent — safe to re-run after updates.
 
 ---
 
-## 10. Build system
+## 10. USB logging and diagnostics (usb_run.sh)
+
+`usb_run.sh` is the orchestrator that wraps `install.sh` / `uninstall.sh` with
+error handling, user-visible dialogs, and **detailed logs written back to the
+USB stick**. Every run produces a diagnostics folder that can be photographed
+or sent for remote analysis.
+
+### Log folder structure
+
+Every install/uninstall/status run creates a numbered folder on the stick:
+
+```
+hud-mod/logs/
+├── 001_install_20261117-143022/
+│   ├── RESULT.txt          the text shown on the centre display
+│   ├── run.log             full stdout/stderr of the entire run
+│   └── system.txt          system snapshot for remote analysis
+├── 002_status_20261117-150511/
+│   ├── RESULT.txt
+│   ├── run.log
+│   └── system.txt
+└── LAST_RESULT.txt         copy of the most recent RESULT.txt
+```
+
+Folders are numbered sequentially (`001`, `002`, ...) because the CMU clock
+starts at 1970 until a GPS fix — timestamps alone would collide.
+
+### RESULT.txt — the screen photo
+
+The result dialog is designed to be **photographed** by the user and sent for
+support. It contains:
+
+- **Error code** (OK, E1–E9, S0–S1, U1) — identifies the failure class
+- **Headline** — what happened in plain words
+- **Detail** — the specific error message from `install.sh`
+- **Advice** — what the user should do next
+- **Facts line** — toolkit version, firmware version, firmware flavor, free space, timestamp
+- **Photo prompt** — "Photo this screen and send it to the author" (on errors)
+- **Log folder path** — so the user can find the full logs on the USB
+
+### Error codes
+
+| Code | Meaning | Cause |
+|------|---------|-------|
+| `OK` | Success | Install/uninstall/status completed normally |
+| `E1` | Damaged file on USB | MD5 mismatch or missing file — stick needs re-creation |
+| `E2` | Not a CMU | No `/jci/sm/sm.conf` or `sm_WCP.conf` — wrong device |
+| `E3` | Unusual system config | Foreign `LD_PRELOAD` from another mod, or missing services |
+| `E4` | Can't unlock system partition | `mount -o remount,rw /` failed — retry after restart |
+| `E5` | Can't write to storage | Disk full or filesystem error |
+| `E6` | Config patch failed safely | Sanity check caught corruption — sm.conf left untouched |
+| `E9` | Unexpected error | Catch-all — full log needed for diagnosis |
+| `S0` | Not installed | Status check: mod files not present |
+| `S1` | Partially active | Installed but N shim(s) not loaded — usually needs a reboot |
+| `U1` | Uninstall incomplete | Removal didn't finish — full log needed |
+
+### system.txt — remote diagnostics snapshot
+
+Captures everything needed to diagnose a problem remotely, without SSH access:
+
+- **Firmware info** — `version.ini` fields (JCI_SW_VER, JCI_SW_FLAVOR, OEM_PART_NUMBER)
+- **Filesystem layout** — `/jci` and `/jci/sm` directory listings, all `sm*.conf` paths
+- **Mount table** — mounts touching `jci`, `data_persist`, `system`, `rootfs`
+- **sm.conf state** — all LD_PRELOAD and target service lines from both configs
+- **Board type** — `get_board_type.sh` exit code (0=non-WCP, 2=WCP)
+- **Mod file inventory** — `ls -l` of `oem-aa-mod/`, `cp-hud-mod/`, `hud-mod-backup/`
+- **Shim MD5 hashes** — verify the installed `.so` files match the shipped ones
+- **libpatch.conf** — active developer settings (comments stripped)
+- **Shim load state** — for each of the 4 services: OK / NOT loaded / not running
+  (checks `/proc/<pid>/maps` for `libpatch-*.so`)
+- **NaviSupported flag** — TRUE or FALSE from `devmgr_config_master.xml`
+- **Stock nav binary** — svcjcinavi.so size and MD5 (to verify force_street_name compatibility)
+- **Hand-off state** — current contents of `/tmp/hud_oem_speed` and `/tmp/hud_carplay_active`
+- **Storage** — `df -k` for `/data_persist`, `/tmp`, `/`
+- **Memory** — first 4 lines of `/proc/meminfo`
+- **Running processes** — jciCARPLAY, jciAAPA, jcinavi, aap_service, NNG, jci-linux
+- **Kernel log** — last 40 lines of `dmesg`
+
+### run.log — full execution trace
+
+The entire stdout/stderr of the run, including every line from `install.sh`.
+Starts with a header:
+```
+=== hud-mod USB install | toolkit v2.6.0 | FW 74.00.324A NA | free 847 MB | 20261117-143022 | uptime 142.37 | from /tmp/mnt/sda1/hud-mod | mount /tmp/mnt/sda1
+```
+
+### XSS panel live progress
+
+For the XSS fallback path (dev.html panel), `usb_run.sh` also writes
+`/tmp/hud-usb-status.js` — a JSON payload that the panel polls to show
+real-time progress lines. Format:
+```js
+window.hudUsbStatus={id:"install",action:"install",done:false,lines:["line1","line2"]};
+```
+
+### Read-only USB fallback
+
+If the stick can't be remounted read-write (some media players lock it),
+logs are written to `/tmp/hud-mod-logs/` on the CMU instead, and the result
+dialog notes this. These persist until the next reboot (tmpfs).
+
+### Status check early-boot wait
+
+At uptime < 90 seconds, shims may not yet appear in `/proc/<pid>/maps`.
+The status command waits with a countdown stepper before checking, to avoid
+false "NOT loaded" results.
+
+### `check` command (SSH variant)
+
+`usb_run.sh check` is a silent, no-dialog, no-log variant for SSH toolkits:
+```
+OK   CarPlay: shim loaded
+OK   AndroidAuto: shim loaded
+OK   AA-1.6: shim loaded
+OK   Navi/speed: shim loaded
+INFO NaviSupported=TRUE
+INFO config: hud_transport = svcnavi force_street_name = true ...
+INFO stock-nav speed shared with CarPlay: 50 1
+```
+Exit codes: 0 = all loaded, 1 = problem, 3 = not installed.
+
+---
+
+## 11. Build system
 
 ### Toolchain
 
@@ -464,7 +588,7 @@ at 67ba1f5) — do not build from that one.
 
 ---
 
-## 11. File layout
+## 12. File layout
 
 ### Toolkit repository (`mazda-hud-toolkit`)
 
@@ -531,7 +655,7 @@ mazda/
 
 ---
 
-## 12. Source code map
+## 13. Source code map
 
 ### Shared headers (patches/common/)
 
@@ -560,7 +684,7 @@ mazda/
 
 ---
 
-## 13. Gotchas and hard-won lessons
+## 14. Gotchas and hard-won lessons
 
 ### Never use `pkill -f` for splim
 
