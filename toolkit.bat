@@ -315,6 +315,8 @@ exit /b 1
 :kidmixer_base
 if not exist "%FILES%\install.sh"                (echo %M_ERR%local file missing: install.sh                & exit /b 1)
 if not exist "%FILES%\libpatch-blmjcicarplay.so" (echo %M_ERR%local file missing: libpatch-blmjcicarplay.so & exit /b 1)
+call :md5_local "%FILES%\libpatch-blmjcicarplay.so"
+if /I not "!LMD5!"=="%MD5_SO_PURE%" (echo %M_ERR%libpatch-blmjcicarplay.so md5 mismatch: got !LMD5!, want %MD5_SO_PURE% -- re-download the toolkit & exit /b 1)
 echo %M_INFO%copying KidMixer install.sh + pure .so
 set /a KB_TRY=0
 :kidmixer_base_loop
@@ -323,9 +325,14 @@ if !KB_TRY! GTR 1 echo     retry !KB_TRY!/3...
 ssh %SSHOPTS% -p %PORT% %CMU% "mkdir -p /tmp/cp-hud-install" && ^
 scp %SSHOPTS% -P %PORT% "%FILES%\install.sh"                %CMU%:/tmp/cp-hud-install/ && ^
 scp %SSHOPTS% -P %PORT% "%FILES%\libpatch-blmjcicarplay.so" %CMU%:/tmp/cp-hud-install/
-if exist "%FILES%\VERSION" scp %SSHOPTS% -P %PORT% "%FILES%\VERSION" %CMU%:/tmp/cp-hud-install/ >nul 2>&1
+if errorlevel 1 goto kidmixer_base_fail
+if exist "%FILES%\VERSION" (
+  scp %SSHOPTS% -P %PORT% "%FILES%\VERSION" %CMU%:/tmp/cp-hud-install/
+  if errorlevel 1 goto kidmixer_base_fail
+)
 ssh %SSHOPTS% -p %PORT% %CMU% "cd /tmp/cp-hud-install && sh install.sh"
 if not errorlevel 1 exit /b 0
+:kidmixer_base_fail
 if !KB_TRY! LSS 3 (timeout /t 2 /nobreak >nul & goto kidmixer_base_loop)
 echo %M_ERR%KidMixer base install failed after 3 attempts
 exit /b 1
@@ -340,7 +347,7 @@ exit /b 1
 :: is the exact fix as toolkit.sh:wipe_speed_mod().
 :: ===========================================================================
 :wipe_speed_mod
-ssh %SSHOPTS% -p %PORT% %CMU% "pkill -9 splim_bridge 2>/dev/null; pkill -9 splim_udpd 2>/dev/null; kill -9 $(pgrep splim_udpd) 2>/dev/null; rm -f /data_persist/splim_udpd_start.sh /data_persist/cp-hud-mod/splim_bridge*.sh /data_persist/cp-hud-mod/splim_udpd /data_persist/cp-hud-mod/.variant /data_persist/splim /mnt/data_persist/splim /tmp/splim_v*_cache /tmp/splim_v*_last; rm -rf /tmp/splim_v*_cache; sleep 1; true" >nul 2>&1
+ssh %SSHOPTS% -p %PORT% %CMU% "pkill -9 splim_bridge 2>/dev/null; pkill -9 splim_udpd 2>/dev/null; kill -9 $(pgrep splim_udpd) 2>/dev/null; rm -f /data_persist/splim_udpd_start.sh /data_persist/cp-hud-mod/splim_bridge*.sh /data_persist/cp-hud-mod/splim_udpd /data_persist/cp-hud-mod/.variant /data_persist/splim /mnt/data_persist/splim /tmp/splim_v*_cache /tmp/splim_v*_last /tmp/splim_v*_tsr /tmp/splim_v*_nng /tmp/splim_v*_lanes; rm -rf /tmp/splim_v*_cache; sleep 1; true" >nul 2>&1
 exit /b 0
 
 :: ===========================================================================
@@ -498,6 +505,10 @@ set "CH="
 set /p "CH=> "
 if "!CH!"=="" (echo cancelled & exit /b 0)
 if "!CH!"=="0" (echo cancelled & exit /b 0)
+:: digits only -- CH is expanded at parse time into the variable name below
+set "CH_BAD="
+for /f "delims=0123456789" %%x in ("!CH!") do set "CH_BAD=1"
+if defined CH_BAD (echo %M_ERR%invalid choice & exit /b 1)
 set "TARGET=!DRIVE_%CH%!"
 if "!TARGET!"=="" (echo %M_ERR%invalid choice & exit /b 1)
 
@@ -936,7 +947,7 @@ set "PV_WANT=%MD5_SPLIM_LAUNCHER%"
 call :push_verify
 if errorlevel 1 (echo %M_ERR%aborted -- launcher did not land correctly & exit /b 1)
 
-ssh %SSHOPTS% -p %PORT% %CMU% "chmod +x /data_persist/cp-hud-mod/splim_udpd /data_persist/splim_udpd_start.sh; rm -f /data_persist/cp-hud-mod/splim_bridge.sh /data_persist/cp-hud-mod/splim_bridge_v*.sh; rm -f /mnt/data_persist/splim /data_persist/splim; echo legacy > /data_persist/cp-hud-mod/.variant"
+ssh %SSHOPTS% -p %PORT% %CMU% "chmod +x /data_persist/cp-hud-mod/splim_udpd /data_persist/splim_udpd_start.sh; rm -f /data_persist/cp-hud-mod/splim_bridge.sh /data_persist/cp-hud-mod/splim_bridge_v*.sh; rm -f /mnt/data_persist/splim /data_persist/splim; rm -f /mnt/data_persist/log/splim_v5.log /mnt/data_persist/log/splim_v6.log /mnt/data_persist/log/splim_v7.log /mnt/data_persist/log/splim_v8.log /mnt/data_persist/log/splim_v9.log /mnt/data_persist/log/splim_v10.log /mnt/data_persist/log/splim_v11.log /mnt/data_persist/log/splim_v12.log /mnt/data_persist/log/splim_v13.log /mnt/data_persist/log/splim_v14.log /mnt/data_persist/log/splim_v15.log; echo legacy > /data_persist/cp-hud-mod/.variant"
 
 echo %M_OK%legacy mod installed. Rebooting...
 ssh %SSHOPTS% -p %PORT% %CMU% "sync && reboot" >nul 2>&1

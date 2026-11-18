@@ -216,7 +216,8 @@ rm -rf /tmp/splim_v16_cache
 
 # --- 6) hud_config (traffic side + speed unit for the shim) ------------------
 if [ -f "$SRC/hud_config" ]; then
-  cp -f "$SRC/hud_config" /data_persist/hud_config
+  # strip CR: toolkit.bat writes the file with CRLF line endings
+  tr -d '\r' < "$SRC/hud_config" > /data_persist/hud_config
   chmod 0644 /data_persist/hud_config
   log "installed /data_persist/hud_config: $(cat /data_persist/hud_config | tr '\n' ' ')"
 fi
