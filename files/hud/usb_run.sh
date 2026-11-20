@@ -159,7 +159,10 @@ result() {
   case "$code" in OK|S0) ;; *) text="$text\n$PHOTO" ;; esac
   [ -n "$LOGNOTE" ] && text="$text\n$LOGNOTE"
   printf '%b\n' "$text" > "$RUN/RESULT.txt"
-  echo "log folder: $RUN/  (RESULT.txt, run.log, system.txt)" >> "$RUN/RESULT.txt"
+  _logfiles="RESULT.txt, run.log, system.txt"
+  [ -f "$RUN/tweak_scan.txt" ] && _logfiles="$_logfiles, tweak_scan.txt, tweaks/"
+  echo "log folder: $RUN/  ($_logfiles)" >> "$RUN/RESULT.txt"
+  unset _logfiles
   cp "$RUN/RESULT.txt" "$LOGBASE/LAST_RESULT.txt" 2>/dev/null
   snapshot
   dialog "$text\nFolder: $(basename "$LOGBASE")/$(basename "$RUN")"
@@ -195,6 +198,267 @@ snapshot() {
     echo "--- processes"; ps | grep -E 'jciCARPLAY|jciAAPA|jcinavi|aap_service|NNG|jci-linux' | grep -v grep
     echo "--- dmesg (last 40)"; dmesg 2>/dev/null | tail -n 40
   } > "$RUN/system.txt" 2>&1
+}
+
+# ============================================================================
+#  Tweak scan — detect traces of third-party Mazda mods.
+#  Creates $RUN/tweak_scan.txt (human-readable report) and $RUN/tweaks/
+#  (copies of modified/foreign files for remote analysis).
+#  Returns the number of issues found on stdout.
+# ============================================================================
+tweak_scan() {
+  TDIR="$RUN/tweaks"
+  TRPT="$RUN/tweak_scan.txt"
+  mkdir -p "$TDIR/configs" "$TDIR/foreign"
+  found=0
+
+  tsay() { echo "$*" >> "$TRPT"; }
+  tcopy() {
+    [ -f "$1" ] || return 1
+    d="$TDIR/${2:-foreign}"
+    mkdir -p "$d" 2>/dev/null
+    cp -a "$1" "$d/" 2>/dev/null && tsay "    copied -> tweaks/${2:-foreign}/$(basename "$1")"
+  }
+  tlist() {
+    [ -d "$1" ] || return 1
+    ls -laR "$1" 2>/dev/null >> "$TDIR/foreign/$(echo "$1" | tr '/' '_').listing.txt"
+  }
+
+  tsay "=== Tweak scan | $FACTS"
+  tsay "    Scans for traces of third-party Mazda CMU mods."
+  tsay "    Items marked [!] are foreign to both the stock firmware and the HUD patch."
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 1. Known tweak directories on /data_persist
+  # -------------------------------------------------------------------
+  tsay "--- 1. Known tweak directories (/data_persist) ---"
+  if [ -d /data_persist/dev ]; then
+    found=$((found + 1))
+    tsay "  [!] FOUND: /data_persist/dev  (MZD-AIO)"
+    tlist /data_persist/dev
+    for sub in bin conf AppList app_data; do
+      [ -d "/data_persist/dev/$sub" ] && tsay "         sub: /data_persist/dev/$sub"
+    done
+  fi
+  for p in \
+    /data_persist/sshd \
+    /data_persist/ssh_key_rsa \
+    /data_persist/cp-hud-mod \
+    /tmp/root/.ssh \
+    /tmp/mnt/data_persist/dev \
+  ; do
+    if [ -d "$p" ] || [ -f "$p" ]; then
+      found=$((found + 1))
+      tsay "  [!] FOUND: $p"
+      tlist "$p"
+    fi
+  done
+  for p in \
+    /data_persist/enable_ssh_bringback \
+    /data_persist/background.png \
+    /data_persist/background.jpg \
+    /data_persist/splim_udpd_start.sh \
+  ; do
+    if [ -f "$p" ]; then
+      found=$((found + 1))
+      tsay "  [!] FOUND: $p  ($(ls -la "$p" 2>/dev/null | awk '{print $5" bytes, "$6" "$7" "$8}'))"
+      tcopy "$p" "foreign"
+    fi
+  done
+  extras=$(ls -1 /data_persist/ 2>/dev/null | grep -vE '^(oem-aa-mod|hud-mod-backup|hud_config|hud-probe|log|nng|navigon|gracenote|TomTom|wlan|bt|data|mss|AAOS|appsdk|Nuance)$' | grep -vE '^\.')
+  for e in $extras; do
+    case "$e" in
+      lost+found|quota.*) continue ;;
+    esac
+    if [ -d "/data_persist/$e" ] || [ -f "/data_persist/$e" ]; then
+      tsay "  [?] /data_persist/$e  $(ls -ld "/data_persist/$e" 2>/dev/null | awk '{print $1" "$5" "$6" "$7" "$8}')"
+    fi
+  done
+  [ "$found" -eq 0 ] && tsay "  (none found)"
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 2. JavaScript / Opera mods
+  # -------------------------------------------------------------------
+  tsay "--- 2. JavaScript / UI mods ---"
+  js_found=0
+  for p in \
+    /jci/opera/opera_home/user.js \
+    /jci/opera/opera_dir/userjs/CustomApplications.js \
+    /jci/opera/opera_dir/userjs/addon-common.js \
+  ; do
+    if [ -f "$p" ]; then
+      js_found=$((js_found + 1)); found=$((found + 1))
+      tsay "  [!] FOUND: $p  ($(wc -c < "$p" 2>/dev/null) bytes)"
+      tcopy "$p" "foreign/js"
+    fi
+  done
+  if [ -d /jci/opera/opera_dir/userjs ]; then
+    for f in /jci/opera/opera_dir/userjs/*.js; do
+      [ -f "$f" ] || continue
+      case "$f" in
+        */user.js|*/CustomApplications.js|*/addon-common.js) continue ;;
+      esac
+      tsay "  [!] userjs: $f"
+      tcopy "$f" "foreign/js"
+      js_found=$((js_found + 1)); found=$((found + 1))
+    done
+  fi
+  [ "$js_found" -eq 0 ] && tsay "  (none found)"
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 3. Script / autorun mods
+  # -------------------------------------------------------------------
+  tsay "--- 3. Script / autorun mods ---"
+  scr_found=0
+  for p in \
+    /jci/scripts/stage \
+    /data_persist/dev/bin/autorun \
+    /data_persist/dev/bin/startup.sh \
+  ; do
+    if [ -d "$p" ] || [ -f "$p" ]; then
+      scr_found=$((scr_found + 1)); found=$((found + 1))
+      tsay "  [!] FOUND: $p"
+      [ -d "$p" ] && tlist "$p"
+      [ -f "$p" ] && tcopy "$p" "foreign/scripts"
+    fi
+  done
+  if [ -d /jci/scripts/stage ]; then
+    for f in /jci/scripts/stage/*; do
+      [ -f "$f" ] || continue
+      tcopy "$f" "foreign/scripts"
+    done
+  fi
+  [ "$scr_found" -eq 0 ] && tsay "  (none found)"
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 4. Custom GUI apps
+  # -------------------------------------------------------------------
+  tsay "--- 4. Custom GUI apps ---"
+  gui_found=0
+  if [ -d /jci/gui/apps ]; then
+    for d in /jci/gui/apps/*; do
+      [ -d "$d" ] || continue
+      app=$(basename "$d")
+      case "$app" in
+        system|diag|syssettings|vehsettings|audiosettings|btwidget|radio|usbaudio| \
+        aharadio|stitcher|pandora|siriusxm|hdtrafficimage|auxin|cd|dvd|tv|backupcam| \
+        carplay|aapa|navi|bds|phone|sms|notification|statusbar|connectedservices| \
+        aha|email|calendar|unitmanager|wifiap|wificp|diag_debug|iheartradio|dab) ;;
+        *)
+          gui_found=$((gui_found + 1)); found=$((found + 1))
+          tsay "  [!] non-stock app: /jci/gui/apps/$app"
+          tlist "/jci/gui/apps/$app"
+        ;;
+      esac
+    done
+  fi
+  [ "$gui_found" -eq 0 ] && tsay "  (none found)"
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 5. Modified stock files
+  # -------------------------------------------------------------------
+  tsay "--- 5. Modified stock files ---"
+  for f in \
+    /jci/sm/sm.conf \
+    /jci/sm/sm_WCP.conf \
+    /etc/devmgr_config_master.xml \
+    /etc/aap_system_attributes.xml \
+    /etc/aap_system_attributes_UCP.xml \
+    /data_persist/oem-aa-mod/libpatch.conf \
+    /data_persist/hud_config \
+  ; do
+    if [ -f "$f" ]; then
+      tcopy "$f" "configs"
+      tsay "  collected: $f  ($(ls -la "$f" 2>/dev/null | awk '{print $5" bytes, "$6" "$7" "$8}'))"
+    fi
+  done
+  tsay ""
+
+  REF=/jci/sm/sm
+  if [ -f "$REF" ]; then
+    tsay "  Reference file: $REF  ($(ls -la "$REF" | awk '{print $6" "$7" "$8}'))"
+    tsay "  Files in /jci newer than firmware build (excluding our LD_PRELOAD edits):"
+    _mfl=/tmp/hud_tweak_mfl.tmp
+    find /jci -maxdepth 3 -type f -newer "$REF" 2>/dev/null | \
+      grep -vE '(\.so$|/sm\.conf$|/sm_WCP\.conf$|/bin/)' | \
+      sort | head -60 > "$_mfl"
+    while read -r mf; do
+        tsay "  [!] $mf  ($(ls -la "$mf" 2>/dev/null | awk '{print $5" bytes, "$6" "$7" "$8}'))"
+        sz=$(wc -c < "$mf" 2>/dev/null || echo 999999)
+        if [ "$sz" -lt 51200 ]; then
+          subdir="foreign/modified_jci$(dirname "$mf" | sed 's#/jci##')"
+          mkdir -p "$TDIR/$subdir" 2>/dev/null
+          cp -a "$mf" "$TDIR/$subdir/" 2>/dev/null
+        fi
+        found=$((found + 1))
+    done < "$_mfl"
+    find /etc -maxdepth 2 -type f -newer "$REF" \( -name '*.xml' -o -name '*.conf' \) 2>/dev/null | \
+      grep -vE '(aap_system_attributes)' | \
+      sort | head -20 > "$_mfl"
+    while read -r mf; do
+        tsay "  [!] $mf  ($(ls -la "$mf" 2>/dev/null | awk '{print $5" bytes, "$6" "$7" "$8}'))"
+        tcopy "$mf" "configs/etc"
+        found=$((found + 1))
+    done < "$_mfl"
+    rm -f "$_mfl"
+  else
+    tsay "  (reference binary $REF not found — skipping date comparison)"
+  fi
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 6. Foreign LD_PRELOAD lines
+  # -------------------------------------------------------------------
+  tsay "--- 6. Foreign LD_PRELOAD lines ---"
+  _fld=/tmp/hud_tweak_fld.tmp; : > "$_fld"
+  for c in /jci/sm/sm.conf /jci/sm/sm_WCP.conf; do
+    [ -f "$c" ] || continue
+    grep 'env_name="LD_PRELOAD"' "$c" 2>/dev/null | grep -v 'oem-aa-mod/libpatch-' >> "$_fld"
+  done
+  foreign_ld=$(wc -l < "$_fld" 2>/dev/null); foreign_ld=${foreign_ld:-0}; foreign_ld=$(echo "$foreign_ld" | tr -d ' ')
+  if [ "$foreign_ld" -gt 0 ]; then
+    found=$((found + foreign_ld))
+    sed "s/^/  [!] /" "$_fld" >> "$TRPT"
+  else
+    tsay "  (none — only our shims, or no preloads at all)"
+  fi
+  rm -f "$_fld"
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 7. Backup originals
+  # -------------------------------------------------------------------
+  tsay "--- 7. Backup originals (/data_persist/hud-mod-backup/) ---"
+  if [ -d /data_persist/hud-mod-backup ]; then
+    for f in /data_persist/hud-mod-backup/*; do
+      [ -f "$f" ] || continue
+      tcopy "$f" "backup_orig"
+      tsay "  $(basename "$f")  $(ls -la "$f" 2>/dev/null | awk '{print $5" bytes, "$6" "$7" "$8}')"
+    done
+  else
+    tsay "  (no backup directory)"
+  fi
+  tsay ""
+
+  # -------------------------------------------------------------------
+  # 8. Summary
+  # -------------------------------------------------------------------
+  tsay "--- Summary ---"
+  tsay "  Tweak traces found: $found"
+  if [ "$found" -gt 0 ]; then
+    tsay "  Items marked [!] are foreign. Send the tweaks/ folder for analysis."
+  else
+    tsay "  No third-party mod traces detected."
+  fi
+
+  _ret=$found
+  unset TDIR TRPT found d extras js_found scr_found gui_found foreign_ld _fld _mfl REF
+  echo "$_ret"; unset _ret
 }
 
 finish() {  # 0 = reboot, 1 = keep the message up and stop, 2 = done (no reboot)
@@ -308,16 +572,23 @@ status)
     lines="${lines:+$lines\n}${spec##*:}: $st"
   done
 
-  dialog "[1/3]  Services ready\n[2/3]  Patch checked\n[3/3]  Showing results..."
+  dialog "[1/4]  Services ready\n[2/4]  Patch checked\n[3/4]  Scanning for tweaks...\n[4/4]  Results"
+  panel "Running tweak scan..."
+  tweak_issues=$(tweak_scan)
+  : "${tweak_issues:=0}"
+
+  dialog "[1/4]  Services ready\n[2/4]  Patch checked\n[3/4]  Tweak scan done\n[4/4]  Showing results..."
 
   installed=$([ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ] && echo yes || echo no)
   speed=$(cat /tmp/hud_oem_speed 2>/dev/null || echo none)
+  tweak_note=""
+  [ "$tweak_issues" -gt 0 ] 2>/dev/null && tweak_note="\ntweaks found: $tweak_issues (see tweak_scan.txt)"
   if [ "$installed" = no ]; then
-    result S0 "The HUD patch is not installed." "${lines}" "Use HUD+ to install it."
+    result S0 "The HUD patch is not installed." "${lines}${tweak_note}" "Use HUD+ to install it."
   elif [ "$bad" = 0 ]; then
-    result OK "HUD patch is working." "$lines\nnav speed: $speed" ""
+    result OK "HUD patch is working." "$lines\nnav speed: $speed${tweak_note}" ""
   else
-    result S1 "HUD patch installed but $bad part(s) not active." "${lines}" "Restart the car once. If it stays, send this photo."
+    result S1 "HUD patch installed but $bad part(s) not active." "${lines}${tweak_note}" "Restart the car once. If it stays, send this photo."
   fi
   finish 2 ;;
 esac
