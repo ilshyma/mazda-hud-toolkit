@@ -215,6 +215,7 @@ rm -f /data_persist/splim_udpd_start.sh /data_persist/cp-hud-mod/splim_udpd \
 rm -rf /tmp/splim_v16_cache
 
 # --- done --------------------------------------------------------------------
+echo "$MOD_VERSION" > "$MOD_DIR/.version"
 sync
 mount -o remount,ro / 2>/dev/null
 echo ""

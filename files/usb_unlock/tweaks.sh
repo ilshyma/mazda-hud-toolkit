@@ -24,13 +24,27 @@ if [ ! -f "$RUNNER" ]; then
 fi
 
 if [ -f /data_persist/oem-aa-mod/libpatch-svcjcinavi.so ]; then
-    $DLG --question --title="$TITLE" \
-      --text="The HUD patch is installed.\nWhat would you like to do?" \
-      --ok-label="Uninstall" --cancel-label="Check Status"
-    if [ $? -eq 0 ]; then
-        sh "$RUNNER" uninstall
+    CUR_VER=$(cat /data_persist/oem-aa-mod/.version 2>/dev/null | tr -d '[:space:]')
+    if [ -n "$CUR_VER" ] && [ "$CUR_VER" != "$MOD_VER" ]; then
+        $DLG --3-button-dialog --title="$TITLE" \
+          --text="HUD patch v$CUR_VER installed.\nUSB has v$MOD_VER." \
+          --ok-label="Update" --cancel-label="Uninstall" --button3-label="Close"
+        RC=$?
+        if [ $RC -eq 0 ]; then
+            sh "$RUNNER" install
+        elif [ $RC -eq 1 ]; then
+            sh "$RUNNER" uninstall
+        fi
     else
-        sh "$RUNNER" status
+        $DLG --3-button-dialog --title="$TITLE" \
+          --text="HUD patch v${CUR_VER:-$MOD_VER} is installed." \
+          --ok-label="Uninstall" --cancel-label="Check Status" --button3-label="Close"
+        RC=$?
+        if [ $RC -eq 0 ]; then
+            sh "$RUNNER" uninstall
+        elif [ $RC -eq 1 ]; then
+            sh "$RUNNER" status
+        fi
     fi
 else
     $DLG --question --title="$TITLE" \

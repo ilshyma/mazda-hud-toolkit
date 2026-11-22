@@ -223,6 +223,7 @@ if [ -f "$SRC/hud_config" ]; then
 fi
 
 # --- done --------------------------------------------------------------------
+echo "$MOD_VERSION" > "$MOD_DIR/.version"
 sync
 mount -o remount,ro / 2>/dev/null
 echo ""
