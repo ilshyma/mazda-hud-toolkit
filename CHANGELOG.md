@@ -2,6 +2,11 @@
 
 All notable changes to the Mazda CarPlay & Android Auto HUD Toolkit.
 
+## [v2.6.2] — 2026-11-23
+
+### Fixed
+- **HUD arrows not appearing after cold boot** — `sender_setup()` D-Bus connect was a one-shot attempt; if `svcjcinavi` hadn't registered yet, the sender thread exited permanently and the HUD stayed dead until sleep/wake. Added retry loop with rising back-off (~2 min window: 2s→10s).
+
 ## [v2.6.1] — 2026-11-22
 
 ### Added

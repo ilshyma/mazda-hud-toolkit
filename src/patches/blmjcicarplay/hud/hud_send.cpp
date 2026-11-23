@@ -656,12 +656,33 @@ bool sender_setup()
         return false;
     }
 
-    LOGD("hud sender: connecting to service bus as %s", kBusName);
-    if (JCIDBUS_conn_connect(g_conn, kBusName, kJciServiceBus, nullptr) == 0) {
-        LOGE("hud sender: JCIDBUS_conn_connect failed — no HUD this session");
-        JCIDBUS_conn_free(g_conn);
-        g_conn = nullptr;
-        return false;
+    // Retry the D-Bus connect with rising back-off (~2 min window): after a
+    // cold boot svcjcinavi (which owns com.jci.vbs.navi) may still be starting
+    // when jciCARPLAY is already armed.  Without a retry the sender thread
+    // exits permanently and the HUD stays dead until the next sleep/wake cycle.
+    static constexpr int kMaxRetries = 15;     // 2+3+4+5+6+7+8+9+10×7 = ~114s
+    static constexpr int kMinDelaySec = 2;
+    static constexpr int kMaxDelaySec = 10;
+    for (int attempt = 0; ; ++attempt) {
+        if (g_stop.load(std::memory_order_relaxed)) {
+            JCIDBUS_conn_free(g_conn);
+            g_conn = nullptr;
+            return false;
+        }
+        LOGD("hud sender: connecting to service bus as %s (attempt %d)", kBusName, attempt);
+        if (JCIDBUS_conn_connect(g_conn, kBusName, kJciServiceBus, nullptr) != 0)
+            break;   // success
+        if (attempt >= kMaxRetries) {
+            LOGE("hud sender: JCIDBUS_conn_connect failed after %d attempts — no HUD this session",
+                 kMaxRetries + 1);
+            JCIDBUS_conn_free(g_conn);
+            g_conn = nullptr;
+            return false;
+        }
+        int delay = kMinDelaySec + attempt;
+        if (delay > kMaxDelaySec) delay = kMaxDelaySec;
+        LOGW("hud sender: connect attempt %d failed, retrying in %ds", attempt, delay);
+        usleep(delay * 1000000);
     }
 
     JCIDBUS_worker_start(g_conn);
