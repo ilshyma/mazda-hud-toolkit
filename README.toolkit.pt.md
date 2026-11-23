@@ -1,8 +1,8 @@
 # Mazda CMU CarPlay-HUD Toolkit — Português
 
-Navegação turn-by-turn do **Apple CarPlay** no **Head-Up Display** do painel de instrumentos para Mazda CMU150 (firmware 74.00.324) — com indicador correto de limite de velocidade em **km/h** para o mercado europeu.
+Navegação turn-by-turn do **Apple CarPlay** no **Head-Up Display** do painel de instrumentos para Mazda CMU150 (firmware 74.00.324) — com indicador correto de limite de velocidade em **km/h**.
 
-**Compatível com:** CX-5 KF, CX-8, CX-9 (2016-2023) e veículos da mesma plataforma com firmware EU.
+**Compatível com:** CX-5 KF, CX-8, CX-9 (2016-2023) e veículos da mesma plataforma.
 
 **Traduções:** [English](README.md) · [Українська](README.uk.md) · [Español](README.es.md) · [Deutsch](README.de.md)
 
@@ -10,9 +10,9 @@ Navegação turn-by-turn do **Apple CarPlay** no **Head-Up Display** do painel d
 
 ## O que este toolkit faz
 
-Baseado no shim `LD_PRELOAD` [KidMixer/mazda-carplay-hud](https://github.com/KidMixer/mazda-carplay-hud) construído pela comunidade, com duas adições para veículos europeus:
+Baseado no shim `LD_PRELOAD` [KidMixer/mazda-carplay-hud](https://github.com/KidMixer/mazda-carplay-hud) construído pela comunidade, com duas adições:
 
-1. **Correção km/h** — patch de uma linha no código fonte (`displaySpeedUnit = 2` em vez de `1`, enum VBS `km/h` em vez de `mph`). Sem isto, um HUD EU renderiza um sinal `50 km/h` vindo do shim como `≈80 km/h` após conversão mile→km.
+1. **Correção km/h** — patch de uma linha no código fonte (`displaySpeedUnit = 2` em vez de `1`, enum VBS `km/h` em vez de `mph`). Sem isto, o HUD renderiza um sinal `50 km/h` vindo do shim como `≈80 km/h` após conversão mile→km.
 2. **Daemon-espelho do limite de velocidade** — pequeno script shell que escuta passivamente o stream HUD do `svcjcinavi.so` OEM e copia o limite *atual* para os frames keep-alive do próprio shim. Sem isto, o shim sobrescreve o slot de velocidade com `0` a cada 500 ms e o valor morre para `---` entre atualizações OEM.
 
 Tudo o resto é bit-a-bit o build original KidMixer.
@@ -21,7 +21,7 @@ Tudo o resto é bit-a-bit o build original KidMixer.
 
 ## Requisitos
 
-- Mazda CMU150, firmware `74.00.324`, versão EU (verificar: `cat /jci/version.ini` no CMU)
+- Mazda CMU150, firmware `74.00.324` (verificar: `cat /jci/version.ini` no CMU)
 - Pen USB (≥1 GB, formatada FAT32)
 - Um computador com Wi-Fi (macOS, Linux ou Windows 10+)
 - Hotspot Wi-Fi no seu CMU (vem com dongles CarPlay sem fios) ou setup root+SSH a funcionar
@@ -51,7 +51,7 @@ mazda-hud-toolkit/
 | **1** | **Criar pen USB** — formata uma USB (FAT32, etiqueta MZD) com o desbloqueio MP3-XSS (botão SSH) **e** o patch HUD (`hud-mod/`). No carro, o menu no ecrã oferece **SSH**, **HUD+** (instalar), **HUD-** (remover) e **HUD?** (verificar), para instalar o patch sem portátil. |
 | **2** | **Backup do CMU** — baixa por SSH um arquivo com todos os ficheiros que um patch toca para `backups/YYYYMMDD_HHMMSS/`. Execute isto antes de instalar. |
 | **3** | **Rollback** — remove **todos** os patches HUD: CarPlay + Android Auto, ilshyma v16 com seu daemon, KidMixer e oem-aa-mod. Volta ao estado de fábrica, reinicia e confirma. |
-| **4** | **Instalar patch HUD (CarPlay + Android Auto)** — um patch único para ambos os telefones: setas e distância para CarPlay e Android Auto, mais o sinal de limite de velocidade da navegação de série (precisa do SD de navegação). Cada ficheiro é verificado por md5. O toolkit reinicia a unidade, aguarda SSH e verifica que os 4 módulos carregaram. Fonte: [mazda-carplay-hud `unified-carplay-aa`](https://github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa). Os nomes de rua são forçados em HUDs EU pelo patch (`force_street_name`). |
+| **4** | **Instalar patch HUD (CarPlay + Android Auto)** — um patch único para ambos os telefones: setas e distância para CarPlay e Android Auto, mais o sinal de limite de velocidade da navegação de série (precisa do SD de navegação). Cada ficheiro é verificado por md5. O toolkit reinicia a unidade, aguarda SSH e verifica que os 4 módulos carregaram. Fonte: [mazda-carplay-hud `unified-carplay-aa`](https://github.com/ilshyma/mazda-carplay-hud/tree/unified-carplay-aa). Os nomes de rua são forçados no HUD pelo patch (`force_street_name`). |
 | **B** | **Configurar chave SSH** — setup único para o fluxo SSH (opções 2 / 3 / 4). Gera `id_rsa_cmu` se não existir e instala a metade pública em `authorized_keys` do CMU usando a palavra-passe de uso único `cmu:jci` do desbloqueio USB XSS. Só necessário num computador novo. |
 | **A** | **Avançado** — validar instalação, verificação SSH, dump diagnóstico e patches antigos só-CarPlay (v16, pure KidMixer, legacy) com as suas ferramentas. |
 

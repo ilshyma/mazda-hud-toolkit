@@ -6,7 +6,7 @@ Turn-by-turn navigation on the windshield HUD for **CarPlay** and **Android Auto
 
 **Downloads:** [Latest release](../../releases/latest)
 
-**Applies to:** CX-5 KF, CX-8, CX-9 (2018+) and same-platform units with FW 74.00.324 (NA/EU).
+**Applies to:** CX-5 KF, CX-8, CX-9 (2018+) and same-platform units with FW 74.00.324.
 
 ## What it does
 

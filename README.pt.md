@@ -1,8 +1,8 @@
 # Mazda CMU CarPlay-HUD Toolkit — Português
 
-Navegação turn-by-turn do **Apple CarPlay** no **Head-Up Display** do quadro de instrumentos para Mazda CMU150 (firmware 74.00.324) — com indicador correto de limite de velocidade em **km/h** para o mercado europeu.
+Navegação turn-by-turn do **Apple CarPlay** no **Head-Up Display** do quadro de instrumentos para Mazda CMU150 (firmware 74.00.324) — com indicador correto de limite de velocidade em **km/h**.
 
-**Compatível com:** CX-5 KF, CX-8, CX-9 (2018) e unidades da mesma plataforma com firmware EU.
+**Compatível com:** CX-5 KF, CX-8, CX-9 (2018) e unidades da mesma plataforma.
 
 **Traduções:** [English](README.md) · [Українська](README.uk.md) · [Español](README.es.md) · [Deutsch](README.de.md)
 
@@ -10,9 +10,9 @@ Navegação turn-by-turn do **Apple CarPlay** no **Head-Up Display** do quadro d
 
 ## O que este kit faz
 
-Baseado no mod comunitário [KidMixer/mazda-carplay-hud](https://github.com/KidMixer/mazda-carplay-hud) com duas adições para veículos do mercado europeu:
+Baseado no mod comunitário [KidMixer/mazda-carplay-hud](https://github.com/KidMixer/mazda-carplay-hud) com duas adições:
 
-1. **Correção km/h** — patch de uma linha no código-fonte (`displaySpeedUnit = 2` em vez de `1`, isto é, enum VBS `km/h` em vez de `mph`). Sem esta correção, um HUD europeu desenha um sinal de `50 km/h` vindo do shim como `≈80 km/h` após conversão milha→km.
+1. **Correção km/h** — patch de uma linha no código-fonte (`displaySpeedUnit = 2` em vez de `1`, isto é, enum VBS `km/h` em vez de `mph`). Sem esta correção, o HUD desenha um sinal de `50 km/h` vindo do shim como `≈80 km/h` após conversão milha→km.
 2. **Daemon-espelho do limite de velocidade** — pequeno script shell que escuta passivamente o fluxo HUD original de `svcjcinavi.so` e copia o valor *atual* do limite nos frames keep-alive do próprio shim. Sem ele, o shim sobrescreve o slot de velocidade com `0` a cada 500 ms e o valor cai para `---` entre atualizações OEM.
 
 Tudo o mais é bit-a-bit o original de KidMixer.
@@ -21,7 +21,7 @@ Tudo o mais é bit-a-bit o original de KidMixer.
 
 ## Requisitos
 
-- Mazda CMU150, firmware `74.00.324`, versão EU (verificação: `cat /jci/version.ini`)
+- Mazda CMU150, firmware `74.00.324` (verificação: `cat /jci/version.ini`)
 - USB flash drive (≥1 GB, formato FAT32)
 - Um computador com Wi-Fi (macOS, Linux ou Windows 10+)
 - Wi-Fi hotspot no CMU (vem com dongles CarPlay sem fio) ou o setup root+SSH descrito abaixo
