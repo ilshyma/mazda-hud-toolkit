@@ -576,6 +576,7 @@ if exist "%UNIFIED%\usb_run.sh" (
   echo %M_INFO%  copying CarPlay + Android Auto HUD patch to !TARGET!\hud-mod\
   xcopy /E /I /Y "%UNIFIED%\*" "!TARGET_BS!hud-mod\" >nul
   if errorlevel 1 (echo %M_ERR%copy of hud-mod failed & exit /b 1)
+  if exist "%FILES%\VERSION" copy /Y "%FILES%\VERSION" "!TARGET_BS!hud-mod\VERSION" >nul
   powershell -NoProfile -ExecutionPolicy Bypass -Command "$bad=0; Get-ChildItem -LiteralPath '%UNIFIED%' -File | ForEach-Object { $d = Join-Path '!TARGET_BS!hud-mod' $_.Name; if (-not (Test-Path -LiteralPath $d) -or (Get-FileHash -Algorithm MD5 -LiteralPath $_.FullName).Hash -ne (Get-FileHash -Algorithm MD5 -LiteralPath $d).Hash) { Write-Output ('  CORRUPT/MISSING: hud-mod\' + $_.Name); $bad++ } }; exit $bad"
   if errorlevel 1 (echo %M_ERR%hud-mod on the stick does not match the toolkit -- re-run option 1 & exit /b 1)
   echo %M_OK%  hud-mod verified

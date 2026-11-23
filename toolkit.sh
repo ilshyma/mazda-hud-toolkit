@@ -57,7 +57,7 @@ CMU=cmu@192.168.53.1
 PORT=36000
 # One source of truth for the shipping toolkit version -- stamped into the
 # main-menu header and used by install/uninstall/usb_run on the CMU side.
-# Bump files/VERSION + files/hud/VERSION together with every release.
+# Single source of truth for the toolkit version: files/VERSION.
 MOD_VERSION=$(cat "$FILES/VERSION" 2>/dev/null | tr -d '[:space:]')
 : "${MOD_VERSION:=unknown}"
 
@@ -259,7 +259,7 @@ make_usb() {
   # short "sh /mnt/sda1/h <action> <token>" through the CGI (the CGI has a
   # URL-length limit, so the command must be SSH-sized).
   if [ -f "$UNIFIED/usb_run.sh" ]; then
-    ( export COPYFILE_DISABLE=1 && mkdir -p /Volumes/MZD/hud-mod && cp "$UNIFIED/"* /Volumes/MZD/hud-mod/ ) || {
+    ( export COPYFILE_DISABLE=1 && mkdir -p /Volumes/MZD/hud-mod && cp "$UNIFIED/"* /Volumes/MZD/hud-mod/ && cp "$FILES/VERSION" /Volumes/MZD/hud-mod/VERSION ) || {
       err "copy of hud-mod failed"; return 1;
     }
     # Write the user's traffic-side / speed-unit choices so the in-car
@@ -342,6 +342,13 @@ make_usb() {
       problems=$((problems+1))
     fi
   done
+  # Verify VERSION on the stick (copied from files/VERSION, not from UNIFIED).
+  if [ -f "$FILES/VERSION" ]; then
+    if [ "$(md5 -q "$FILES/VERSION" 2>/dev/null)" != "$(md5 -q "/Volumes/MZD/hud-mod/VERSION" 2>/dev/null)" ]; then
+      err "  MISSING/CORRUPT: hud-mod/VERSION"
+      problems=$((problems+1))
+    fi
+  fi
   # Verify .up injection payloads exist on the stick.
   local up_count
   up_count=$(find /Volumes/MZD -maxdepth 1 -name '*.up' 2>/dev/null | wc -l | tr -d ' ')
@@ -925,6 +932,12 @@ unified_push() {
     fi
     push_verify "$f" "$UNIFIED_REMOTE/$(basename "$f")" "$want" || return 1
   done
+  # VERSION lives in files/, not in UNIFIED — push it separately.
+  if [ -f "$FILES/VERSION" ]; then
+    local vwant
+    vwant=$(md5 -q "$FILES/VERSION" 2>/dev/null || md5sum "$FILES/VERSION" | awk '{print $1}')
+    push_verify "$FILES/VERSION" "$UNIFIED_REMOTE/VERSION" "$vwant" || return 1
+  fi
 }
 
 validate_unified() {

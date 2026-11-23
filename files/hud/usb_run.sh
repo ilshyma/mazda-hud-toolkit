@@ -115,9 +115,9 @@ VER=$(grep '^JCI_SW_VER=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/
 FLAVOR=$(grep '^JCI_SW_FLAVOR=' /jci/version.ini 2>/dev/null | cut -d'"' -f2 | sed 's/cmu150_//')
 FREE=$(df -k /data_persist 2>/dev/null | awk 'NR==2 {print int($4/1024)}')
 STAMP=$(date +%Y%m%d-%H%M%S)
-# Toolkit version from the VERSION file next to this script (hud-mod/VERSION
-# on the stick). Shown on-screen in every result dialog and stamped into
-# every log, so a photo of the screen alone identifies the exact build.
+# Toolkit version from the VERSION file next to this script (copied from
+# files/VERSION by the toolkit at USB-build time). Shown on-screen in every
+# result dialog and stamped into every log.
 MOD_VERSION=$(cat "$D/VERSION" 2>/dev/null | tr -d '[:space:]')
 : "${MOD_VERSION:=unknown}"
 FACTS="toolkit v$MOD_VERSION | FW ${VER:-?} ${FLAVOR:-?} | free ${FREE:-?} MB | $STAMP"

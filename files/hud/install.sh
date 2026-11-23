@@ -25,10 +25,9 @@ set -u
 TAG="[hud-mod install]"
 SRC=$(cd "$(dirname "$0")" && pwd)
 # Toolkit version -- stamped into run.log so every log tells us exactly which
-# shim bundle produced it. Bump files/VERSION + files/unified/VERSION
-# whenever a new release goes out and the number flows through here, the
-# uninstaller, usb_run.sh (on-screen FACTS line + system.txt header), and
-# the toolkit menus. Unknown-fallback keeps us safe if the file is missing.
+# shim bundle produced it. The single source of truth is files/VERSION in the
+# repo; the toolkit copies it here at USB-build time. Unknown-fallback keeps
+# us safe if the file is missing.
 MOD_VERSION=$(cat "$SRC/VERSION" 2>/dev/null | tr -d '[:space:]')
 : "${MOD_VERSION:=unknown}"
 MOD_DIR=/data_persist/oem-aa-mod
